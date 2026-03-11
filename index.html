@@ -181,7 +181,7 @@ var QUOTES=[{text:"The team you're on is more important than the team you lead."
 var DN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],DS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var INACTIVE_DAYS=7;
 
-var state={user:null,data:{habits:[],completions:{},notes:{},startDate:null,endDate:null},view:'home',modalOpen:false,editingHabit:null,isCoach:false,clients:[],selectedClient:null,coachView:'clients'};
+var state={user:null,data:{habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:''},view:'home',modalOpen:false,editingHabit:null,isCoach:false,clients:[],selectedClient:null,coachView:'clients'};
 
 // HELPERS
 function dailyQuote(){var t=new Date();return QUOTES[(t.getFullYear()*10000+(t.getMonth()+1)*100+t.getDate())%QUOTES.length];}
@@ -243,6 +243,8 @@ function saveToCloud(){
     db.collection('users').doc(state.user.uid).set({
       habits:state.data.habits,completions:state.data.completions,notes:state.data.notes||{},
       startDate:state.data.startDate||null,endDate:state.data.endDate||null,
+      nextSession:state.data.nextSession||null,focusOfWeek:state.data.focusOfWeek||'',
+      todos:state.data.todos||[],sessionPrep:state.data.sessionPrep||'',
       displayName:state.user.displayName||'',email:state.user.email||'',photoURL:state.user.photoURL||'',
       updatedAt:firebase.firestore.FieldValue.serverTimestamp()
     },{merge:true});
@@ -251,7 +253,7 @@ function saveToCloud(){
 function loadFromCloud(cb){
   if(!state.user)return;
   db.collection('users').doc(state.user.uid).get().then(function(doc){
-    if(doc.exists){var d=doc.data();state.data.habits=d.habits||[];state.data.completions=d.completions||{};state.data.notes=d.notes||{};state.data.startDate=d.startDate||null;state.data.endDate=d.endDate||null;}
+    if(doc.exists){var d=doc.data();state.data.habits=d.habits||[];state.data.completions=d.completions||{};state.data.notes=d.notes||{};state.data.startDate=d.startDate||null;state.data.endDate=d.endDate||null;state.data.nextSession=d.nextSession||null;state.data.focusOfWeek=d.focusOfWeek||'';state.data.todos=d.todos||[];state.data.sessionPrep=d.sessionPrep||'';}
     if(cb)cb();
   }).catch(function(){if(cb)cb();});
 }
@@ -261,16 +263,17 @@ function loadAllClients(cb){
     snap.forEach(function(doc){var d=doc.data();
       if(COACH_EMAILS.indexOf(d.email)===-1){
         state.clients.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',
-          habits:d.habits||[],completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null});
+          habits:d.habits||[],completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,
+          nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||''});
       }
     });if(cb)cb();
   }).catch(function(e){console.error(e);if(cb)cb();});
 }
-function saveClientDates(uid,start,end){
-  db.collection('users').doc(uid).set({startDate:start||null,endDate:end||null},{merge:true}).then(function(){
+function saveClientFields(uid,fields){
+  db.collection('users').doc(uid).set(fields,{merge:true}).then(function(){
     var c=state.clients.find(function(x){return x.uid===uid;});
-    if(c){c.startDate=start||null;c.endDate=end||null;}
-    if(state.selectedClient&&state.selectedClient.uid===uid){state.selectedClient.startDate=start||null;state.selectedClient.endDate=end||null;}
+    if(c){Object.keys(fields).forEach(function(k){c[k]=fields[k];});}
+    if(state.selectedClient&&state.selectedClient.uid===uid){Object.keys(fields).forEach(function(k){state.selectedClient[k]=fields[k];});}
     render();
   });
 }
@@ -284,7 +287,7 @@ auth.onAuthStateChanged(function(user){
       db.collection('users').doc(user.uid).set({displayName:user.displayName||'',email:user.email||'',photoURL:user.photoURL||''},{merge:true});
       loadAllClients(function(){render();});
     }else{state.view='home';loadFromCloud(function(){saveToCloud();render();});}
-  }else{state.user=null;state.isCoach=false;state.data={habits:[],completions:{},notes:{},startDate:null,endDate:null};state.clients=[];renderLogin();}
+  }else{state.user=null;state.isCoach=false;state.data={habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:''};state.clients=[];renderLogin();}
 });
 
 // LOGIN
@@ -313,33 +316,76 @@ function renderClientApp(){
   if(state.view==='home'){
     // QUOTE
     h+='<div class="quote-banner"><div class="quote-text">&ldquo;'+esc(quote.text)+'&rdquo;</div><div class="quote-attr">&mdash; '+esc(quote.attr)+'</div></div>';
-    // HOME GRID
+
+    // NEXT SESSION + SCHEDULE
+    h+='<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">';
+    if(state.data.nextSession){
+      h+='<div style="flex:1;min-width:200px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 22px;display:flex;align-items:center;gap:14px">';
+      h+='<div style="width:44px;height:44px;min-width:44px;background:var(--cream-light);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>';
+      h+='<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Next Session</div>';
+      h+='<div style="font-weight:600;font-size:15px;color:var(--green)">'+fmtDate(state.data.nextSession)+'</div></div></div>';
+    }
+    h+='<a class="schedule-btn" href="'+CALENDLY_URL+'" target="_blank" style="flex:1;min-width:200px;margin:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule a Session</a>';
+    h+='</div>';
+
+    // SESSION PREP (shows 48hrs before next session)
+    var showPrep=false;
+    if(state.data.nextSession){var np=state.data.nextSession.split('-'),nd=new Date(np[0],np[1]-1,np[2]),hoursUntil=(nd-new Date())/(1000*60*60);if(hoursUntil<=48&&hoursUntil>-24)showPrep=true;}
+    if(showPrep){
+      h+='<div style="background:linear-gradient(135deg,rgba(184,134,11,0.08),rgba(184,134,11,0.03));border:1px solid var(--gold);border-radius:12px;padding:22px;margin-bottom:16px">';
+      h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--gold);margin-bottom:4px">Session Prep</h3>';
+      h+='<div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Your session is coming up. Take a few minutes to reflect.</div>';
+      h+='<textarea class="form-textarea" style="min-height:100px;font-size:14px;line-height:1.7;border-color:var(--gold)" placeholder="What do you want to focus on? What has been hard? What are you proud of?" oninput="saveSessionPrep(this.value)">'+esc(state.data.sessionPrep||'')+'</textarea>';
+      h+='</div>';
+    }
+
+    // FOCUS OF THE WEEK
+    if(state.data.focusOfWeek){
+      h+='<div style="background:var(--white);border:1px solid var(--border);border-left:4px solid var(--green);border-radius:12px;padding:20px 22px;margin-bottom:16px">';
+      h+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--green-muted);margin-bottom:6px">Focus This Week</div>';
+      h+='<div style="font-size:15px;line-height:1.6;color:var(--text)">'+esc(state.data.focusOfWeek)+'</div></div>';
+    }
+
+    // TO-DOS
+    var todos=state.data.todos||[];
+    if(todos.length>0){
+      var todosDone=todos.filter(function(t){return t.done;}).length;
+      h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:16px">';
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green)">To-Dos</h3><span style="font-size:12px;color:var(--text-muted)">'+todosDone+'/'+todos.length+' done</span></div>';
+      h+='<div style="display:flex;flex-direction:column;gap:8px">';
+      todos.forEach(function(t,i){
+        h+='<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:'+(t.done?'rgba(45,106,79,0.04)':'var(--cream-bg)')+';border-radius:8px;cursor:pointer" onclick="toggleTodo('+i+')">';
+        h+='<div style="width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;margin-top:1px">';
+        if(t.done)h+='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        h+='</div><div style="flex:1"><div style="font-size:14px;font-weight:500;color:'+(t.done?'var(--green-muted)':'var(--text)')+'">'+esc(t.text)+'</div>';
+        if(t.link)h+='<a href="'+esc(t.link)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:12px;color:var(--green);text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-top:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Open link</a>';
+        h+='</div></div>';
+      });
+      h+='</div></div>';
+    }
+
+    // HOME GRID - engagement + stats
     h+='<div class="home-grid">';
-    // Engagement card
     h+='<div class="home-card"><h3>Your Engagement</h3>';
     if(state.data.startDate){
       var ep=engagementProgress(state.data);
       h+='<div class="engagement-dates"><div>Start<strong>'+fmtDate(state.data.startDate)+'</strong></div>';
       if(state.data.endDate)h+='<div>End<strong>'+fmtDate(state.data.endDate)+'</strong></div>';
       h+='</div>';
-      if(ep!==null){h+='<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+ep+'%;background:'+( ep>=100?'var(--gold)':'var(--check-green)')+'"></div></div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+ep+'% through engagement</div>';}
-    } else {
-      h+='<div style="font-size:14px;color:var(--text-muted)">Your coach will set your engagement dates.</div>';
-    }
+      if(ep!==null){h+='<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+ep+'%;background:'+(ep>=100?'var(--gold)':'var(--check-green)')+'"></div></div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+ep+'% through engagement</div>';}
+    } else {h+='<div style="font-size:14px;color:var(--text-muted)">Your coach will set your engagement dates.</div>';}
     h+='</div>';
-    // Quick stats card
     var rate=getCompletionRate(state.data),activeDays=getActiveDays(state.data);
     h+='<div class="home-card"><h3>Your Progress</h3>';
     h+='<div style="display:flex;gap:20px"><div><span style="font-family:\'DM Serif Display\',serif;font-size:32px;color:'+(rate>=70?'var(--check-green)':rate>=40?'var(--gold)':'#c0392b')+'">'+rate+'%</span><div style="font-size:12px;color:var(--text-muted)">completion rate</div></div>';
     h+='<div><span style="font-family:\'DM Serif Display\',serif;font-size:32px;color:var(--green)">'+streak+'</span><div style="font-size:12px;color:var(--text-muted)">day streak</div></div>';
     h+='<div><span style="font-family:\'DM Serif Display\',serif;font-size:32px;color:var(--green)">'+activeDays+'</span><div style="font-size:12px;color:var(--text-muted)">days tracking</div></div></div></div>';
     h+='</div>';
-    // Schedule button
-    h+='<a class="schedule-btn" href="'+CALENDLY_URL+'" target="_blank"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule a Session</a>';
+
     // Today's habits quick view
     if(state.data.habits.length>0){
       var total=state.data.habits.length,done=comp.length;
-      h+='<div style="margin-top:20px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green)">Today\'s Habits</h3><span style="font-size:13px;color:var(--text-muted)">'+done+'/'+total+' done</span></div>';
+      h+='<div style="margin-top:4px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green)">Today\'s Habits</h3><span style="font-size:13px;color:var(--text-muted)">'+done+'/'+total+' done</span></div>';
       h+='<div class="habits-list">';
       state.data.habits.forEach(function(hab){
         var checked=comp.indexOf(hab.id)!==-1;
@@ -348,7 +394,6 @@ function renderClientApp(){
       });
       h+='</div></div>';
     }
-    // Coach card
     h+=renderCoachCard();
   } else if(state.view==='habits'){
     h+=renderHabits(today,ts,comp);
@@ -490,12 +535,53 @@ function renderClientDetail(){
   h+='<button class="export-btn" onclick="exportClientCSV()">Export CSV</button></div>';
 
   // Engagement dates editor
-  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">';
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">';
   h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);margin-bottom:12px">Engagement Dates</h3>';
   h+='<div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">';
   h+='<div class="form-group" style="margin-bottom:0;flex:1;min-width:150px"><label class="form-label">Start Date</label><input class="form-input" type="date" id="client-start" value="'+(c.startDate||'')+'"></div>';
   h+='<div class="form-group" style="margin-bottom:0;flex:1;min-width:150px"><label class="form-label">End Date</label><input class="form-input" type="date" id="client-end" value="'+(c.endDate||'')+'"></div>';
-  h+='<button class="btn btn-primary" onclick="saveClientDatesUI()">Save Dates</button></div></div>';
+  h+='<button class="btn btn-primary" onclick="saveClientDatesUI()">Save</button></div></div>';
+
+  // Next session
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">';
+  h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);margin-bottom:12px">Next Session</h3>';
+  h+='<div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">';
+  h+='<div class="form-group" style="margin-bottom:0;flex:1;min-width:200px"><input class="form-input" type="date" id="client-nextsession" value="'+(c.nextSession||'')+'"></div>';
+  h+='<button class="btn btn-primary" onclick="saveClientNextSession()">Save</button></div></div>';
+
+  // Focus of the week
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">';
+  h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);margin-bottom:12px">Focus This Week</h3>';
+  h+='<textarea class="form-textarea" id="client-focus" style="min-height:80px;font-size:14px" placeholder="What should this client hold between sessions?">'+esc(c.focusOfWeek||'')+'</textarea>';
+  h+='<div style="margin-top:10px;text-align:right"><button class="btn btn-primary" onclick="saveClientFocus()">Save Focus</button></div></div>';
+
+  // To-dos
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">';
+  h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);margin-bottom:12px">To-Dos</h3>';
+  var ctodos=c.todos||[];
+  if(ctodos.length>0){
+    h+='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">';
+    ctodos.forEach(function(t,i){
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:'+(t.done?'rgba(45,106,79,0.06)':'var(--cream-bg)')+';border-radius:8px">';
+      h+='<div style="width:20px;height:20px;min-width:20px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center">';
+      if(t.done)h+='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      h+='</div><div style="flex:1;font-size:13px;color:'+(t.done?'var(--green-muted)':'var(--text)')+'">'+esc(t.text);
+      if(t.link)h+=' <a href="'+esc(t.link)+'" target="_blank" style="color:var(--green);font-size:12px">link</a>';
+      h+='</div><button class="habit-action-btn delete" onclick="removeClientTodo('+i+')" style="opacity:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
+    });
+    h+='</div>';
+  }
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">';
+  h+='<div class="form-group" style="margin-bottom:0;flex:2;min-width:180px"><label class="form-label">New To-Do</label><input class="form-input" id="new-todo-text" type="text" placeholder="Read chapter 3, Complete assessment..."></div>';
+  h+='<div class="form-group" style="margin-bottom:0;flex:1;min-width:150px"><label class="form-label">Link (optional)</label><input class="form-input" id="new-todo-link" type="url" placeholder="https://..."></div>';
+  h+='<button class="btn btn-primary" onclick="addClientTodo()">Add</button></div></div>';
+
+  // Session prep (read-only for coach)
+  if(c.sessionPrep){
+    h+='<div style="background:linear-gradient(135deg,rgba(184,134,11,0.08),rgba(184,134,11,0.03));border:1px solid var(--gold);border-radius:12px;padding:20px;margin-bottom:16px">';
+    h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--gold);margin-bottom:8px">Session Prep (from client)</h3>';
+    h+='<div style="font-size:14px;line-height:1.7;white-space:pre-wrap">'+esc(c.sessionPrep)+'</div></div>';
+  }
 
   h+=renderStats(today,c);
 
@@ -520,7 +606,28 @@ function selectClient(i){
 function refreshClients(){loadAllClients(function(){render();});}
 function saveClientDatesUI(){
   var s=document.getElementById('client-start').value,e=document.getElementById('client-end').value;
-  saveClientDates(state.selectedClient.uid,s||null,e||null);
+  saveClientFields(state.selectedClient.uid,{startDate:s||null,endDate:e||null});
+}
+function saveClientNextSession(){
+  var v=document.getElementById('client-nextsession').value;
+  saveClientFields(state.selectedClient.uid,{nextSession:v||null});
+}
+function saveClientFocus(){
+  var v=document.getElementById('client-focus').value;
+  saveClientFields(state.selectedClient.uid,{focusOfWeek:v||''});
+}
+function addClientTodo(){
+  var t=document.getElementById('new-todo-text').value.trim();if(!t)return;
+  var l=document.getElementById('new-todo-link').value.trim();
+  var todos=(state.selectedClient.todos||[]).slice();
+  todos.push({id:'t'+Date.now(),text:t,link:l||'',done:false});
+  saveClientFields(state.selectedClient.uid,{todos:todos});
+}
+function removeClientTodo(i){
+  if(!confirm('Remove this to-do?'))return;
+  var todos=(state.selectedClient.todos||[]).slice();
+  todos.splice(i,1);
+  saveClientFields(state.selectedClient.uid,{todos:todos});
 }
 function exportAllCSV(){
   var rows=[['Name','Email','Habits','Rate','Streak','Start','End','Last Active']];
@@ -548,6 +655,8 @@ function closeModal(){state.modalOpen=false;state.editingHabit=null;render();}
 function closeModalOverlay(e){if(e.target.classList.contains('modal-overlay'))closeModal();}
 function saveHabit(){var n=document.getElementById('habit-name').value.trim(),d=document.getElementById('habit-desc').value.trim(),c=document.getElementById('habit-cat').value;if(!n)return;if(state.editingHabit){var hb=state.data.habits.find(function(x){return x.id===state.editingHabit;});if(hb){hb.name=n;hb.desc=d;hb.category=c;}}else{state.data.habits.push({id:'h'+Date.now(),name:n,desc:d,category:c});}saveToCloud();closeModal();}
 function deleteHabit(id){if(!confirm('Remove this habit?'))return;state.data.habits=state.data.habits.filter(function(h){return h.id!==id;});saveToCloud();render();}
+function toggleTodo(i){var t=state.data.todos||[];if(t[i]){t[i].done=!t[i].done;saveToCloud();render();}}
+function saveSessionPrep(val){state.data.sessionPrep=val;saveToCloud();}
 function saveNote(k,val){if(!state.data.notes)state.data.notes={};state.data.notes[k]=val;saveToCloud();}
 function deleteNote(k){if(!confirm('Delete this note?'))return;delete state.data.notes[k];saveToCloud();render();}
 
