@@ -7,6 +7,8 @@
 <meta name="theme-color" content="#1B4332">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -603,6 +605,15 @@ function saveHabit(){var n=document.getElementById('habit-name').value.trim(),d=
 function deleteHabit(id){if(!confirm('Remove this habit?'))return;state.data.habits=state.data.habits.filter(function(h){return h.id!==id;});saveToCloud();render();}
 function saveNote(dk,val){if(!state.data.notes)state.data.notes={};state.data.notes[dk]=val;saveToCloud();}
 function deleteNote(dk){if(!confirm('Delete this note?'))return;delete state.data.notes[dk];saveToCloud();render();}
+
+// ─── PWA SERVICE WORKER ───
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js').catch(function(err) {
+      console.log('SW registration failed:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
