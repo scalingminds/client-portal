@@ -191,6 +191,7 @@ function weekDates(){var t=new Date(),day=t.getDay(),m=new Date(t);m.setDate(t.g
 function isCoach(){return state.user&&COACH_EMAILS.indexOf(state.user.email)!==-1;}
 function fmtDate(s){if(!s)return'—';var p=s.split('-');var d=new Date(p[0],p[1]-1,p[2]);return MN[d.getMonth()]+' '+d.getDate()+', '+p[0];}
 function fmtShort(s){if(!s)return'—';var p=s.split('-');var d=new Date(p[0],p[1]-1,p[2]);return DS[d.getDay()]+', '+MN[d.getMonth()]+' '+d.getDate();}
+function fmtDateTime(s){if(!s)return'—';var d;if(s.indexOf('T')!==-1){d=new Date(s);}else{var p=s.split('-');d=new Date(p[0],p[1]-1,p[2]);}var h=d.getHours(),m=d.getMinutes(),ampm=h>=12?'PM':'AM';h=h%12;if(h===0)h=12;var mm=m<10?'0'+m:m;return MN[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear()+' at '+h+':'+mm+' '+ampm;}
 
 function getStreak(data){
   var s=0,d=new Date();
@@ -323,14 +324,14 @@ function renderClientApp(){
       h+='<div style="flex:1;min-width:200px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 22px;display:flex;align-items:center;gap:14px">';
       h+='<div style="width:44px;height:44px;min-width:44px;background:var(--cream-light);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>';
       h+='<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Next Session</div>';
-      h+='<div style="font-weight:600;font-size:15px;color:var(--green)">'+fmtDate(state.data.nextSession)+'</div></div></div>';
+      h+='<div style="font-weight:600;font-size:15px;color:var(--green)">'+fmtDateTime(state.data.nextSession)+'</div></div></div>';
     }
     h+='<a class="schedule-btn" href="'+CALENDLY_URL+'" target="_blank" style="flex:1;min-width:200px;margin:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule a Session</a>';
     h+='</div>';
 
     // SESSION PREP (shows 48hrs before next session)
     var showPrep=false;
-    if(state.data.nextSession){var np=state.data.nextSession.split('-'),nd=new Date(np[0],np[1]-1,np[2]),hoursUntil=(nd-new Date())/(1000*60*60);if(hoursUntil<=48&&hoursUntil>-24)showPrep=true;}
+    if(state.data.nextSession){var nd;if(state.data.nextSession.indexOf('T')!==-1){nd=new Date(state.data.nextSession);}else{var np=state.data.nextSession.split('-');nd=new Date(np[0],np[1]-1,np[2]);}var hoursUntil=(nd-new Date())/(1000*60*60);if(hoursUntil<=48&&hoursUntil>-24)showPrep=true;}
     if(showPrep){
       h+='<div style="background:linear-gradient(135deg,rgba(184,134,11,0.08),rgba(184,134,11,0.03));border:1px solid var(--gold);border-radius:12px;padding:22px;margin-bottom:16px">';
       h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--gold);margin-bottom:4px">Session Prep</h3>';
@@ -546,7 +547,7 @@ function renderClientDetail(){
   h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">';
   h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);margin-bottom:12px">Next Session</h3>';
   h+='<div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">';
-  h+='<div class="form-group" style="margin-bottom:0;flex:1;min-width:200px"><input class="form-input" type="date" id="client-nextsession" value="'+(c.nextSession||'')+'"></div>';
+  h+='<div class="form-group" style="margin-bottom:0;flex:1;min-width:200px"><input class="form-input" type="datetime-local" id="client-nextsession" value="'+(c.nextSession||'')+'"></div>';
   h+='<button class="btn btn-primary" onclick="saveClientNextSession()">Save</button></div></div>';
 
   // Focus of the week
