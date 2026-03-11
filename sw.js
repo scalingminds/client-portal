@@ -1,9 +1,7 @@
-var CACHE_NAME = 'sm-portal-v1';
+var CACHE_NAME = 'sm-portal-v2';
 var urlsToCache = [
   '/client-portal/',
-  '/client-portal/index.html',
-  '/client-portal/manifest.json',
-  'https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap'
+  '/client-portal/index.html'
 ];
 
 self.addEventListener('install', function(event) {
@@ -28,16 +26,17 @@ self.addEventListener('activate', function(event) {
 });
 
 self.addEventListener('fetch', function(event) {
-  // Always go network-first for API calls and auth
+  if (event.request.method !== 'GET') return;
   if (event.request.url.indexOf('firebasejs') !== -1 ||
-      event.request.url.indexOf('googleapis.com/identitytoolkit') !== -1 ||
+      event.request.url.indexOf('googleapis.com') !== -1 ||
       event.request.url.indexOf('firestore.googleapis.com') !== -1 ||
-      event.request.url.indexOf('securetoken.googleapis.com') !== -1) {
+      event.request.url.indexOf('securetoken.googleapis.com') !== -1 ||
+      event.request.url.indexOf('gstatic.com') !== -1) {
     return;
   }
   event.respondWith(
     fetch(event.request).then(function(response) {
-      if (response && response.status === 200) {
+      if (response && response.status === 200 && response.type === 'basic') {
         var responseClone = response.clone();
         caches.open(CACHE_NAME).then(function(cache) {
           cache.put(event.request, responseClone);
