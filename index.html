@@ -186,7 +186,7 @@ var QUOTES=[{text:"The team you're on is more important than the team you lead."
 var DN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],DS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var INACTIVE_DAYS=7;
 
-var state={user:null,data:{habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:''},view:'home',modalOpen:false,editingHabit:null,isCoach:false,clients:[],selectedClient:null,coachView:'clients'};
+var state={user:null,data:{habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:'',docs:[]},view:'home',modalOpen:false,editingHabit:null,isCoach:false,clients:[],selectedClient:null,coachView:'clients'};
 
 // HELPERS
 function dailyQuote(){var t=new Date();return QUOTES[(t.getFullYear()*10000+(t.getMonth()+1)*100+t.getDate())%QUOTES.length];}
@@ -250,7 +250,7 @@ function saveToCloud(){
       habits:state.data.habits,completions:state.data.completions,notes:state.data.notes||{},
       startDate:state.data.startDate||null,endDate:state.data.endDate||null,
       nextSession:state.data.nextSession||null,focusOfWeek:state.data.focusOfWeek||'',
-      todos:state.data.todos||[],sessionPrep:state.data.sessionPrep||'',
+      todos:state.data.todos||[],sessionPrep:state.data.sessionPrep||'',docs:state.data.docs||[],
       displayName:state.user.displayName||'',email:state.user.email||'',photoURL:state.user.photoURL||'',
       updatedAt:firebase.firestore.FieldValue.serverTimestamp()
     },{merge:true});
@@ -259,7 +259,7 @@ function saveToCloud(){
 function loadFromCloud(cb){
   if(!state.user)return;
   db.collection('users').doc(state.user.uid).get().then(function(doc){
-    if(doc.exists){var d=doc.data();state.data.habits=d.habits||[];state.data.completions=d.completions||{};state.data.notes=d.notes||{};state.data.startDate=d.startDate||null;state.data.endDate=d.endDate||null;state.data.nextSession=d.nextSession||null;state.data.focusOfWeek=d.focusOfWeek||'';state.data.todos=d.todos||[];state.data.sessionPrep=d.sessionPrep||'';}
+    if(doc.exists){var d=doc.data();state.data.habits=d.habits||[];state.data.completions=d.completions||{};state.data.notes=d.notes||{};state.data.startDate=d.startDate||null;state.data.endDate=d.endDate||null;state.data.nextSession=d.nextSession||null;state.data.focusOfWeek=d.focusOfWeek||'';state.data.todos=d.todos||[];state.data.sessionPrep=d.sessionPrep||'';state.data.docs=d.docs||[];}
     if(cb)cb();
   }).catch(function(){if(cb)cb();});
 }
@@ -270,7 +270,7 @@ function loadAllClients(cb){
       if(COACH_EMAILS.indexOf(d.email)===-1){
         state.clients.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',
           habits:d.habits||[],completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,
-          nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||''});
+          nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[]});
       }
     });if(cb)cb();
   }).catch(function(e){console.error(e);if(cb)cb();});
@@ -293,7 +293,7 @@ auth.onAuthStateChanged(function(user){
       db.collection('users').doc(user.uid).set({displayName:user.displayName||'',email:user.email||'',photoURL:user.photoURL||''},{merge:true});
       loadAllClients(function(){render();});
     }else{state.view='home';loadFromCloud(function(){saveToCloud();render();});}
-  }else{state.user=null;state.isCoach=false;state.data={habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:''};state.clients=[];renderLogin();}
+  }else{state.user=null;state.isCoach=false;state.data={habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:'',docs:[]};state.clients=[];renderLogin();}
 });
 
 // LOGIN
@@ -313,8 +313,8 @@ function renderClientApp(){
   if(state.user.photoURL)h+='<img class="user-avatar" src="'+state.user.photoURL+'" alt="">';
   h+='<button class="signout-btn" onclick="signOut()">Sign out</button></div></div>';
   h+='<div class="nav-bar">';
-  ['home','habits','week','notes','stats'].forEach(function(v){
-    var l=v==='home'?'Home':v==='habits'?'Habits':v==='week'?'This Week':v==='notes'?'Notes':'Progress';
+  ['home','habits','week','notes','docs','stats'].forEach(function(v){
+    var l=v==='home'?'Home':v==='habits'?'Habits':v==='week'?'This Week':v==='notes'?'Notes':v==='docs'?'Documents':'Progress';
     h+='<div class="nav-tab'+(state.view===v?' active':'')+'" onclick="setView(\''+v+'\')">'+l+'</div>';
   });
   h+='</div><div class="main">';
@@ -394,6 +394,8 @@ function renderClientApp(){
     h+=renderWeek(today,ts);
   } else if(state.view==='notes'){
     h+=renderNotes(ts);
+  } else if(state.view==='docs'){
+    h+=renderDocs(state.data);
   } else if(state.view==='stats'){
     h+=renderStats(today,state.data);
   }
@@ -453,6 +455,28 @@ function renderNotes(ts){
   if(past.length>0){h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:14px">Previous Notes</h3><div style="display:flex;flex-direction:column;gap:10px">';
     past.forEach(function(k){h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 22px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-weight:600;font-size:13px;color:var(--green)">'+fmtShort(k)+'</span><button class="habit-action-btn delete" onclick="deleteNote(\''+k+'\')" title="Delete" style="opacity:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div><div style="font-size:14px;line-height:1.7;white-space:pre-wrap">'+esc(state.data.notes[k])+'</div></div>';});h+='</div>';
   } else {h+='<div style="text-align:center;padding:28px 18px;color:var(--text-muted);font-size:13px">Your notes will show up here as you write them.</div>';}
+  return h;
+}
+
+function renderDocs(data){
+  var docs=data.docs||[];
+  var h='<div style="margin-bottom:22px"><h2 style="font-family:\'DM Serif Display\',serif;font-size:26px;color:var(--green)">Documents</h2><div style="font-size:13px;color:var(--text-muted);margin-top:3px">Resources, handouts, and files from your coach.</div></div>';
+  if(docs.length===0){return h+'<div class="empty-state"><div class="icon">📄</div><h3>No documents yet</h3><p>Your coach will share resources and documents here as your engagement progresses.</p></div>';}
+  // Group by category
+  var cats={};docs.forEach(function(d){var c=d.category||'General';if(!cats[c])cats[c]=[];cats[c].push(d);});
+  Object.keys(cats).sort().forEach(function(cat){
+    h+='<div style="margin-bottom:20px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green-muted);margin-bottom:10px">'+esc(cat)+'</div>';
+    h+='<div style="display:flex;flex-direction:column;gap:8px">';
+    cats[cat].forEach(function(d){
+      h+='<a href="'+esc(d.link)+'" target="_blank" style="display:flex;align-items:flex-start;gap:14px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 18px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.boxShadow=\'0 2px 12px rgba(27,67,50,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
+      h+='<div style="width:36px;height:36px;min-width:36px;background:var(--cream-light);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>';
+      h+='<div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--green)">'+esc(d.title)+'</div>';
+      if(d.desc)h+='<div style="font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.4">'+esc(d.desc)+'</div>';
+      h+='</div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="margin-top:2px;min-width:16px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+      h+='</a>';
+    });
+    h+='</div></div>';
+  });
   return h;
 }
 
@@ -591,6 +615,31 @@ function renderClientDetail(){
 
   h+=renderStats(today,c);
 
+  // Documents management
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">';
+  h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);margin-bottom:12px">Documents</h3>';
+  var cdocs=c.docs||[];
+  if(cdocs.length>0){
+    h+='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">';
+    cdocs.forEach(function(d,i){
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--cream-bg);border-radius:8px">';
+      h+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+      h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text)">'+esc(d.title)+'</div>';
+      h+='<div style="font-size:11px;color:var(--text-muted)">'+(d.category||'General')+(d.desc?' — '+esc(d.desc):'')+'</div></div>';
+      h+='<a href="'+esc(d.link)+'" target="_blank" style="font-size:11px;color:var(--green);text-decoration:none">open</a>';
+      h+='<button class="habit-action-btn delete" onclick="removeClientDoc('+i+')" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">';
+  h+='<div class="form-group" style="margin-bottom:0;flex:2;min-width:150px"><label class="form-label">Title</label><input class="form-input" id="new-doc-title" type="text" placeholder="Six Shifts Brief"></div>';
+  h+='<div class="form-group" style="margin-bottom:0;flex:2;min-width:150px"><label class="form-label">Link</label><input class="form-input" id="new-doc-link" type="url" placeholder="https://drive.google.com/..."></div>';
+  h+='<div class="form-group" style="margin-bottom:0;flex:1;min-width:120px"><label class="form-label">Category</label><select class="form-select" id="new-doc-cat"><option value="Handouts">Handouts</option><option value="Assessments">Assessments</option><option value="Session Notes">Session Notes</option><option value="Reading">Reading</option><option value="Templates">Templates</option><option value="General">General</option></select></div>';
+  h+='<button class="btn btn-primary" onclick="addClientDoc()">Add</button></div>';
+  h+='<div class="form-group" style="margin-top:8px;margin-bottom:0"><label class="form-label">Description (optional)</label><input class="form-input" id="new-doc-desc" type="text" placeholder="Brief description..."></div>';
+  h+='</div>';
+
   // Notes
   var nd=Object.keys(c.notes||{}).filter(function(k){return c.notes[k]&&c.notes[k].trim();}).sort(function(a,b){return b.localeCompare(a);});
   if(nd.length>0){
@@ -634,6 +683,21 @@ function removeClientTodo(i){
   var todos=(state.selectedClient.todos||[]).slice();
   todos.splice(i,1);
   saveClientFields(state.selectedClient.uid,{todos:todos});
+}
+function addClientDoc(){
+  var t=document.getElementById('new-doc-title').value.trim();if(!t)return;
+  var l=document.getElementById('new-doc-link').value.trim();if(!l)return;
+  var c=document.getElementById('new-doc-cat').value;
+  var d=document.getElementById('new-doc-desc').value.trim();
+  var docs=(state.selectedClient.docs||[]).slice();
+  docs.push({id:'d'+Date.now(),title:t,link:l,category:c||'General',desc:d||''});
+  saveClientFields(state.selectedClient.uid,{docs:docs});
+}
+function removeClientDoc(i){
+  if(!confirm('Remove this document?'))return;
+  var docs=(state.selectedClient.docs||[]).slice();
+  docs.splice(i,1);
+  saveClientFields(state.selectedClient.uid,{docs:docs});
 }
 function exportAllCSV(){
   var rows=[['Name','Email','Habits','Rate','Streak','Start','End','Last Active']];
