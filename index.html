@@ -125,8 +125,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
 .home-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:22px;}
 .home-card h3{font-family:'DM Serif Display',serif;font-size:17px;color:var(--green);margin-bottom:10px;}
-.schedule-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:var(--green);color:var(--cream-light);border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;text-decoration:none;}
+.schedule-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;background:var(--green);color:var(--cream-light);border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap;}
 .schedule-btn:hover{background:var(--green-light);}
+.zoom-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;background:#2D8CFF;color:white;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap;margin-left:auto;}
+.zoom-btn:hover{background:#1a7ae6;}
+.quote-line{font-family:'DM Serif Display',serif;font-size:15px;color:var(--green-muted);font-style:italic;margin-bottom:22px;padding-left:16px;border-left:3px solid var(--gold);line-height:1.5;}
+.quote-line span{font-style:normal;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-muted);display:block;margin-top:2px;}
 .engagement-dates{display:flex;gap:20px;font-size:13px;color:var(--text-muted);}
 .engagement-dates strong{display:block;font-size:16px;color:var(--text);margin-top:2px;}
 .progress-bar-wrap{background:var(--cream-light);border-radius:8px;height:10px;overflow:hidden;margin-top:8px;}
@@ -172,6 +176,7 @@ var LOGO_SRC="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJ
 
 var COACH_EMAILS=['andyhitecoaching@gmail.com'];
 var CALENDLY_URL='https://calendly.com/scalingminds/60-minute-coaching-session';
+var ZOOM_URL='https://us02web.zoom.us/s/3810541297';
 var firebaseConfig={apiKey:"AIzaSyCbvCnmib2YatMCdlRFzMwW2z1j3yXgjVk",authDomain:"scaling-minds-client.firebaseapp.com",projectId:"scaling-minds-client",storageBucket:"scaling-minds-client.firebasestorage.app",messagingSenderId:"490292472340",appId:"1:490292472340:web:371921a61a7ce4aba89501"};
 firebase.initializeApp(firebaseConfig);
 var auth=firebase.auth(),db=firebase.firestore(),provider=new firebase.auth.GoogleAuthProvider();
@@ -315,86 +320,73 @@ function renderClientApp(){
   h+='</div><div class="main">';
 
   if(state.view==='home'){
-    // QUOTE
-    h+='<div class="quote-banner"><div class="quote-text">&ldquo;'+esc(quote.text)+'&rdquo;</div><div class="quote-attr">&mdash; '+esc(quote.attr)+'</div></div>';
+    // 1. QUOTE FIRST
+    h+='<div class="quote-line">&ldquo;'+esc(quote.text)+'&rdquo;<span>&mdash; '+esc(quote.attr)+'</span></div>';
 
-    // NEXT SESSION + SCHEDULE
-    h+='<div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">';
+    // 2. NEXT SESSION + JOIN ZOOM + SCHEDULE
+    h+='<div style="display:flex;gap:10px;margin-bottom:20px;align-items:stretch;flex-wrap:wrap">';
     if(state.data.nextSession){
-      h+='<div style="flex:1;min-width:200px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 22px;display:flex;align-items:center;gap:14px">';
-      h+='<div style="width:44px;height:44px;min-width:44px;background:var(--cream-light);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>';
-      h+='<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Next Session</div>';
-      h+='<div style="font-weight:600;font-size:15px;color:var(--green)">'+fmtDateTime(state.data.nextSession)+'</div></div></div>';
+      h+='<div style="flex:1;min-width:220px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px">';
+      h+='<div style="width:38px;height:38px;min-width:38px;background:var(--cream-light);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>';
+      h+='<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Next Session</div>';
+      h+='<div style="font-weight:600;font-size:14px;color:var(--green)">'+fmtDateTime(state.data.nextSession)+'</div></div>';
+      h+='<a href="'+ZOOM_URL+'" target="_blank" class="zoom-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Join Zoom</a>';
+      h+='</div>';
     }
-    h+='<a class="schedule-btn" href="'+CALENDLY_URL+'" target="_blank" style="flex:1;min-width:200px;margin:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Schedule a Session</a>';
+    h+='<a class="schedule-btn" href="'+CALENDLY_URL+'" target="_blank"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schedule</a>';
     h+='</div>';
 
-    // SESSION PREP (shows 48hrs before next session)
+    // 3. SESSION PREP (48hrs before)
     var showPrep=false;
     if(state.data.nextSession){var nd;if(state.data.nextSession.indexOf('T')!==-1){nd=new Date(state.data.nextSession);}else{var np=state.data.nextSession.split('-');nd=new Date(np[0],np[1]-1,np[2]);}var hoursUntil=(nd-new Date())/(1000*60*60);if(hoursUntil<=48&&hoursUntil>-24)showPrep=true;}
     if(showPrep){
-      h+='<div style="background:linear-gradient(135deg,rgba(184,134,11,0.08),rgba(184,134,11,0.03));border:1px solid var(--gold);border-radius:12px;padding:22px;margin-bottom:16px">';
-      h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--gold);margin-bottom:4px">Session Prep</h3>';
-      h+='<div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Your session is coming up. Take a few minutes to reflect.</div>';
-      h+='<textarea class="form-textarea" style="min-height:100px;font-size:14px;line-height:1.7;border-color:var(--gold)" placeholder="What do you want to focus on? What has been hard? What are you proud of?" oninput="saveSessionPrep(this.value)">'+esc(state.data.sessionPrep||'')+'</textarea>';
+      h+='<div style="background:linear-gradient(135deg,rgba(184,134,11,0.06),rgba(184,134,11,0.02));border:1px solid rgba(184,134,11,0.3);border-radius:12px;padding:18px 22px;margin-bottom:16px">';
+      h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gold);margin-bottom:4px">Session Prep</div>';
+      h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Your session is coming up. Take a few minutes to reflect.</div>';
+      h+='<textarea class="form-textarea" style="min-height:80px;font-size:13px;line-height:1.7;border-color:rgba(184,134,11,0.3)" placeholder="What do you want to focus on? What has been hard? What are you proud of?" oninput="saveSessionPrep(this.value)">'+esc(state.data.sessionPrep||'')+'</textarea>';
       h+='</div>';
     }
 
-    // FOCUS OF THE WEEK
+    // 4. FOCUS
     if(state.data.focusOfWeek){
-      h+='<div style="background:var(--white);border:1px solid var(--border);border-left:4px solid var(--green);border-radius:12px;padding:20px 22px;margin-bottom:16px">';
-      h+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--green-muted);margin-bottom:6px">Focus This Week</div>';
+      h+='<div style="background:var(--white);border-left:4px solid var(--green);border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:16px">';
+      h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green-muted);margin-bottom:5px">Focus This Week</div>';
       h+='<div style="font-size:15px;line-height:1.6;color:var(--text)">'+esc(state.data.focusOfWeek)+'</div></div>';
     }
 
-    // TO-DOS
+    // 5. TO-DOS
     var todos=state.data.todos||[];
     if(todos.length>0){
       var todosDone=todos.filter(function(t){return t.done;}).length;
-      h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:16px">';
-      h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green)">To-Dos</h3><span style="font-size:12px;color:var(--text-muted)">'+todosDone+'/'+todos.length+' done</span></div>';
-      h+='<div style="display:flex;flex-direction:column;gap:8px">';
+      h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px">';
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-size:14px;font-weight:700;color:var(--green)">To-Dos</div><span style="font-size:11px;color:var(--text-muted)">'+todosDone+'/'+todos.length+' done</span></div>';
       todos.forEach(function(t,i){
-        h+='<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:'+(t.done?'rgba(45,106,79,0.04)':'var(--cream-bg)')+';border-radius:8px;cursor:pointer" onclick="toggleTodo('+i+')">';
-        h+='<div style="width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;margin-top:1px">';
-        if(t.done)h+='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
-        h+='</div><div style="flex:1"><div style="font-size:14px;font-weight:500;color:'+(t.done?'var(--green-muted)':'var(--text)')+'">'+esc(t.text)+'</div>';
-        if(t.link)h+='<a href="'+esc(t.link)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:12px;color:var(--green);text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-top:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Open link</a>';
+        h+='<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--cream-light);cursor:pointer" onclick="toggleTodo('+i+')">';
+        h+='<div style="width:20px;height:20px;min-width:20px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;margin-top:1px">';
+        if(t.done)h+='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        h+='</div><div style="flex:1"><div style="font-size:13px;'+(t.done?'color:var(--green-muted);text-decoration:line-through':'color:var(--text)')+'">'+esc(t.text)+'</div>';
+        if(t.link)h+='<a href="'+esc(t.link)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--green);text-decoration:none;display:inline-flex;align-items:center;gap:3px;margin-top:2px">↗ Open link</a>';
         h+='</div></div>';
       });
-      h+='</div></div>';
+      h+='</div>';
     }
 
-    // HOME GRID - engagement + stats
-    h+='<div class="home-grid">';
-    h+='<div class="home-card"><h3>Your Engagement</h3>';
-    if(state.data.startDate){
-      var ep=engagementProgress(state.data);
-      h+='<div class="engagement-dates"><div>Start<strong>'+fmtDate(state.data.startDate)+'</strong></div>';
-      if(state.data.endDate)h+='<div>End<strong>'+fmtDate(state.data.endDate)+'</strong></div>';
-      h+='</div>';
-      if(ep!==null){h+='<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+ep+'%;background:'+(ep>=100?'var(--gold)':'var(--check-green)')+'"></div></div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">'+ep+'% through engagement</div>';}
-    } else {h+='<div style="font-size:14px;color:var(--text-muted)">Your coach will set your engagement dates.</div>';}
-    h+='</div>';
-    var rate=getCompletionRate(state.data),activeDays=getActiveDays(state.data);
-    h+='<div class="home-card"><h3>Your Progress</h3>';
-    h+='<div style="display:flex;gap:20px"><div><span style="font-family:\'DM Serif Display\',serif;font-size:32px;color:'+(rate>=70?'var(--check-green)':rate>=40?'var(--gold)':'#c0392b')+'">'+rate+'%</span><div style="font-size:12px;color:var(--text-muted)">completion rate</div></div>';
-    h+='<div><span style="font-family:\'DM Serif Display\',serif;font-size:32px;color:var(--green)">'+streak+'</span><div style="font-size:12px;color:var(--text-muted)">day streak</div></div>';
-    h+='<div><span style="font-family:\'DM Serif Display\',serif;font-size:32px;color:var(--green)">'+activeDays+'</span><div style="font-size:12px;color:var(--text-muted)">days tracking</div></div></div></div>';
-    h+='</div>';
-
-    // Today's habits quick view
+    // 6. HABITS COMPACT
     if(state.data.habits.length>0){
       var total=state.data.habits.length,done=comp.length;
-      h+='<div style="margin-top:4px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green)">Today\'s Habits</h3><span style="font-size:13px;color:var(--text-muted)">'+done+'/'+total+' done</span></div>';
-      h+='<div class="habits-list">';
+      h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px">';
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="font-size:14px;font-weight:700;color:var(--green)">Today\'s Habits</div><span style="font-size:11px;color:var(--text-muted)">'+done+'/'+total+' done</span></div>';
       state.data.habits.forEach(function(hab){
         var checked=comp.indexOf(hab.id)!==-1;
-        h+='<div class="habit-card'+(checked?' checked':'')+'"><div class="habit-check" onclick="toggleHabit(\''+hab.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>';
-        h+='<div class="habit-info" onclick="toggleHabit(\''+hab.id+'\')"><div class="habit-name">'+esc(hab.name)+'</div></div></div>';
+        h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--cream-light)">';
+        h+='<div style="width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid '+(checked?'var(--check-green)':'var(--border)')+';background:'+(checked?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="toggleHabit(\''+hab.id+'\')">';
+        if(checked)h+='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        h+='</div><div style="font-size:13px;font-weight:500;'+(checked?'color:var(--green-muted)':'')+'">'+esc(hab.name)+'</div></div>';
       });
-      h+='</div></div>';
+      h+='</div>';
     }
+
+    // 7. COACH CARD COMPACT
     h+=renderCoachCard();
   } else if(state.view==='habits'){
     h+=renderHabits(today,ts,comp);
@@ -471,11 +463,24 @@ function renderStats(today,data){
   var totalChecks=0,perfectDays=0;
   days.forEach(function(k){var c=data.completions[k]||[];var cnt=habits.filter(function(h){return c.indexOf(h.id)!==-1;}).length;totalChecks+=cnt;if(cnt===habits.length)perfectDays++;});
   var avgRate=activeDays>0?Math.round((totalChecks/(habits.length*activeDays))*100):0;
+  var streak=getStreak(data);
   var habitRates=habits.map(function(hb){var c=0;days.forEach(function(k){var co=data.completions[k]||[];if(co.indexOf(hb.id)!==-1)c++;});return{name:hb.name,category:hb.category,rate:activeDays>0?Math.round((c/activeDays)*100):0};}).sort(function(a,b){return b.rate-a.rate;});
   var h='<div style="margin-bottom:22px"><h2 style="font-family:\'DM Serif Display\',serif;font-size:26px;color:var(--green)">Progress</h2><div style="font-size:13px;color:var(--text-muted);margin-top:3px">Last '+activeDays+' day'+(activeDays!==1?'s':'')+'</div></div>';
+
+  // Engagement bar
+  if(data.startDate){
+    var ep=engagementProgress(data);
+    h+='<div style="display:flex;align-items:center;gap:16px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 18px;margin-bottom:16px;font-size:12px;color:var(--text-muted)">';
+    h+='<span>Engagement</span><strong style="color:var(--text);font-size:13px">'+fmtDate(data.startDate);
+    if(data.endDate)h+=' – '+fmtDate(data.endDate);
+    h+='</strong>';
+    if(ep!==null){h+='<div style="flex:1;max-width:120px;background:var(--cream-light);border-radius:4px;height:6px;overflow:hidden"><div style="height:100%;background:'+(ep>=100?'var(--gold)':'var(--check-green)')+';border-radius:4px;width:'+ep+'%"></div></div><span>'+ep+'%</span>';}
+    h+='</div>';
+  }
+
   h+='<div class="stats-grid"><div class="stat-card"><div class="stat-value" style="color:'+(avgRate>=70?'var(--check-green)':avgRate>=40?'var(--gold)':'#c0392b')+'">'+avgRate+'%</div><div class="stat-label">Completion Rate</div></div>';
-  h+='<div class="stat-card"><div class="stat-value">'+perfectDays+'</div><div class="stat-label">Perfect Days</div></div>';
-  h+='<div class="stat-card"><div class="stat-value">'+totalChecks+'</div><div class="stat-label">Total Check-ins</div></div></div>';
+  h+='<div class="stat-card"><div class="stat-value">'+streak+'</div><div class="stat-label">Day Streak</div></div>';
+  h+='<div class="stat-card"><div class="stat-value">'+perfectDays+'</div><div class="stat-label">Perfect Days</div></div></div>';
   h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:14px">By Habit</h3><div style="display:flex;flex-direction:column;gap:10px">';
   habitRates.forEach(function(hr){var cat=CATEGORIES.find(function(c){return c.id===hr.category;})||CATEGORIES[6];var bc=hr.rate>=70?'var(--check-green)':hr.rate>=40?'var(--gold)':'#c0392b';
     h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div><span style="font-weight:600;font-size:14px">'+esc(hr.name)+'</span><span class="habit-category '+cat.cls+'" style="margin-left:8px">'+cat.label+'</span></div><span style="font-weight:700;color:var(--green)">'+hr.rate+'%</span></div><div style="background:var(--cream-light);border-radius:6px;height:7px;overflow:hidden"><div style="background:'+bc+';height:100%;width:'+hr.rate+'%;border-radius:6px;transition:width 0.4s"></div></div></div>';
