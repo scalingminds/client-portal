@@ -223,7 +223,7 @@ function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.
 
 function scf(uid,f){db.collection('users').doc(uid).set(f,{merge:true}).then(function(){var c=S.cls.find(function(x){return x.uid===uid;});if(c)Object.keys(f).forEach(function(k){c[k]=f[k];});if(S.sc&&S.sc.uid===uid)Object.keys(f).forEach(function(k){S.sc[k]=f[k];});R();});}
 
-function loadLib(cb){db.collection('library').doc('resources').get().then(function(doc){if(doc.exists){S.lib=doc.data().items||[];}else{S.lib=[];}if(cb)cb();}).catch(function(){S.lib=[];if(cb)cb();});}
+function loadLib(cb){db.collection('library').doc('resources').get().then(function(doc){if(doc.exists){S.lib=doc.data().items||[];console.log('Library loaded:',S.lib.length,'items');}else{S.lib=[];console.log('Library doc does not exist yet');}if(cb)cb();}).catch(function(err){S.lib=[];console.error('Library load error:',err.message);if(cb)cb();});}
 function saveLib(items){db.collection('library').doc('resources').set({items:items}).then(function(){S.lib=items;R();});}
 
 // Auth
@@ -549,6 +549,17 @@ function rProgress(td,data){
   hr.forEach(function(r){var cat=CATS.find(function(c){return c.id===r.category;})||CATS[6];var bc=r.rate>=70?'var(--check-green)':r.rate>=40?'var(--gold)':'#c0392b';
     h+='<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div><span style="font-weight:600;font-size:13px">'+e(r.name)+'</span><span class="hcat '+cat.c+'" style="margin-left:6px">'+cat.l+'</span><span style="font-size:10px;color:var(--text-muted);margin-left:6px">'+r.freq+'</span></div><span style="font-weight:700;color:var(--green);font-size:13px">'+r.rate+'%</span></div><div style="background:var(--cream-light);border-radius:4px;height:6px;overflow:hidden"><div style="background:'+bc+';height:100%;width:'+r.rate+'%;border-radius:4px"></div></div></div>';
   });
+  // Goals progress
+  var goals=data.goals||[];
+  if(goals.length>0){
+    h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--green);margin:24px 0 10px">Goal Progress</h3>';
+    goals.forEach(function(g){
+      var pct=g.progress||0,bc2=pct>=70?'var(--check-green)':pct>=40?'var(--gold)':'var(--green-muted)';
+      h+='<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600;font-size:13px;color:var(--green)">'+e(g.title)+'</span><span class="goal-status gs-'+g.status+'" style="font-size:9px">'+g.status+'</span></div>';
+      if(g.outcome)h+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">'+e(g.outcome)+'</div>';
+      h+='<div style="display:flex;align-items:center;gap:10px"><div style="flex:1;background:var(--cream-light);border-radius:4px;height:6px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+pct+'%;background:'+bc2+'"></div></div><span style="font-weight:700;color:var(--green);font-size:13px">'+pct+'%</span></div></div>';
+    });
+  }
   return h;
 }
 
