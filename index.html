@@ -38,7 +38,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .nav-tab:hover{color:var(--green);}
 .nav-tab.active{color:var(--green);border-bottom-color:var(--gold);}
 .main{max-width:860px;margin:0 auto;padding:24px 20px 60px;}
-.quote-line{font-family:'DM Serif Display',serif;font-size:15px;color:var(--green-muted);font-style:italic;margin-bottom:20px;padding-left:16px;border-left:3px solid var(--gold);line-height:1.5;}
+.quote-line{font-family:'DM Serif Display',serif;font-size:19px;color:var(--green-muted);font-style:italic;margin-bottom:20px;padding-left:16px;border-left:3px solid var(--gold);line-height:1.5;}
 .quote-line span{font-style:normal;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-muted);display:block;margin-top:2px;}
 .schedule-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;background:var(--green);color:var(--cream-light);border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap;}
 .schedule-btn:hover{background:var(--green-light);}
@@ -176,7 +176,7 @@ var ID=7;
 
 // Default data shape
 function dd(){return{habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:'',docs:[],goals:[],sessionNotes:[]};}
-var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,cv:'clients'};
+var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,cv:'clients',lib:[]};
 
 // Helpers
 function dq(){var t=new Date();return QT[(t.getFullYear()*10000+(t.getMonth()+1)*100+t.getDate())%QT.length];}
@@ -208,10 +208,13 @@ function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.
 
 function scf(uid,f){db.collection('users').doc(uid).set(f,{merge:true}).then(function(){var c=S.cls.find(function(x){return x.uid===uid;});if(c)Object.keys(f).forEach(function(k){c[k]=f[k];});if(S.sc&&S.sc.uid===uid)Object.keys(f).forEach(function(k){S.sc[k]=f[k];});R();});}
 
+function loadLib(cb){db.collection('library').doc('resources').get().then(function(doc){if(doc.exists){S.lib=doc.data().items||[];}else{S.lib=[];}if(cb)cb();}).catch(function(){S.lib=[];if(cb)cb();});}
+function saveLib(items){db.collection('library').doc('resources').set({items:items}).then(function(){S.lib=items;R();});}
+
 // Auth
 function si(){auth.signInWithPopup(prov).catch(function(){alert('Sign in failed.');});}
 function so(){auth.signOut();}
-auth.onAuthStateChanged(function(u){if(u){S.user=u;S.ic=ic();if(S.ic){S.view='clients';S.cv='clients';db.collection('users').doc(u.uid).set({displayName:u.displayName||'',email:u.email||'',photoURL:u.photoURL||''},{merge:true});loadAll(function(){R();});}else{S.view='home';load(function(){save();R();});}}else{S.user=null;S.ic=false;S.data=dd();S.cls=[];rl();}});
+auth.onAuthStateChanged(function(u){if(u){S.user=u;S.ic=ic();if(S.ic){S.view='clients';S.cv='clients';db.collection('users').doc(u.uid).set({displayName:u.displayName||'',email:u.email||'',photoURL:u.photoURL||''},{merge:true});loadAll(function(){loadLib(function(){R();});});}else{S.view='home';load(function(){loadLib(function(){save();R();});});}}else{S.user=null;S.ic=false;S.data=dd();S.cls=[];S.lib=[];rl();}});
 
 function rl(){document.getElementById('app').innerHTML='<div class="login-screen"><div class="login-card"><img class="login-logo" src="'+L+'" alt="Scaling Minds"><h1>Client Portal</h1><p>Track habits, reflect, and grow. Sign in to sync across all your devices.</p><button class="google-btn" onclick="si()"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Sign in with Google</button><div class="login-footer">&copy; Scaling Minds</div></div></div>';}
 
@@ -318,11 +321,20 @@ function rHome(td,ts,comp,sk,q){
 function rGoals(data){
   var goals=data.goals||[];
   var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:16px">Goals</h2>';
-  if(goals.length===0)return h+'<div class="empty"><div class="ei">🎯</div><h3>No goals set yet</h3><p>Your coach will set goals with you as your engagement begins.</p></div>';
-  var active=goals.filter(function(g){return g.status==='active';}),completed=goals.filter(function(g){return g.status==='completed';}),paused=goals.filter(function(g){return g.status==='paused';});
-  if(active.length>0){h+='<div class="card-label" style="margin-bottom:10px">Active</div>';active.forEach(function(g){h+=gCard(g);});}
-  if(completed.length>0){h+='<div class="card-label" style="margin-top:20px;margin-bottom:10px">Completed</div>';completed.forEach(function(g){h+=gCard(g);});}
-  if(paused.length>0){h+='<div class="card-label" style="margin-top:20px;margin-bottom:10px">Paused</div>';paused.forEach(function(g){h+=gCard(g);});}
+  if(goals.length>0){
+    var active=goals.filter(function(g){return g.status==='active';}),completed=goals.filter(function(g){return g.status==='completed';}),paused=goals.filter(function(g){return g.status==='paused';});
+    if(active.length>0){h+='<div class="card-label" style="margin-bottom:10px">Active</div>';active.forEach(function(g){h+=gCard(g);});}
+    if(completed.length>0){h+='<div class="card-label" style="margin-top:20px;margin-bottom:10px">Completed</div>';completed.forEach(function(g){h+=gCard(g);});}
+    if(paused.length>0){h+='<div class="card-label" style="margin-top:20px;margin-bottom:10px">Paused</div>';paused.forEach(function(g){h+=gCard(g);});}
+  } else {
+    h+='<div class="empty"><div class="ei">🎯</div><h3>No goals yet</h3><p>Add a goal to get started, or your coach will set them with you.</p></div>';
+  }
+  // Client can add goals
+  h+='<div class="card" style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Add a Goal</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">';
+  h+='<div class="fg" style="margin:0;flex:2;min-width:160px"><label class="fl">Goal</label><input class="fi" id="cgt" placeholder="What do you want to work toward?"></div>';
+  h+='<div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">Target Outcome</label><input class="fi" id="cgo" placeholder="How will you know?"></div>';
+  h+='<button class="btn bp" onclick="cag()">Add</button></div></div>';
   return h;
 }
 function gCard(g){
@@ -449,20 +461,40 @@ function rProgress(td,data){
 
 // DOCUMENTS
 function rDocs(data){
-  var docs=data.docs||[];
+  var docs=data.docs||[],lib=S.lib||[];
   var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:4px">Documents</h2><div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Resources from your coach.</div>';
-  if(docs.length===0)return h+'<div class="empty"><div class="ei">📄</div><h3>No documents yet</h3><p>Your coach will share resources here.</p></div>';
-  var cats={};docs.forEach(function(d){var c=d.category||'General';if(!cats[c])cats[c]=[];cats[c].push(d);});
-  Object.keys(cats).sort().forEach(function(cat){
-    h+='<div style="margin-bottom:18px"><div class="card-label" style="margin-bottom:8px">'+e(cat)+'</div>';
-    cats[cat].forEach(function(d){
-      h+='<a href="'+e(d.link)+'" target="_blank" style="display:flex;align-items:flex-start;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-decoration:none;margin-bottom:6px">';
-      h+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="margin-top:2px;min-width:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-      h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--green)">'+e(d.title)+'</div>';
-      if(d.desc)h+='<div style="font-size:11px;color:var(--text-muted);margin-top:1px">'+e(d.desc)+'</div>';
-      h+='</div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="margin-top:2px;min-width:14px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>';
-    });h+='</div>';
-  });return h;
+  // Resource library
+  if(lib.length>0){
+    h+='<div class="card-label" style="margin-bottom:8px">Resource Library</div>';
+    var lcats={};lib.forEach(function(d){var c=d.category||'General';if(!lcats[c])lcats[c]=[];lcats[c].push(d);});
+    Object.keys(lcats).sort().forEach(function(cat){
+      h+='<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:6px">'+e(cat)+'</div>';
+      lcats[cat].forEach(function(d){
+        h+='<a href="'+e(d.link)+'" target="_blank" style="display:flex;align-items:flex-start;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-decoration:none;margin-bottom:6px">';
+        h+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="margin-top:2px;min-width:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+        h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--green)">'+e(d.title)+'</div>';
+        if(d.desc)h+='<div style="font-size:11px;color:var(--text-muted);margin-top:1px">'+e(d.desc)+'</div>';
+        h+='</div></a>';
+      });h+='</div>';
+    });
+  }
+  // Personal docs
+  if(docs.length>0){
+    h+='<div class="card-label" style="margin-top:20px;margin-bottom:8px">Your Documents</div>';
+    var cats={};docs.forEach(function(d){var c=d.category||'General';if(!cats[c])cats[c]=[];cats[c].push(d);});
+    Object.keys(cats).sort().forEach(function(cat){
+      h+='<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:6px">'+e(cat)+'</div>';
+      cats[cat].forEach(function(d){
+        h+='<a href="'+e(d.link)+'" target="_blank" style="display:flex;align-items:flex-start;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-decoration:none;margin-bottom:6px">';
+        h+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="margin-top:2px;min-width:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+        h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--green)">'+e(d.title)+'</div>';
+        if(d.desc)h+='<div style="font-size:11px;color:var(--text-muted);margin-top:1px">'+e(d.desc)+'</div>';
+        h+='</div></a>';
+      });h+='</div>';
+    });
+  }
+  if(docs.length===0&&lib.length===0)h+='<div class="empty"><div class="ei">📄</div><h3>No documents yet</h3><p>Your coach will share resources here.</p></div>';
+  return h;
 }
 
 // MODAL
@@ -485,9 +517,11 @@ function rCA(){
   h+='<div class="header"><div class="header-left"><img class="header-logo" src="'+L+'" alt="SM"><div><h1>Coach Dashboard</h1><div class="header-subtitle">'+e(S.user.displayName||'')+' &middot; '+S.cls.length+' client'+(S.cls.length!==1?'s':'')+'</div></div></div>';
   h+='<div class="header-right"><button class="signout-btn" onclick="so()">Sign out</button></div></div>';
   h+='<div class="nav-bar"><div class="nav-tab'+(S.cv==='clients'?' active':'')+'" onclick="scv(\'clients\')">All Clients</div>';
+  h+='<div class="nav-tab'+(S.cv==='library'?' active':'')+'" onclick="scv(\'library\')">Resource Library</div>';
   if(S.sc)h+='<div class="nav-tab'+(S.cv==='detail'?' active':'')+'" onclick="scv(\'detail\')">'+e(S.sc.displayName)+'</div>';
   h+='</div><div class="main">';
   if(S.cv==='clients')h+=rCL();
+  else if(S.cv==='library')h+=rLib();
   else if(S.cv==='detail'&&S.sc)h+=rCD();
   h+='</div><div class="footer">&copy; Scaling Minds &middot; Coach Dashboard</div>';
   app.innerHTML=h;
@@ -604,6 +638,34 @@ function rCD(){
   return h;
 }
 
+// RESOURCE LIBRARY (coach)
+function rLib(){
+  var lib=S.lib||[];
+  var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:4px">Resource Library</h2><div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Shared with all clients in their Documents tab.</div>';
+  if(lib.length>0){
+    var cats={};lib.forEach(function(d){var c=d.category||'General';if(!cats[c])cats[c]=[];cats[c].push(d);});
+    Object.keys(cats).sort().forEach(function(cat){
+      h+='<div style="margin-bottom:14px"><div class="card-label" style="margin-bottom:6px">'+e(cat)+'</div>';
+      cats[cat].forEach(function(d,i2){
+        var gi=lib.indexOf(d);
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--white);border:1px solid var(--border);border-radius:8px;margin-bottom:4px">';
+        h+='<div style="flex:1"><div style="font-size:13px;font-weight:600">'+e(d.title)+'</div>';
+        if(d.desc)h+='<div style="font-size:11px;color:var(--text-muted)">'+e(d.desc)+'</div>';
+        h+='</div><a href="'+e(d.link)+'" target="_blank" style="font-size:11px;color:var(--green)">open</a>';
+        h+='<button class="abtn del" onclick="rlb('+gi+')" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
+      });h+='</div>';
+    });
+  }
+  h+='<div class="card" style="margin-top:14px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Add Resource</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">';
+  h+='<div class="fg" style="margin:0;flex:2;min-width:140px"><label class="fl">Title</label><input class="fi" id="lbt" placeholder="Six Shifts Overview"></div>';
+  h+='<div class="fg" style="margin:0;flex:2;min-width:140px"><label class="fl">Link</label><input class="fi" id="lbl" type="url" placeholder="https://..."></div>';
+  h+='<div class="fg" style="margin:0;flex:1;min-width:100px"><label class="fl">Category</label><select class="fs" id="lbc"><option>Six Shifts</option><option>Handouts</option><option>Assessments</option><option>Reading</option><option>Templates</option><option>General</option></select></div>';
+  h+='<button class="btn bp" onclick="alb()">Add</button></div>';
+  h+='<div class="fg" style="margin-top:8px;margin-bottom:0"><label class="fl">Description (optional)</label><input class="fi" id="lbd" placeholder="Brief description..."></div></div>';
+  return h;
+}
+
 // ── ACTIONS ──
 // Client
 function sv(v){S.view=v;R();}
@@ -617,6 +679,7 @@ function sh(){var n=document.getElementById('hn').value.trim(),d=document.getEle
 function dh(id){if(!confirm('Remove this habit?'))return;S.data.habits=S.data.habits.filter(function(h){return h.id!==id;});save();R();}
 function tt(i){var t=S.data.todos||[];if(t[i]){t[i].done=!t[i].done;save();R();}}
 function ssp(v){S.data.sessionPrep=v;save();}
+function cag(){var t=document.getElementById('cgt').value.trim();if(!t)return;var o=document.getElementById('cgo').value.trim();S.data.goals=S.data.goals||[];S.data.goals.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active'});save();R();}
 function sn(k,v){if(!S.data.notes)S.data.notes={};S.data.notes[k]=v;save();}
 function dn(k){if(!confirm('Delete?'))return;delete S.data.notes[k];save();R();}
 
@@ -636,6 +699,8 @@ function atd(){var t=document.getElementById('ntt').value.trim();if(!t)return;va
 function rtd(i){if(!confirm('Remove?'))return;var td=(S.sc.todos||[]).slice();td.splice(i,1);scf(S.sc.uid,{todos:td});}
 function adc(){var t=document.getElementById('ndt').value.trim();if(!t)return;var l=document.getElementById('ndl').value.trim();if(!l)return;var c=document.getElementById('ndc').value;var d=(S.sc.docs||[]).slice();d.push({id:'d'+Date.now(),title:t,link:l,category:c||'General',desc:''});scf(S.sc.uid,{docs:d});}
 function rdc(i){if(!confirm('Remove?'))return;var d=(S.sc.docs||[]).slice();d.splice(i,1);scf(S.sc.uid,{docs:d});}
+function alb(){var t=document.getElementById('lbt').value.trim();if(!t)return;var l=document.getElementById('lbl').value.trim();if(!l)return;var c=document.getElementById('lbc').value;var d=document.getElementById('lbd').value.trim();var lib=(S.lib||[]).slice();lib.push({id:'lb'+Date.now(),title:t,link:l,category:c||'General',desc:d||''});saveLib(lib);}
+function rlb(i){if(!confirm('Remove?'))return;var lib=(S.lib||[]).slice();lib.splice(i,1);saveLib(lib);}
 
 function eacsv(){var rows=[['Name','Email','Habits','Rate','Streak','Start','End','Last Active']];S.cls.forEach(function(c){rows.push([c.displayName,c.email,c.habits.length,crate(c)+'%',streak(c),c.startDate||'',c.endDate||'',la(c)||'Never']);});dlc(rows,'scaling-minds-all-clients.csv');}
 function eccsv(){var c=S.sc;if(!c)return;var td=new Date(),ad=Math.min(90,adays(c)),days=[];for(var i=ad-1;i>=0;i--){var d=new Date(td);d.setDate(d.getDate()-i);days.push(dk(d));}var hdr=['Date'];c.habits.forEach(function(h){hdr.push(h.name);});var rows=[hdr];days.forEach(function(k){var r=[k];c.habits.forEach(function(h){var co=c.completions[k]||[];r.push(co.indexOf(h.id)!==-1?'Yes':'');});rows.push(r);});dlc(rows,'scaling-minds-'+c.displayName.replace(/\s+/g,'-').toLowerCase()+'.csv');}
