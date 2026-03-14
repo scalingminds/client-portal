@@ -219,7 +219,7 @@ function save(){if(!S.user)return;clearTimeout(st);st=setTimeout(function(){var 
 
 function load(cb){if(!S.user)return;db.collection('users').doc(S.user.uid).get().then(function(doc){if(doc.exists){var d=doc.data();S.data.habits=d.habits||[];S.data.completions=d.completions||{};S.data.notes=d.notes||{};S.data.startDate=d.startDate||null;S.data.endDate=d.endDate||null;S.data.nextSession=d.nextSession||null;S.data.focusOfWeek=d.focusOfWeek||'';S.data.todos=d.todos||[];S.data.sessionPrep=d.sessionPrep||'';S.data.docs=d.docs||[];S.data.goals=d.goals||[];S.data.sessionNotes=d.sessionNotes||[];}if(cb)cb();}).catch(function(){if(cb)cb();});}
 
-function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.forEach(function(doc){var d=doc.data();if(CE.indexOf(d.email)===-1){S.cls.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',habits:d.habits||[],completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[]});}});if(cb)cb();}).catch(function(e2){console.error(e2);if(cb)cb();});}
+function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.forEach(function(doc){var d=doc.data();if(CE.indexOf(d.email)===-1){S.cls.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',phone:d.phone||'',birthday:d.birthday||'',address:d.address||'',habits:d.habits||[],completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[]});}});if(cb)cb();}).catch(function(e2){console.error(e2);if(cb)cb();});}
 
 function scf(uid,f){db.collection('users').doc(uid).set(f,{merge:true}).then(function(){var c=S.cls.find(function(x){return x.uid===uid;});if(c)Object.keys(f).forEach(function(k){c[k]=f[k];});if(S.sc&&S.sc.uid===uid)Object.keys(f).forEach(function(k){S.sc[k]=f[k];});R();});}
 
@@ -260,16 +260,32 @@ function R(){
 }
 
 function rSetup(){
-  document.getElementById('app').innerHTML='<div class="login-screen"><div class="login-card"><img class="login-logo" src="'+L+'" alt="Scaling Minds"><h1>Welcome!</h1><p>Let\'s get you set up. What\'s your name?</p><div id="setup-err" class="login-error"></div><input class="login-input" id="setup-first" type="text" placeholder="First name"><input class="login-input" id="setup-last" type="text" placeholder="Last name"><button class="login-btn" onclick="saveSetup()">Continue</button></div></div>';
+  var h='<div class="login-screen"><div class="login-card" style="max-width:440px"><img class="login-logo" src="'+L+'" alt="Scaling Minds"><h1>Welcome!</h1><p>Let\'s get you set up. This takes about 30 seconds.</p><div id="setup-err" class="login-error"></div>';
+  h+='<input class="login-input" id="setup-first" type="text" placeholder="First name *">';
+  h+='<input class="login-input" id="setup-last" type="text" placeholder="Last name *">';
+  h+='<input class="login-input" id="setup-phone" type="tel" placeholder="Phone number">';
+  h+='<div style="display:flex;gap:8px;margin-bottom:10px"><select class="login-input" id="setup-bm" style="flex:1"><option value="">Birthday month</option>';
+  ['January','February','March','April','May','June','July','August','September','October','November','December'].forEach(function(m,i){h+='<option value="'+(i+1)+'">'+m+'</option>';});
+  h+='</select><select class="login-input" id="setup-bd" style="width:80px"><option value="">Day</option>';
+  for(var i=1;i<=31;i++){h+='<option value="'+i+'">'+i+'</option>';}
+  h+='</select></div>';
+  h+='<input class="login-input" id="setup-addr" type="text" placeholder="Street address">';
+  h+='<div style="display:flex;gap:8px;margin-bottom:10px"><input class="login-input" id="setup-city" type="text" placeholder="City" style="flex:2;margin:0"><input class="login-input" id="setup-state" type="text" placeholder="State" style="width:70px;margin:0"><input class="login-input" id="setup-zip" type="text" placeholder="Zip" style="width:80px;margin:0"></div>';
+  h+='<button class="login-btn" onclick="saveSetup()">Continue</button></div></div>';
+  document.getElementById('app').innerHTML=h;
 }
 
 function saveSetup(){
   var f=document.getElementById('setup-first').value.trim(),l=document.getElementById('setup-last').value.trim();
-  if(!f){document.getElementById('setup-err').textContent='Please enter your first name.';return;}
-  var name=f+(l?' '+l:'');
+  if(!f||!l){document.getElementById('setup-err').textContent='Please enter your first and last name.';return;}
+  var name=f+' '+l;
+  var phone=document.getElementById('setup-phone').value.trim();
+  var bm=document.getElementById('setup-bm').value,bd=document.getElementById('setup-bd').value;
+  var addr=document.getElementById('setup-addr').value.trim(),city=document.getElementById('setup-city').value.trim(),st=document.getElementById('setup-state').value.trim(),zip=document.getElementById('setup-zip').value.trim();
+  var profile={displayName:name,phone:phone||'',birthday:bm&&bd?bm+'/'+bd:'',address:addr?addr+(city?', '+city:'')+(st?' '+st:'')+(zip?' '+zip:''):''};
   S.user.updateProfile({displayName:name}).then(function(){
     S._nameSet=true;
-    db.collection('users').doc(S.user.uid).set({displayName:name},{merge:true});
+    db.collection('users').doc(S.user.uid).set(profile,{merge:true});
     R();
   }).catch(function(err){document.getElementById('setup-err').textContent=err.message;});
 }
@@ -669,6 +685,13 @@ function rCD(){
   h+='<div><h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green)">'+e(c.displayName)+'</h2><div style="font-size:12px;color:var(--text-muted)">'+e(c.email)+'</div></div></div>';
   h+='<button class="exp" onclick="eccsv()">Export CSV</button></div>';
 
+  // Name edit
+  h+='<div class="card"><h3>Client Name</h3><div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="fg" style="margin:0;flex:1;min-width:200px"><input class="fi" id="cnm" type="text" value="'+e(c.displayName)+'" placeholder="Client name"></div><button class="btn bp" onclick="scnm()">Save</button></div>';
+  // Contact info (read-only display)
+  var ci=[];if(c.phone)ci.push(c.phone);if(c.birthday)ci.push('Birthday: '+c.birthday);if(c.address)ci.push(c.address);
+  if(ci.length>0)h+='<div style="margin-top:10px;font-size:12px;color:var(--text-muted);line-height:1.8">'+ci.map(function(x){return e(x);}).join(' &middot; ')+'</div>';
+  h+='</div>';
+
   // Dates
   h+='<div class="card"><h3>Engagement</h3><div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">Start</label><input class="fi" type="date" id="cs" value="'+(c.startDate||'')+'"></div><div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">End</label><input class="fi" type="date" id="ce2" value="'+(c.endDate||'')+'"></div><button class="btn bp" onclick="scd()">Save</button></div></div>';
   // Next session
@@ -809,6 +832,7 @@ function scv(v){S.cv=v;R();}
 function sel(i){var sorted=S.cls.slice().sort(function(a,b){var ai=ds(la(a))>=ID?0:1,bi=ds(la(b))>=ID?0:1;if(ai!==bi)return ai-bi;return(a.displayName||'').localeCompare(b.displayName||'');});S.sc=sorted[i];S.cv='detail';R();}
 function ref(){loadAll(function(){R();});}
 function scd(){scf(S.sc.uid,{startDate:document.getElementById('cs').value||null,endDate:document.getElementById('ce2').value||null});}
+function scnm(){var n=document.getElementById('cnm').value.trim();if(!n)return;scf(S.sc.uid,{displayName:n});}
 function scns(){scf(S.sc.uid,{nextSession:document.getElementById('cns').value||null});}
 function scfw(){scf(S.sc.uid,{focusOfWeek:document.getElementById('cfw').value||''});}
 function ag(){var t=document.getElementById('ngt').value.trim();if(!t)return;var o=document.getElementById('ngo').value.trim();var g=(S.sc.goals||[]).slice();g.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active',progress:0});scf(S.sc.uid,{goals:g});}
