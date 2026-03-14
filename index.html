@@ -278,69 +278,101 @@ function rC(){
 
 // HOME
 function rHome(td,ts,comp,sk,q){
-  var h='<div class="quote-line">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
-  // Session row
-  h+='<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">';
-  if(S.data.nextSession){
-    h+='<div style="flex:1;min-width:220px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px">';
-    h+='<div style="width:38px;height:38px;min-width:38px;background:var(--cream-light);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>';
-    h+='<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Next Session</div><div style="font-weight:600;font-size:14px;color:var(--green)">'+fdt(S.data.nextSession)+'</div></div>';
-    h+='<a href="'+ZM+'" target="_blank" class="zoom-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Zoom</a></div>';
-  }
-  h+='<a class="schedule-btn" href="'+CAL+'" target="_blank"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schedule</a></div>';
+  var h='';
+  // Welcome
+  var hr=td.getHours(),greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  var fname=(S.user.displayName||S.user.email||'').split(' ')[0].split('@')[0];
+  h+='<div style="margin-bottom:8px"><div style="font-family:\'DM Serif Display\',serif;font-size:26px;color:var(--green)">'+greet+', '+e(fname)+'</div>';
+  h+='<div style="font-size:13px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">';
+  if(S.data.nextSession){var nd2;if(S.data.nextSession.indexOf('T')!==-1)nd2=new Date(S.data.nextSession);else{var np2=S.data.nextSession.split('-');nd2=new Date(np2[0],np2[1]-1,np2[2]);}var daysUntil=Math.ceil((nd2-new Date())/864e5);if(daysUntil>=0)h+='<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green-muted)" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Next session in '+daysUntil+' day'+(daysUntil!==1?'s':'')+'</span>';}
+  if(S.data.habits.length>0){var dueToday=S.data.habits.filter(function(h2){return hdue(h2,td);}).length,doneToday=comp.length;h+='<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green-muted)" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> '+doneToday+' of '+dueToday+' habits done today</span>';}
+  h+='</div></div>';
 
-  // Session prep (48hrs before)
-  var sp=false;
-  if(S.data.nextSession){var nd;if(S.data.nextSession.indexOf('T')!==-1)nd=new Date(S.data.nextSession);else{var np=S.data.nextSession.split('-');nd=new Date(np[0],np[1]-1,np[2]);}if((nd-new Date())/36e5<=48&&(nd-new Date())/36e5>-24)sp=true;}
-  if(sp){
-    h+='<div style="background:linear-gradient(135deg,rgba(184,134,11,0.06),rgba(184,134,11,0.02));border:1px solid rgba(184,134,11,0.3);border-radius:12px;padding:16px 20px;margin-bottom:14px">';
-    h+='<div class="card-label" style="color:var(--gold)">Session Prep</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your session is coming up. Take a few minutes to reflect.</div>';
-    h+='<textarea class="ft" style="min-height:70px;border-color:rgba(184,134,11,0.3)" placeholder="What do you want to focus on? What has been hard? What are you proud of?" oninput="ssp(this.value)">'+e(S.data.sessionPrep||'')+'</textarea></div>';
+  // Quote
+  h+='<div class="quote-line" style="margin:24px 0 36px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
+
+  // Session prep (48hrs before - stays on home as it's time-sensitive)
+  var showPrep=false;
+  if(S.data.nextSession){var nd;if(S.data.nextSession.indexOf('T')!==-1)nd=new Date(S.data.nextSession);else{var np=S.data.nextSession.split('-');nd=new Date(np[0],np[1]-1,np[2]);}if((nd-new Date())/36e5<=48&&(nd-new Date())/36e5>-24)showPrep=true;}
+  if(showPrep){
+    h+='<div style="background:linear-gradient(135deg,rgba(184,134,11,0.06),rgba(184,134,11,0.02));border:1px solid rgba(184,134,11,0.3);border-radius:12px;padding:18px 22px;margin-bottom:36px">';
+    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gold);margin-bottom:4px">Session Prep</div>';
+    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your session is coming up. Take a few minutes to reflect.</div>';
+    h+='<textarea class="ft" style="min-height:80px;border-color:rgba(184,134,11,0.3)" placeholder="What do you want to focus on? What has been hard? What are you proud of?" oninput="ssp(this.value)">'+e(S.data.sessionPrep||'')+'</textarea></div>';
   }
-  // Focus
-  if(S.data.focusOfWeek){
-    h+='<div style="background:var(--white);border-left:4px solid var(--green);border-radius:0 12px 12px 0;padding:14px 18px;margin-bottom:14px">';
-    h+='<div class="card-label">Focus This Week</div><div style="font-size:14px;line-height:1.6">'+e(S.data.focusOfWeek)+'</div></div>';
-  }
-  // Goals summary
-  var ag=(S.data.goals||[]).filter(function(g){return g.status==='active';});
-  if(ag.length>0){
-    h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><h3 style="margin:0">Active Goals</h3><span style="font-size:11px;color:var(--text-muted);cursor:pointer" onclick="sv(\'goals\')">View all &rarr;</span></div>';
-    ag.slice(0,3).forEach(function(g){h+='<div style="padding:6px 0;border-bottom:1px solid var(--cream-light);font-size:13px;font-weight:500;color:var(--green)">'+e(g.title)+'</div>';});
-    h+='</div>';
-  }
-  // Todos
-  var todos=S.data.todos||[];
-  if(todos.length>0){var td2=todos.filter(function(t){return t.done;}).length;
-    h+='<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div style="font-size:13px;font-weight:700;color:var(--green)">To-Dos</div><span style="font-size:11px;color:var(--text-muted)">'+td2+'/'+todos.length+'</span></div>';
-    todos.forEach(function(t,i){
-      h+='<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream-light);cursor:pointer" onclick="tt('+i+')">';
-      h+='<div style="width:18px;height:18px;min-width:18px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;margin-top:1px">';
-      if(t.done)h+='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
-      h+='</div><div style="flex:1"><div style="font-size:12px;'+(t.done?'color:var(--green-muted);text-decoration:line-through':'')+'">'+e(t.text)+'</div>';
-      if(t.link)h+='<a href="'+e(t.link)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--green);text-decoration:none">↗ link</a>';
-      h+='</div></div>';
-    });h+='</div>';
-  }
-  // Last session note
+
+  // Commitments from last session
   var sn=(S.data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
-  if(sn.length>0){var ls=sn[0];
-    h+='<div class="sn-card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="sn-date">Last Session &middot; '+fs(ls.date)+'</div><span style="font-size:11px;color:var(--text-muted);cursor:pointer" onclick="sv(\'sessions\')">All sessions &rarr;</span></div>';
-    if(ls.themes)h+='<div style="font-size:13px;margin-top:8px;line-height:1.5">'+e(ls.themes)+'</div>';
+  if(sn.length>0&&sn[0].commitments){
+    h+='<div style="background:var(--white);border-left:4px solid var(--green);border-radius:0 12px 12px 0;padding:18px 22px;margin-bottom:36px">';
+    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green-muted);margin-bottom:3px">What You\'re Working On</div>';
+    h+='<div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">From your '+fs(sn[0].date)+' session</div>';
+    sn[0].commitments.split('\n').forEach(function(line){if(line.trim())h+='<div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;font-size:14px;line-height:1.5"><span style="color:var(--green);font-weight:700;margin-top:1px">&rarr;</span> '+e(line.trim())+'</div>';});
     h+='</div>';
   }
-  // Compact habits
-  if(S.data.habits.length>0){var total=S.data.habits.length,done=comp.length;
-    h+='<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><div style="font-size:13px;font-weight:700;color:var(--green)">Today\'s Habits</div><span style="font-size:11px;color:var(--text-muted)">'+done+'/'+total+'</span></div>';
-    S.data.habits.forEach(function(hab){var ck=comp.indexOf(hab.id)!==-1;
-      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream-light)">';
-      h+='<div style="width:20px;height:20px;min-width:20px;border-radius:50%;border:2px solid '+(ck?'var(--check-green)':'var(--border)')+';background:'+(ck?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="th(\''+hab.id+'\')">';
-      if(ck)h+='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
-      h+='</div><div style="font-size:12px;font-weight:500;'+(ck?'color:var(--green-muted)':'')+'">'+e(hab.name)+'</div></div>';
-    });h+='</div>';
+
+  // Two column: Todos + Goals
+  var todos=S.data.todos||[],ag=(S.data.goals||[]).filter(function(g){return g.status==='active';});
+  if(todos.length>0||ag.length>0){
+    h+='<div style="display:flex;gap:14px;margin-bottom:36px;flex-wrap:wrap">';
+    // Todos
+    if(todos.length>0){var td2=todos.filter(function(t){return t.done;}).length;
+      h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:var(--green)">To-Dos</div><span style="font-size:11px;color:var(--text-muted)">'+td2+'/'+todos.length+' done</span></div>';
+      todos.forEach(function(t,i){
+        h+='<div style="display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--cream-light);cursor:pointer" onclick="tt('+i+')">';
+        h+='<div style="width:18px;height:18px;min-width:18px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;margin-top:1px">';
+        if(t.done)h+='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        h+='</div><div style="flex:1"><div style="font-size:12px;'+(t.done?'color:var(--green-muted);text-decoration:line-through':'')+'">'+e(t.text)+'</div>';
+        if(t.link)h+='<a href="'+e(t.link)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:10px;color:var(--green);text-decoration:none">↗ link</a>';
+        h+='</div></div>';
+      });
+      h+='</div></div>';
+    }
+    // Goals
+    if(ag.length>0){
+      h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:var(--green)">Active Goals</div></div>';
+      ag.slice(0,3).forEach(function(g){
+        var pct=g.progress||0;
+        h+='<div style="padding:10px 0;border-bottom:1px solid var(--cream-light)">';
+        h+='<div style="font-weight:600;font-size:13px;color:var(--green);margin-bottom:2px">'+e(g.title)+'</div>';
+        if(g.outcome)h+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+e(g.outcome)+'</div>';
+        h+='<div style="display:flex;align-items:center;gap:10px"><div style="flex:1;background:var(--cream-light);border-radius:4px;height:7px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+pct+'%;background:'+(pct>=70?'var(--check-green)':pct>=40?'var(--gold)':'var(--green-muted)')+'"></div></div><span style="font-size:12px;font-weight:700;color:var(--green);min-width:32px;text-align:right">'+pct+'%</span></div>';
+        h+='</div>';
+      });
+      h+='<div style="text-align:right;margin-top:8px"><span style="font-size:11px;color:var(--text-muted);cursor:pointer" onclick="sv(\'goals\')">View all goals &rarr;</span></div>';
+      h+='</div></div>';
+    }
+    h+='</div>';
   }
-  // Coach card
-  h+='<div class="coach-compact"><div class="cs"><div class="csl">Your Coach</div><div class="csn">Andy Hite</div><div class="cst">Founder & CEO, Scaling Minds</div><a href="tel:3127728525">312-772-8525</a><a href="mailto:andy@scalingminds.com">andy@scalingminds.com</a><a href="https://www.scalingminds.com" target="_blank">www.scalingminds.com</a></div><div class="cdiv"></div><div class="cs"><div class="csl">Client Success</div><div class="csn">Sasha Vargas</div><div class="cst">Client Success Manager</div><a href="mailto:sasha@scalingminds.com">sasha@scalingminds.com</a></div></div>';
+
+  // Encouragement
+  var allTodosDone=todos.length>0&&todos.every(function(t){return t.done;});
+  var allHabitsDone=S.data.habits.length>0&&S.data.habits.filter(function(h2){return hdue(h2,td);}).every(function(h2){return comp.indexOf(h2.id)!==-1;});
+  if(allTodosDone||allHabitsDone){
+    var msg=allTodosDone&&allHabitsDone?'All habits and to-dos done. Strong day.':allTodosDone?'All to-dos complete. Keep it going.':'All habits done today. Nice work.';
+    h+='<div style="text-align:center;padding:14px;background:rgba(45,106,79,0.05);border-radius:10px;margin-bottom:36px;font-size:13px;color:var(--green);font-weight:500">✓ '+msg+'</div>';
+  }
+
+  // Empty state for new clients
+  if(sn.length===0&&todos.length===0&&ag.length===0&&S.data.habits.length===0){
+    h+='<div style="text-align:center;padding:40px 20px;background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:36px">';
+    h+='<div style="font-size:24px;margin-bottom:12px">👋</div>';
+    h+='<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:6px">Welcome to your coaching portal</div>';
+    h+='<div style="font-size:13px;color:var(--text-muted);max-width:360px;margin:0 auto">Your coach will set things up for you soon. In the meantime, check out your Documents tab for onboarding materials.</div></div>';
+  }
+
+  // Quick note
+  h+='<div style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:36px;cursor:pointer" onclick="sv(\'journal\')">';
+  h+='<div style="width:34px;height:34px;min-width:34px;background:var(--cream-light);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>';
+  h+='<div style="font-size:13px;color:var(--text-muted)">Jot something down for your next session...</div></div>';
+
+  // Coach line
+  h+='<div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:14px;font-size:12px;color:var(--text-muted);flex-wrap:wrap">';
+  h+='<span><strong style="color:var(--green)">Your Coach</strong> Andy Hite</span>';
+  h+='<span style="color:var(--border)">|</span><a href="tel:3127728525" style="color:var(--green);text-decoration:none">312-772-8525</a>';
+  h+='<span style="color:var(--border)">|</span><a href="mailto:andy@scalingminds.com" style="color:var(--green);text-decoration:none">andy@scalingminds.com</a>';
+  h+='<span style="color:var(--border)">|</span><strong style="color:var(--green)">Client Success</strong> <a href="mailto:sasha@scalingminds.com" style="color:var(--green);text-decoration:none">Sasha Vargas</a>';
+  h+='</div>';
   return h;
 }
 
@@ -365,11 +397,15 @@ function rGoals(data){
   return h;
 }
 function gCard(g){
-  var h='<div class="goal-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">';
+  var pct=g.progress||0;
+  var h='<div class="goal-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">';
   h+='<div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green)">'+e(g.title)+'</div>';
   h+='<span class="goal-status gs-'+g.status+'">'+g.status+'</span></div>';
-  if(g.outcome)h+='<div style="font-size:13px;color:var(--text-muted);margin-bottom:6px"><strong style="color:var(--text)">Target:</strong> '+e(g.outcome)+'</div>';
-  if(g.desc)h+='<div style="font-size:13px;line-height:1.5">'+e(g.desc)+'</div>';
+  if(g.outcome)h+='<div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">'+e(g.outcome)+'</div>';
+  if(g.desc)h+='<div style="font-size:13px;line-height:1.5;margin-bottom:8px">'+e(g.desc)+'</div>';
+  h+='<div style="display:flex;align-items:center;gap:10px"><div style="flex:1;background:var(--cream-light);border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+pct+'%;background:'+(pct>=70?'var(--check-green)':pct>=40?'var(--gold)':'var(--green-muted)')+'"></div></div>';
+  h+='<span style="font-size:13px;font-weight:700;color:var(--green);min-width:36px;text-align:right">'+pct+'%</span></div>';
+  if(g.status==='active'){h+='<div style="margin-top:8px"><input type="range" min="0" max="100" value="'+pct+'" style="width:100%;accent-color:var(--green)" onchange="ugp(\''+g.id+'\',this.value)"></div>';}
   h+='</div>';return h;
 }
 
@@ -725,7 +761,8 @@ function sh(){var n=document.getElementById('hn').value.trim(),d=document.getEle
 function dh(id){if(!confirm('Remove this habit?'))return;S.data.habits=S.data.habits.filter(function(h){return h.id!==id;});save();R();}
 function tt(i){var t=S.data.todos||[];if(t[i]){t[i].done=!t[i].done;save();R();}}
 function ssp(v){S.data.sessionPrep=v;save();}
-function cag(){var t=document.getElementById('cgt').value.trim();if(!t)return;var o=document.getElementById('cgo').value.trim();S.data.goals=S.data.goals||[];S.data.goals.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active'});save();R();}
+function cag(){var t=document.getElementById('cgt').value.trim();if(!t)return;var o=document.getElementById('cgo').value.trim();S.data.goals=S.data.goals||[];S.data.goals.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active',progress:0});save();R();}
+function ugp(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.progress=parseInt(val)||0;save();}}
 function sn(k,v){if(!S.data.notes)S.data.notes={};S.data.notes[k]=v;save();}
 function dn(k){if(!confirm('Delete?'))return;delete S.data.notes[k];save();R();}
 
@@ -736,7 +773,7 @@ function ref(){loadAll(function(){R();});}
 function scd(){scf(S.sc.uid,{startDate:document.getElementById('cs').value||null,endDate:document.getElementById('ce2').value||null});}
 function scns(){scf(S.sc.uid,{nextSession:document.getElementById('cns').value||null});}
 function scfw(){scf(S.sc.uid,{focusOfWeek:document.getElementById('cfw').value||''});}
-function ag(){var t=document.getElementById('ngt').value.trim();if(!t)return;var o=document.getElementById('ngo').value.trim();var g=(S.sc.goals||[]).slice();g.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active'});scf(S.sc.uid,{goals:g});}
+function ag(){var t=document.getElementById('ngt').value.trim();if(!t)return;var o=document.getElementById('ngo').value.trim();var g=(S.sc.goals||[]).slice();g.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active',progress:0});scf(S.sc.uid,{goals:g});}
 function rg(i){if(!confirm('Remove?'))return;var g=(S.sc.goals||[]).slice();g.splice(i,1);scf(S.sc.uid,{goals:g});}
 function sgst(i,v){var g=(S.sc.goals||[]).slice();if(g[i])g[i].status=v;scf(S.sc.uid,{goals:g});}
 function asn(){var d=document.getElementById('snd').value,t=document.getElementById('snt').value.trim(),c=document.getElementById('snc').value.trim(),ex=document.getElementById('sne').value.trim(),n=document.getElementById('snn').value.trim();if(!d)return;var sn2=(S.sc.sessionNotes||[]).slice();sn2.push({id:'sn'+Date.now(),date:d,themes:t,commitments:c,experiments:ex,notes:n});scf(S.sc.uid,{sessionNotes:sn2});}
