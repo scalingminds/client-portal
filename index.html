@@ -219,7 +219,7 @@ function save(){if(!S.user)return;clearTimeout(st);st=setTimeout(function(){var 
 
 function load(cb){if(!S.user)return;db.collection('users').doc(S.user.uid).get().then(function(doc){if(doc.exists){var d=doc.data();S.data.habits=d.habits||[];S.data.completions=d.completions||{};S.data.notes=d.notes||{};S.data.startDate=d.startDate||null;S.data.endDate=d.endDate||null;S.data.nextSession=d.nextSession||null;S.data.focusOfWeek=d.focusOfWeek||'';S.data.todos=d.todos||[];S.data.sessionPrep=d.sessionPrep||'';S.data.docs=d.docs||[];S.data.goals=d.goals||[];S.data.sessionNotes=d.sessionNotes||[];}if(cb)cb();}).catch(function(){if(cb)cb();});}
 
-function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.forEach(function(doc){var d=doc.data();if(CE.indexOf(d.email)===-1){S.cls.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',phone:d.phone||'',birthday:d.birthday||'',address:d.address||'',habits:d.habits||[],completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[]});}});if(cb)cb();}).catch(function(e2){console.error(e2);if(cb)cb();});}
+function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.forEach(function(doc){var d=doc.data();if(CE.indexOf(d.email)===-1){S.cls.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',phone:d.phone||'',birthday:d.birthday||'',address:d.address||'',company:d.company||'',title:d.title||'',archived:d.archived||false,habits:d.habits||[],completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[]});}});if(cb)cb();}).catch(function(e2){console.error(e2);if(cb)cb();});}
 
 function scf(uid,f){db.collection('users').doc(uid).set(f,{merge:true}).then(function(){var c=S.cls.find(function(x){return x.uid===uid;});if(c)Object.keys(f).forEach(function(k){c[k]=f[k];});if(S.sc&&S.sc.uid===uid)Object.keys(f).forEach(function(k){S.sc[k]=f[k];});R();});}
 
@@ -263,6 +263,8 @@ function rSetup(){
   var h='<div class="login-screen"><div class="login-card" style="max-width:440px"><img class="login-logo" src="'+L+'" alt="Scaling Minds"><h1>Welcome!</h1><p>Let\'s get you set up. This takes about 30 seconds.</p><div id="setup-err" class="login-error"></div>';
   h+='<input class="login-input" id="setup-first" type="text" placeholder="First name *">';
   h+='<input class="login-input" id="setup-last" type="text" placeholder="Last name *">';
+  h+='<input class="login-input" id="setup-company" type="text" placeholder="Company">';
+  h+='<input class="login-input" id="setup-title" type="text" placeholder="Title / Role">';
   h+='<input class="login-input" id="setup-phone" type="tel" placeholder="Phone number">';
   h+='<div style="display:flex;gap:8px;margin-bottom:10px"><select class="login-input" id="setup-bm" style="flex:1"><option value="">Birthday month</option>';
   ['January','February','March','April','May','June','July','August','September','October','November','December'].forEach(function(m,i){h+='<option value="'+(i+1)+'">'+m+'</option>';});
@@ -279,10 +281,12 @@ function saveSetup(){
   var f=document.getElementById('setup-first').value.trim(),l=document.getElementById('setup-last').value.trim();
   if(!f||!l){document.getElementById('setup-err').textContent='Please enter your first and last name.';return;}
   var name=f+' '+l;
+  var company=document.getElementById('setup-company').value.trim();
+  var title=document.getElementById('setup-title').value.trim();
   var phone=document.getElementById('setup-phone').value.trim();
   var bm=document.getElementById('setup-bm').value,bd=document.getElementById('setup-bd').value;
   var addr=document.getElementById('setup-addr').value.trim(),city=document.getElementById('setup-city').value.trim(),st=document.getElementById('setup-state').value.trim(),zip=document.getElementById('setup-zip').value.trim();
-  var profile={displayName:name,phone:phone||'',birthday:bm&&bd?bm+'/'+bd:'',address:addr?addr+(city?', '+city:'')+(st?' '+st:'')+(zip?' '+zip:''):''};
+  var profile={displayName:name,company:company||'',title:title||'',phone:phone||'',birthday:bm&&bd?bm+'/'+bd:'',address:addr?addr+(city?', '+city:'')+(st?' '+st:'')+(zip?' '+zip:''):''};
   S.user.updateProfile({displayName:name}).then(function(){
     S._nameSet=true;
     db.collection('users').doc(S.user.uid).set(profile,{merge:true});
@@ -670,17 +674,24 @@ function rCA(){
 }
 
 function rCL(){
-  var h='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green)">Your Clients</h2>';
-  h+='<div style="display:flex;gap:8px"><button class="exp" onclick="eacsv()">Export</button><button class="btn bs" onclick="ref()">Refresh</button></div></div>';
-  if(S.cls.length===0)return h+'<div class="empty"><div class="ei">👥</div><h3>No clients yet</h3></div>';
-  var sorted=S.cls.slice().sort(function(a,b){var ai=ds(la(a))>=ID?0:1,bi=ds(la(b))>=ID?0:1;if(ai!==bi)return ai-bi;return(a.displayName||'').localeCompare(b.displayName||'');});
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green)">Your Clients</h2>';
+  h+='<div style="display:flex;gap:8px;align-items:center"><label style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="show-arch" onchange="R()"'+(S._showArch?' checked':'')+'> Show archived</label><button class="exp" onclick="eacsv()">Export</button><button class="btn bs" onclick="ref()">Refresh</button></div></div>';
+  S._showArch=document.getElementById('show-arch')&&document.getElementById('show-arch').checked;
+  var active=S.cls.filter(function(c){return !c.archived;});
+  var archived=S.cls.filter(function(c){return c.archived;});
+  var list=S._showArch?S.cls:active;
+  if(list.length===0)return h+'<div class="empty"><div class="ei">👥</div><h3>No clients yet</h3></div>';
+  var sorted=list.slice().sort(function(a,b){if(a.archived!==b.archived)return a.archived?1:-1;var ai=ds(la(a))>=ID?0:1,bi=ds(la(b))>=ID?0:1;if(ai!==bi)return ai-bi;return(a.displayName||'').localeCompare(b.displayName||'');});
   h+='<div class="client-grid">';
   sorted.forEach(function(c,i){var r=crate(c),sk=streak(c),lv=la(c),ina=ds(lv)>=ID;
-    h+='<div class="cc'+(ina?' inactive':'')+'" onclick="sel('+i+')">';
+    h+='<div class="cc'+(ina&&!c.archived?' inactive':'')+(c.archived?' inactive':'')+'" onclick="selByUid(\''+c.uid+'\')" style="'+(c.archived?'opacity:0.6':'')+'">';
     h+='<div class="ct">';if(c.photoURL)h+='<img class="ca" src="'+c.photoURL+'" alt="">';
-    h+='<div><div class="cn">'+e(c.displayName)+(ina?'<span class="itag">'+ds(lv)+'d inactive</span>':'')+'</div><div class="ce">'+e(c.email)+'</div></div></div>';
+    h+='<div><div class="cn">'+e(c.displayName)+(c.archived?'<span class="itag" style="background:var(--cream-light);color:var(--text-muted)">Archived</span>':ina?'<span class="itag">'+ds(lv)+'d inactive</span>':'')+'</div>';
+    h+='<div class="ce">'+e(c.email)+(c.company?' &middot; '+e(c.company):'')+'</div></div></div>';
     h+='<div class="cstats"><div><span class="csv">'+r+'%</span>rate</div><div><span class="csv">'+sk+'</span>streak</div><div><span class="csv">'+c.habits.length+'</span>habits</div><div><span class="csv">'+(lv||'\u2014')+'</span>last</div></div></div>';
-  });h+='</div>';return h;
+  });h+='</div>';
+  if(!S._showArch&&archived.length>0)h+='<div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-muted)">'+archived.length+' archived client'+(archived.length!==1?'s':'')+' hidden</div>';
+  return h;
 }
 
 function rCD(){
@@ -693,9 +704,12 @@ function rCD(){
 
   // Name edit
   h+='<div class="card"><h3>Client Name</h3><div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="fg" style="margin:0;flex:1;min-width:200px"><input class="fi" id="cnm" type="text" value="'+e(c.displayName)+'" placeholder="Client name"></div><button class="btn bp" onclick="scnm()">Save</button></div>';
-  // Contact info (read-only display)
-  var ci=[];if(c.phone)ci.push(c.phone);if(c.birthday)ci.push('Birthday: '+c.birthday);if(c.address)ci.push(c.address);
-  if(ci.length>0)h+='<div style="margin-top:10px;font-size:12px;color:var(--text-muted);line-height:1.8">'+ci.map(function(x){return e(x);}).join(' &middot; ')+'</div>';
+  // Contact info
+  var ci=[];
+  if(c.company||c.title)ci.push((c.title||'')+(c.title&&c.company?' at ':'')+(c.company||''));
+  if(c.phone)ci.push(c.phone);if(c.birthday)ci.push('Birthday: '+c.birthday);if(c.address)ci.push(c.address);
+  if(ci.length>0)h+='<div style="margin-top:10px;font-size:12px;color:var(--text-muted);line-height:1.8">'+ci.map(function(x){return e(x);}).join('<br>')+'</div>';
+  h+='<div style="margin-top:12px;display:flex;gap:8px"><button class="btn bs" style="font-size:11px;padding:6px 14px" onclick="archClient()">'+( c.archived?'Unarchive':'Archive')+'</button><button class="btn bs" style="font-size:11px;padding:6px 14px;color:#c0392b" onclick="delClient()">Delete</button></div>';
   h+='</div>';
 
   // Dates
@@ -836,6 +850,9 @@ function dn(k){if(!confirm('Delete?'))return;delete S.data.notes[k];save();R();}
 // Coach
 function scv(v){S.cv=v;R();}
 function sel(i){var sorted=S.cls.slice().sort(function(a,b){var ai=ds(la(a))>=ID?0:1,bi=ds(la(b))>=ID?0:1;if(ai!==bi)return ai-bi;return(a.displayName||'').localeCompare(b.displayName||'');});S.sc=sorted[i];S.cv='detail';R();}
+function selByUid(uid){var c=S.cls.find(function(x){return x.uid===uid;});if(c){S.sc=c;S.cv='detail';R();}}
+function archClient(){if(!S.sc)return;var newVal=!S.sc.archived;if(!confirm(newVal?'Archive this client? They\'ll be hidden from the main list.':'Unarchive this client?'))return;scf(S.sc.uid,{archived:newVal});}
+function delClient(){if(!S.sc)return;if(!confirm('Permanently delete '+S.sc.displayName+'? This cannot be undone.'))return;if(!confirm('Are you sure? All data will be lost.'))return;db.collection('users').doc(S.sc.uid).delete().then(function(){S.cls=S.cls.filter(function(c){return c.uid!==S.sc.uid;});S.sc=null;S.cv='clients';R();});}
 function ref(){loadAll(function(){R();});}
 function scd(){scf(S.sc.uid,{startDate:document.getElementById('cs').value||null,endDate:document.getElementById('ce2').value||null});}
 function scnm(){var n=document.getElementById('cnm').value.trim();if(!n)return;scf(S.sc.uid,{displayName:n});}
