@@ -32,7 +32,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .login-footer{margin-top:24px;font-size:11px;color:var(--text-muted);}
 .loading-spinner{display:inline-block;width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-.header{background:var(--green);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.header{background:var(--green);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;}
+.sticky-top{position:sticky;top:0;z-index:100;}
 .header-left{display:flex;align-items:center;gap:14px;}
 .header-logo{height:44px;border-radius:4px;}
 .header h1{font-family:'DM Serif Display',serif;color:var(--cream-light);font-size:20px;font-weight:400;}
@@ -42,12 +43,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .user-avatar{width:34px;height:34px;border-radius:50%;border:2px solid var(--gold);}
 .signout-btn{background:none;border:1px solid rgba(212,197,169,0.3);color:var(--cream);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;}
 .signout-btn:hover{background:rgba(255,255,255,0.1);}
-.nav-bar{background:var(--white);border-bottom:1px solid var(--border);display:flex;padding:0 28px;overflow-x:auto;position:sticky;top:56px;z-index:99;}
-.nav-tab{padding:12px 16px;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
-.nav-tab:hover{color:var(--green);}
-.nav-tab.active{color:var(--green);border-bottom-color:var(--gold);}
+.nav-bar{background:var(--green);display:flex;padding:0 28px;overflow-x:auto;border-bottom:none;border-top:1px solid rgba(255,255,255,0.1);}
+.nav-tab{padding:14px 16px;font-size:12px;font-weight:600;color:var(--cream);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;opacity:0.7;transition:opacity 0.2s;}
+.nav-tab:hover{color:var(--cream-light);opacity:1;}
+.nav-tab.active{color:var(--cream-light);border-bottom-color:var(--gold);opacity:1;}
 .mob-nav{display:none;}
-.mob-nav-bar{background:var(--white);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;position:sticky;top:56px;z-index:99;}
+.mob-nav-bar{background:var(--green);border-bottom:1px solid rgba(255,255,255,0.1);padding:12px 16px;display:flex;align-items:center;position:sticky;top:0;z-index:100;}
 .mob-nav-current{display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 0;}
 .mob-ham{min-width:20px;}
 .mob-nav-menu{background:var(--white);border-bottom:1px solid var(--border);box-shadow:0 8px 24px rgba(27,67,50,0.1);}
@@ -365,7 +366,7 @@ function saveSetup(){
 // ══════════════════════════════════
 function rC(){
   var app=document.getElementById('app'),td=new Date(),ts=dk(td),comp=S.data.completions[ts]||[],sk=streak(S.data),q=dq();
-  var h='<div class="header"><div class="header-left"><img class="header-logo" src="'+L+'" alt="SM"><div><h1>Client Portal</h1><div class="header-subtitle">'+e(S.user.displayName||'')+' &middot; Scaling Minds</div></div></div><div class="header-right">';
+  var h='<div class="sticky-top"><div class="header"><div class="header-left"><img class="header-logo" src="'+L+'" alt="SM"><div><h1>Client Portal</h1><div class="header-subtitle">'+e(S.user.displayName||'')+' &middot; Scaling Minds</div></div></div><div class="header-right">';
   if(sk>0)h+='<div class="streak-badge">🔥 '+sk+' day streak</div>';
   if(S.user.photoURL)h+='<img class="user-avatar" src="'+S.user.photoURL+'" alt="">';
   h+='<button class="signout-btn" onclick="so()">Sign out</button></div></div>';
@@ -375,11 +376,11 @@ function rC(){
   navItems.forEach(function(t){
     h+='<div class="nav-tab'+(S.view===t.v?' active':'')+'" onclick="sv(\''+t.v+'\')">'+t.l+'</div>';
   });
-  h+='</div>';
+  h+='</div></div>';
   // Mobile hamburger
-  h+='<div class="mob-nav"><div class="mob-nav-bar"><div class="mob-nav-current" onclick="toggleMobNav()"><svg class="mob-ham" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+  h+='<div class="mob-nav"><div class="mob-nav-bar"><div class="mob-nav-current" onclick="toggleMobNav()"><svg class="mob-ham" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cream-light)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
   var curTab=navItems.find(function(t){return t.v===S.view;})||navItems[0];
-  h+='<span style="font-size:14px;font-weight:600;color:var(--green)">'+curTab.l+'</span></div></div>';
+  h+='<span style="font-size:14px;font-weight:600;color:var(--cream-light)">'+curTab.l+'</span></div></div>';
   h+='<div class="mob-nav-menu" id="mob-menu" style="display:none">';
   navItems.forEach(function(t){
     h+='<div class="mob-nav-item'+(S.view===t.v?' mob-active':'')+'" onclick="sv(\''+t.v+'\');closeMobNav()">'+t.l+'</div>';
@@ -440,7 +441,7 @@ function rHome(td,ts,comp,sk,q){
   var dueToday=S.data.habits.filter(function(h2){return hdue(h2,td);});
   var doneCount=dueToday.filter(function(h2){return comp.indexOf(h2.id)!==-1;}).length;
 
-  if(dueToday.length>0||todos.length>0){
+  if(dueToday.length>0||true){
     h+='<div style="display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap">';
 
     // Habits (left)
@@ -457,20 +458,20 @@ function rHome(td,ts,comp,sk,q){
       h+='</div></div>';
     }
 
-    // Todos (right)
-    if(todos.length>0){var td2=todos.filter(function(t){return t.done;}).length;
-      h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:var(--green)">To-Dos</div><span style="font-size:11px;color:var(--text-muted)">'+td2+'/'+todos.length+' done</span></div>';
-      todos.forEach(function(t,i){
-        h+='<div style="display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--cream-light)">';
-        h+='<div style="width:18px;height:18px;min-width:18px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;margin-top:1px;cursor:pointer" onclick="tt('+i+')">';
-        if(t.done)h+='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
-        h+='</div><div style="flex:1"><div style="font-size:12px;'+(t.done?'color:var(--green-muted);text-decoration:line-through':'')+'">'+e(t.text)+'</div>';
-        if(t.link)h+='<a href="'+e(t.link)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:10px;color:var(--green);text-decoration:none">↗ link</a>';
-        h+='</div><button class="abtn del" onclick="dtd('+i+')" style="opacity:0.5;width:20px;height:20px" title="Remove"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
-      });
-      h+='<div style="display:flex;gap:6px;margin-top:8px"><input class="fi" id="ctd" type="text" placeholder="Add a to-do..." style="font-size:11px;padding:6px 10px"><button class="btn bp" onclick="catd()" style="padding:6px 12px;font-size:11px">Add</button></div>';
-      h+='</div></div>';
-    }
+    // Todos (right) - always show with add input
+    h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:var(--green)">To-Dos</div>';
+    if(todos.length>0){var td2=todos.filter(function(t){return t.done;}).length;h+='<span style="font-size:11px;color:var(--text-muted)">'+td2+'/'+todos.length+' done</span>';}
+    h+='</div>';
+    todos.forEach(function(t,i){
+      h+='<div style="display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--cream-light)">';
+      h+='<div style="width:18px;height:18px;min-width:18px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;margin-top:1px;cursor:pointer" onclick="tt('+i+')">';
+      if(t.done)h+='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      h+='</div><div style="flex:1"><div style="font-size:12px;'+(t.done?'color:var(--green-muted);text-decoration:line-through':'')+'">'+e(t.text)+'</div>';
+      if(t.link)h+='<a href="'+e(t.link)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:10px;color:var(--green);text-decoration:none">↗ link</a>';
+      h+='</div><button class="abtn del" onclick="dtd('+i+')" style="opacity:0.5;width:20px;height:20px" title="Remove"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
+    });
+    h+='<div style="display:flex;gap:6px;margin-top:8px"><input class="fi" id="ctd" type="text" placeholder="Add a to-do..." style="font-size:11px;padding:6px 10px"><button class="btn bp" onclick="catd()" style="padding:6px 12px;font-size:11px">Add</button></div>';
+    h+='</div></div>';
     h+='</div>';
   }
 
