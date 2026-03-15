@@ -40,6 +40,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .header-subtitle{color:var(--cream);font-size:12px;opacity:0.7;margin-top:1px;}
 .header-right{display:flex;align-items:center;gap:12px;}
 .streak-badge{background:rgba(184,134,11,0.2);border:1px solid var(--gold);color:var(--gold-light);padding:6px 14px;border-radius:24px;font-size:13px;font-weight:600;}
+.mob-streak{display:none;}
 .user-avatar{width:34px;height:34px;border-radius:50%;border:2px solid var(--gold);}
 .signout-btn{background:none;border:1px solid rgba(212,197,169,0.3);color:var(--cream);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;}
 .signout-btn:hover{background:rgba(255,255,255,0.1);}
@@ -48,9 +49,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .nav-tab:hover{color:var(--cream-light);opacity:1;}
 .nav-tab.active{color:var(--cream-light);border-bottom-color:var(--gold);opacity:1;}
 .mob-nav{display:none;}
-.mob-nav-bar{background:var(--green);border-bottom:1px solid rgba(255,255,255,0.1);padding:12px 16px;display:flex;align-items:center;position:sticky;top:0;z-index:100;}
-.mob-nav-current{display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 0;}
-.mob-ham{min-width:20px;}
+.mob-nav-bar{background:var(--green);padding:12px 16px;display:flex;align-items:center;position:sticky;top:0;z-index:100;}
+.mob-nav-current{display:flex;align-items:center;cursor:pointer;padding:4px;}
+.mob-ham{min-width:24px;}
 .mob-nav-menu{background:var(--white);border-bottom:1px solid var(--border);box-shadow:0 8px 24px rgba(27,67,50,0.1);}
 .mob-nav-item{padding:14px 20px;font-size:15px;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:1px solid var(--cream-light);}
 .mob-nav-item:last-child{border-bottom:none;}
@@ -166,8 +167,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .wd.f svg{stroke:white;width:12px;height:12px;}
 .wd.fu{opacity:0.3;pointer-events:none;}
 @media(max-width:700px){
-  .header{padding:14px 16px;}.header h1{font-size:18px;}.header-logo{height:36px;}
+  .header{padding:14px 16px;display:none!important;}.header h1{font-size:18px;}.header-logo{height:36px;}
+  .sticky-top{display:none!important;}
   .streak{font-size:13px;padding:6px 14px;}
+  .mob-streak{display:inline-flex!important;}
   .nav-bar{display:none!important;}
   .mob-nav{display:block!important;}
   .main{padding:22px 18px 60px;max-width:100%;font-size:16px;}
@@ -390,14 +393,19 @@ function rC(){
     h+='<div class="nav-tab'+(S.view===t.v?' active':'')+'" onclick="sv(\''+t.v+'\')">'+t.l+'</div>';
   });
   h+='</div></div>';
-  // Mobile hamburger
-  h+='<div class="mob-nav"><div class="mob-nav-bar"><div class="mob-nav-current" onclick="toggleMobNav()"><svg class="mob-ham" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cream-light)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+  // Mobile hamburger - compact single row header
+  h+='<div class="mob-nav"><div class="mob-nav-bar">';
+  h+='<img class="header-logo" src="'+L+'" alt="SM" style="height:30px;margin-right:10px">';
+  h+='<span style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--cream-light);flex:1">Client Portal</span>';
   var curTab=navItems.find(function(t){return t.v===S.view;})||navItems[0];
-  h+='<span style="font-size:14px;font-weight:600;color:var(--cream-light)">'+curTab.l+'</span></div></div>';
+  h+='<span style="font-size:13px;font-weight:600;color:var(--gold);margin-right:12px">'+curTab.l+'</span>';
+  h+='<div class="mob-nav-current" onclick="toggleMobNav()"><svg class="mob-ham" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--cream-light)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div>';
+  h+='</div>';
   h+='<div class="mob-nav-menu" id="mob-menu" style="display:none">';
   navItems.forEach(function(t){
     h+='<div class="mob-nav-item'+(S.view===t.v?' mob-active':'')+'" onclick="sv(\''+t.v+'\');closeMobNav()">'+t.l+'</div>';
   });
+  h+='<div class="mob-nav-item" style="color:#c0392b;border-top:2px solid var(--cream-light)" onclick="so()">Sign Out</div>';
   h+='</div></div>';
   h+='<div class="main">';
 
@@ -420,7 +428,9 @@ function rHome(td,ts,comp,sk,q){
   // Welcome
   var hr=td.getHours(),greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   var fname=(S.user.displayName||S.user.email||'').split(' ')[0].split('@')[0];
-  h+='<div style="margin-bottom:8px"><div style="font-family:\'DM Serif Display\',serif;font-size:26px;color:var(--green)">'+greet+', '+e(fname)+'</div>';
+  h+='<div style="margin-bottom:8px"><div style="font-family:\'DM Serif Display\',serif;font-size:26px;color:var(--green);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span>'+greet+', '+e(fname)+'</span>';
+  if(sk>0)h+='<span class="streak-badge mob-streak" style="font-size:13px">🔥 '+sk+'</span>';
+  h+='</div>';
   h+='<div style="font-size:13px;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">';
   if(S.data.nextSession){var nd2;if(S.data.nextSession.indexOf('T')!==-1)nd2=new Date(S.data.nextSession);else{var np2=S.data.nextSession.split('-');nd2=new Date(np2[0],np2[1]-1,np2[2]);}var daysUntil=Math.ceil((nd2-new Date())/864e5);if(daysUntil>=0)h+='<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green-muted)" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Next session in '+daysUntil+' day'+(daysUntil!==1?'s':'')+'</span>';}
   if(S.data.habits.length>0){var dueToday=S.data.habits.filter(function(h2){return hdue(h2,td);}).length,doneToday=comp.length;h+='<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green-muted)" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> '+doneToday+' of '+dueToday+' habits done today</span>';}
