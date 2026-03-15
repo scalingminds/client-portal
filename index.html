@@ -54,6 +54,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .zoom-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;background:#2D8CFF;color:white;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap;margin-left:auto;}
 .zoom-btn:hover{background:#1a7ae6;}
 .card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:14px;}
+.rcard{cursor:pointer;border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:box-shadow 0.2s,transform 0.2s;background:var(--white);}
+.rcard:hover{box-shadow:0 4px 20px rgba(27,67,50,0.12);transform:translateY(-2px);}
+.rlink{transition:box-shadow 0.2s;}.rlink:hover{box-shadow:0 2px 12px rgba(27,67,50,0.08);}
 .card h3{font-family:'DM Serif Display',serif;font-size:16px;color:var(--green);margin-bottom:8px;}
 .card-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green-muted);margin-bottom:5px;}
 .habits-list{display:flex;flex-direction:column;gap:8px;}
@@ -705,7 +708,7 @@ function rDocs(data){
     h+='<div style="margin-bottom:28px">';
     h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:4px;height:22px;background:var(--green-muted);border-radius:2px"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green)">Resource Library</div></div>';
     lib.forEach(function(d){
-      h+='<a href="'+e(d.link)+'" target="_blank" style="display:flex;align-items:flex-start;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-decoration:none;margin-bottom:6px;transition:all 0.2s" onmouseover="this.style.boxShadow=\'0 2px 12px rgba(27,67,50,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
+      h+='<a href="'+e(d.link)+'" target="_blank" class="rlink" style="display:flex;align-items:flex-start;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-decoration:none;margin-bottom:6px">';
       h+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="margin-top:2px;min-width:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
       h+='<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--green)">'+e(d.title)+'</div>';
       if(d.desc)h+='<div style="font-size:11px;color:var(--text-muted);margin-top:1px">'+e(d.desc)+'</div>';
@@ -722,7 +725,7 @@ function rDocs(data){
   h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">';
   var toShow=showAll?RESOURCES:featured;
   toShow.forEach(function(r){
-    h+='<div onclick="showRes(\''+r.id+'\')" style="cursor:pointer;border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:all 0.2s;background:var(--white)" onmouseover="this.style.boxShadow=\'0 4px 20px rgba(27,67,50,0.12)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.boxShadow=\'none\';this.style.transform=\'none\'">';
+    h+='<div class="rcard" onclick="showRes(\''+r.id+'\')">';
     h+='<div style="background:linear-gradient(135deg,#1B4332 0%,#2D6A4F 100%);padding:24px 20px;position:relative;overflow:hidden">';
     h+='<div style="position:absolute;top:-10px;right:-10px;width:60px;height:60px;border-radius:50%;background:rgba(184,134,11,0.15)"></div>';
     h+='<div style="position:absolute;bottom:-20px;left:-10px;width:40px;height:40px;border-radius:50%;background:rgba(184,134,11,0.1)"></div>';
