@@ -433,11 +433,29 @@ function rHome(td,ts,comp,sk,q){
     h+='</div>';
   }
 
-  // Two column: Todos + Goals
+  // Two column: Habits + Todos side by side
   var todos=S.data.todos||[],ag=(S.data.goals||[]).filter(function(g){return g.status==='active';});
-  if(todos.length>0||ag.length>0){
-    h+='<div style="display:flex;gap:14px;margin-bottom:36px;flex-wrap:wrap">';
-    // Todos
+  var dueToday=S.data.habits.filter(function(h2){return hdue(h2,td);});
+  var doneCount=dueToday.filter(function(h2){return comp.indexOf(h2.id)!==-1;}).length;
+
+  if(dueToday.length>0||todos.length>0){
+    h+='<div style="display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap">';
+
+    // Habits (left)
+    if(dueToday.length>0){
+      h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div style="font-size:13px;font-weight:700;color:var(--green)">Today\'s Habits</div><span style="font-size:11px;color:var(--text-muted)">'+doneCount+'/'+dueToday.length+'</span></div>';
+      dueToday.forEach(function(hab){var ck=comp.indexOf(hab.id)!==-1;var flbl=hab.freq==='days'?(hab.freqDays||[]).map(function(d2){return DS[d2];}).join(', '):hab.freq==='weekly'?(hab.freqPerWeek||1)+'x/wk':'';
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--cream-light)">';
+        h+='<div style="width:20px;height:20px;min-width:20px;border-radius:50%;border:2px solid '+(ck?'var(--check-green)':'var(--border)')+';background:'+(ck?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="th(\''+hab.id+'\')">';
+        if(ck)h+='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        h+='</div><div style="font-size:12px;font-weight:500;flex:1;'+(ck?'color:var(--green-muted)':'')+'">'+e(hab.name)+'</div>';
+        if(flbl)h+='<span style="font-size:10px;color:var(--text-muted)">'+flbl+'</span>';
+        h+='</div>';
+      });
+      h+='</div></div>';
+    }
+
+    // Todos (right)
     if(todos.length>0){var td2=todos.filter(function(t){return t.done;}).length;
       h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:var(--green)">To-Dos</div><span style="font-size:11px;color:var(--text-muted)">'+td2+'/'+todos.length+' done</span></div>';
       todos.forEach(function(t,i){
@@ -451,26 +469,26 @@ function rHome(td,ts,comp,sk,q){
       h+='<div style="display:flex;gap:6px;margin-top:8px"><input class="fi" id="ctd" type="text" placeholder="Add a to-do..." style="font-size:11px;padding:6px 10px"><button class="btn bp" onclick="catd()" style="padding:6px 12px;font-size:11px">Add</button></div>';
       h+='</div></div>';
     }
-    // Goals
-    if(ag.length>0){
-      h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:var(--green)">Active Goals</div></div>';
-      ag.slice(0,3).forEach(function(g){
-        var pct=g.progress||0;
-        h+='<div style="padding:10px 0;border-bottom:1px solid var(--cream-light)">';
-        h+='<div style="font-weight:600;font-size:13px;color:var(--green);margin-bottom:2px">'+e(g.title)+'</div>';
-        if(g.outcome)h+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+e(g.outcome)+'</div>';
-        h+='<div style="display:flex;align-items:center;gap:10px"><div style="flex:1;background:var(--cream-light);border-radius:4px;height:7px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+pct+'%;background:'+(pct>=70?'var(--check-green)':pct>=40?'var(--gold)':'var(--green-muted)')+'"></div></div><span style="font-size:12px;font-weight:700;color:var(--green);min-width:32px;text-align:right">'+pct+'%</span></div>';
-        h+='</div>';
-      });
-      h+='<div style="text-align:right;margin-top:8px"><span style="font-size:11px;color:var(--text-muted);cursor:pointer" onclick="sv(\'goals\')">View all goals &rarr;</span></div>';
-      h+='</div></div>';
-    }
+    h+='</div>';
+  }
+
+  // Goals below (full width)
+  if(ag.length>0){
+    h+='<div class="card" style="margin-bottom:36px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:var(--green)">Active Goals</div><span style="font-size:11px;color:var(--text-muted);cursor:pointer" onclick="sv(\'goals\')">View all &rarr;</span></div>';
+    ag.slice(0,4).forEach(function(g){
+      var pct=g.progress||0;
+      h+='<div style="padding:10px 0;border-bottom:1px solid var(--cream-light)">';
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><div style="font-weight:600;font-size:13px;color:var(--green)">'+e(g.title)+'</div><span style="font-size:12px;font-weight:700;color:var(--green)">'+pct+'%</span></div>';
+      if(g.outcome)h+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">'+e(g.outcome)+'</div>';
+      h+='<div style="background:var(--cream-light);border-radius:4px;height:7px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+pct+'%;background:'+(pct>=70?'var(--check-green)':pct>=40?'var(--gold)':'var(--green-muted)')+'"></div></div>';
+      h+='</div>';
+    });
     h+='</div>';
   }
 
   // Encouragement
   var allTodosDone=todos.length>0&&todos.every(function(t){return t.done;});
-  var allHabitsDone=S.data.habits.length>0&&S.data.habits.filter(function(h2){return hdue(h2,td);}).every(function(h2){return comp.indexOf(h2.id)!==-1;});
+  var allHabitsDone=dueToday.length>0&&dueToday.every(function(h2){return comp.indexOf(h2.id)!==-1;});
   if(allTodosDone||allHabitsDone){
     var msg=allTodosDone&&allHabitsDone?'All habits and to-dos done. Strong day.':allTodosDone?'All to-dos complete. Keep it going.':'All habits done today. Nice work.';
     h+='<div style="text-align:center;padding:14px;background:rgba(45,106,79,0.05);border-radius:10px;margin-bottom:36px;font-size:13px;color:var(--green);font-weight:500">✓ '+msg+'</div>';
@@ -482,24 +500,6 @@ function rHome(td,ts,comp,sk,q){
     h+='<div style="font-size:24px;margin-bottom:12px">👋</div>';
     h+='<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:6px">Welcome to your coaching portal</div>';
     h+='<div style="font-size:13px;color:var(--text-muted);max-width:360px;margin:0 auto">Your coach will set things up for you soon. In the meantime, check out your Documents tab for onboarding materials.</div></div>';
-  }
-
-  // Compact habits on home
-  if(S.data.habits.length>0){
-    var dueToday=S.data.habits.filter(function(h2){return hdue(h2,td);});
-    if(dueToday.length>0){
-      var doneCount=dueToday.filter(function(h2){return comp.indexOf(h2.id)!==-1;}).length;
-      h+='<div class="card" style="margin-bottom:36px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div style="font-size:13px;font-weight:700;color:var(--green)">Today\'s Habits</div><span style="font-size:11px;color:var(--text-muted)">'+doneCount+'/'+dueToday.length+'</span></div>';
-      dueToday.forEach(function(hab){var ck=comp.indexOf(hab.id)!==-1;var flbl=hab.freq==='days'?(hab.freqDays||[]).map(function(d2){return DS[d2];}).join(', '):hab.freq==='weekly'?(hab.freqPerWeek||1)+'x/wk':'';
-        h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--cream-light)">';
-        h+='<div style="width:20px;height:20px;min-width:20px;border-radius:50%;border:2px solid '+(ck?'var(--check-green)':'var(--border)')+';background:'+(ck?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="th(\''+hab.id+'\')">';
-        if(ck)h+='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
-        h+='</div><div style="font-size:12px;font-weight:500;flex:1;'+(ck?'color:var(--green-muted)':'')+'">'+e(hab.name)+'</div>';
-        if(flbl)h+='<span style="font-size:10px;color:var(--text-muted)">'+flbl+'</span>';
-        h+='</div>';
-      });
-      h+='</div>';
-    }
   }
 
   // Message coach
