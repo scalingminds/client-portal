@@ -157,46 +157,53 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 @media(max-width:700px){
   .header{padding:14px 16px;}.header h1{font-size:18px;}.header-logo{height:36px;}
   .streak{font-size:12px;padding:5px 12px;}
-  .nav-bar{padding:0 8px;gap:0;}.nav-tab{padding:11px 10px;font-size:12px;}
-  .main{padding:20px 16px 60px;max-width:100%;}
-  .quote-line{font-size:17px!important;margin-bottom:28px!important;padding-left:14px;}
+  .nav-bar{padding:0 8px;gap:0;}.nav-tab{padding:12px 10px;font-size:13px;}
+  .main{padding:20px 16px 60px;max-width:100%;font-size:15px;}
+  .quote-line{font-size:18px!important;margin-bottom:28px!important;padding-left:14px;}
   .card{padding:18px 18px;margin-bottom:16px;}
-  .card h3{font-size:17px;}
+  .card h3{font-size:18px;}
   /* Home welcome */
-  .main > div:first-child > div:first-child{font-size:24px!important;}
+  .main > div:first-child > div:first-child{font-size:26px!important;}
   /* Goal cards */
   .goal-card{padding:18px 18px;}
   /* Session notes */
   .sn-card{padding:18px 18px;}
+  .sn-field{font-size:14px!important;}
+  .sn-field-label{font-size:12px!important;}
+  .sn-date{font-size:13px!important;}
   /* Habits */
   .habit-card{padding:14px 16px;}
-  .hc{width:32px;height:32px;min-width:32px;}
-  .hn{font-size:15px;}
-  .hd{font-size:12px;}
+  .hc{width:34px;height:34px;min-width:34px;}
+  .hn{font-size:16px;}
+  .hd{font-size:13px;}
   .habits-list{gap:10px;}
   /* Week grid */
   .whr,.wr{grid-template-columns:100px repeat(7,1fr);}
-  .whn{font-size:11px;padding:8px 10px;}
-  .whc{font-size:9px;padding:8px 3px;}
-  .wd{width:28px;height:28px;}
+  .whn{font-size:12px;padding:8px 10px;}
+  .whc{font-size:10px;padding:8px 3px;}
+  .wd{width:30px;height:30px;}
   /* Stats */
   .stats-grid{grid-template-columns:repeat(3,1fr);gap:8px;}
-  .sv{font-size:26px;}
-  .sl{font-size:10px;}
+  .sv{font-size:28px;}
+  .sl{font-size:11px;}
   .stat-card{padding:14px 10px;}
-  /* General text sizing */
-  .fi,.fs,.ft{font-size:16px!important;padding:12px 14px!important;}
-  .btn,.bp,.bs{font-size:14px!important;padding:12px 20px!important;}
-  .fl{font-size:12px!important;}
-  .login-input{font-size:16px!important;padding:14px 16px!important;}
-  .login-btn{font-size:16px!important;padding:16px!important;}
-  .google-btn{font-size:15px!important;padding:14px 20px!important;}
+  /* General text sizing - bumped */
+  .fi,.fs,.ft{font-size:16px!important;padding:14px 16px!important;}
+  .btn,.bp,.bs{font-size:15px!important;padding:14px 22px!important;}
+  .fl{font-size:13px!important;}
+  .login-input{font-size:17px!important;padding:16px 18px!important;}
+  .login-btn{font-size:17px!important;padding:18px!important;}
+  .google-btn{font-size:16px!important;padding:16px 22px!important;}
   .login-card{padding:32px 20px;}
+  /* Body text on mobile */
+  .main div{font-size:inherit;}
+  .commit-item,.todo .tt,.goal-title,.hn,.qn-text{font-size:15px!important;}
   /* Coach dashboard */
   .client-grid{grid-template-columns:1fr;}
   .cc{padding:16px;}
-  .cn{font-size:15px;}
-  .cstats{gap:10px;font-size:12px;}
+  .cn{font-size:16px;}
+  .ce{font-size:13px;}
+  .cstats{gap:10px;font-size:13px;}
   /* Coach compact */
   .coach-compact{flex-direction:column;}
   .cdiv{width:100%;height:1px;}
@@ -475,6 +482,11 @@ function rHome(td,ts,comp,sk,q){
     }
   }
 
+  // Message coach
+  h+='<a href="mailto:andy@scalingminds.com?subject=Message from '+encodeURIComponent(S.data.displayName||S.user.displayName||'your client')+'" style="display:flex;align-items:center;gap:10px;background:var(--green);border-radius:12px;padding:14px 18px;margin-bottom:14px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.opacity=\'0.9\'" onmouseout="this.style.opacity=\'1\'">';
+  h+='<div style="width:34px;height:34px;min-width:34px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cream-light)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>';
+  h+='<div style="font-size:14px;font-weight:600;color:var(--cream-light)">Message Your Coach</div></a>';
+
   // Quick note
   h+='<div style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:36px;cursor:pointer" onclick="sv(\'journal\')">';
   h+='<div style="width:34px;height:34px;min-width:34px;background:var(--cream-light);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>';
@@ -485,7 +497,7 @@ function rHome(td,ts,comp,sk,q){
   h+='<span><strong style="color:var(--green)">Your Coach</strong> Andy Hite</span>';
   h+='<span style="color:var(--border)">|</span><a href="tel:3127728525" style="color:var(--green);text-decoration:none">312-772-8525</a>';
   h+='<span style="color:var(--border)">|</span><a href="mailto:andy@scalingminds.com" style="color:var(--green);text-decoration:none">andy@scalingminds.com</a>';
-  h+='<span style="color:var(--border)">|</span><strong style="color:var(--green)">Client Success</strong> <a href="mailto:sasha@scalingminds.com" style="color:var(--green);text-decoration:none">Sasha Vargas</a>';
+  h+='<span style="color:var(--border)">|</span><strong style="color:var(--green)">Client Success</strong> <a href="mailto:sasha@scalingminds.com" style="color:var(--green);text-decoration:none">Sasha Vargas</a> <a href="mailto:sasha@scalingminds.com" style="color:var(--text-muted);text-decoration:none;font-size:11px">sasha@scalingminds.com</a>';
   h+='</div>';
   return h;
 }
@@ -640,14 +652,10 @@ function rProgress(td,data){
   h+='<div class="stats-grid"><div class="stat-card"><div class="sv" style="color:'+(ar>=70?'var(--check-green)':ar>=40?'var(--gold)':'#c0392b')+'">'+ar+'%</div><div class="sl">Completion Rate</div></div>';
   h+='<div class="stat-card"><div class="sv">'+sk+'</div><div class="sl">Day Streak</div></div>';
   h+='<div class="stat-card"><div class="sv">'+pd+'</div><div class="sl">Perfect Days</div></div></div>';
-  h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--green);margin-bottom:10px">By Habit</h3>';
-  hr.forEach(function(r){var cat=CATS.find(function(c){return c.id===r.category;})||CATS[6];var bc=r.rate>=70?'var(--check-green)':r.rate>=40?'var(--gold)':'#c0392b';
-    h+='<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div><span style="font-weight:600;font-size:13px">'+e(r.name)+'</span><span class="hcat '+cat.c+'" style="margin-left:6px">'+cat.l+'</span><span style="font-size:10px;color:var(--text-muted);margin-left:6px">'+r.freq+'</span></div><span style="font-weight:700;color:var(--green);font-size:13px">'+r.rate+'%</span></div><div style="background:var(--cream-light);border-radius:4px;height:6px;overflow:hidden"><div style="background:'+bc+';height:100%;width:'+r.rate+'%;border-radius:4px"></div></div></div>';
-  });
-  // Goals progress
+  // Goals progress (above habits)
   var goals=data.goals||[];
   if(goals.length>0){
-    h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--green);margin:24px 0 10px">Goal Progress</h3>';
+    h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--green);margin:20px 0 10px">Goal Progress</h3>';
     goals.forEach(function(g){
       var pct=g.progress||0,bc2=pct>=70?'var(--check-green)':pct>=40?'var(--gold)':'var(--green-muted)';
       h+='<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600;font-size:13px;color:var(--green)">'+e(g.title)+'</span><span class="goal-status gs-'+g.status+'" style="font-size:9px">'+g.status+'</span></div>';
@@ -655,6 +663,10 @@ function rProgress(td,data){
       h+='<div style="display:flex;align-items:center;gap:10px"><div style="flex:1;background:var(--cream-light);border-radius:4px;height:6px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+pct+'%;background:'+bc2+'"></div></div><span style="font-weight:700;color:var(--green);font-size:13px">'+pct+'%</span></div></div>';
     });
   }
+  h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--green);margin:20px 0 10px">By Habit</h3>';
+  hr.forEach(function(r){var cat=CATS.find(function(c){return c.id===r.category;})||CATS[6];var bc=r.rate>=70?'var(--check-green)':r.rate>=40?'var(--gold)':'#c0392b';
+    h+='<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div><span style="font-weight:600;font-size:13px">'+e(r.name)+'</span><span class="hcat '+cat.c+'" style="margin-left:6px">'+cat.l+'</span><span style="font-size:10px;color:var(--text-muted);margin-left:6px">'+r.freq+'</span></div><span style="font-weight:700;color:var(--green);font-size:13px">'+r.rate+'%</span></div><div style="background:var(--cream-light);border-radius:4px;height:6px;overflow:hidden"><div style="background:'+bc+';height:100%;width:'+r.rate+'%;border-radius:4px"></div></div></div>';
+  });
   return h;
 }
 
@@ -816,21 +828,38 @@ function rCA(){
 
 function rCL(){
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green)">Your Clients</h2>';
-  h+='<div style="display:flex;gap:8px;align-items:center"><label style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="show-arch" onchange="R()"'+(S._showArch?' checked':'')+'> Show archived</label><button class="exp" onclick="eacsv()">Export</button><button class="btn bs" onclick="ref()">Refresh</button></div></div>';
+  h+='<div style="display:flex;gap:8px;align-items:center"><label style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="grp-co" onchange="S._grpCo=this.checked;R()"'+(S._grpCo?' checked':'')+'> Group by company</label><label style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="show-arch" onchange="R()"'+(S._showArch?' checked':'')+'> Archived</label><button class="exp" onclick="eacsv()">Export</button><button class="btn bs" onclick="ref()">Refresh</button></div></div>';
   S._showArch=document.getElementById('show-arch')&&document.getElementById('show-arch').checked;
   var active=S.cls.filter(function(c){return !c.archived;});
   var archived=S.cls.filter(function(c){return c.archived;});
   var list=S._showArch?S.cls:active;
   if(list.length===0)return h+'<div class="empty"><div class="ei">👥</div><h3>No clients yet</h3></div>';
   var sorted=list.slice().sort(function(a,b){if(a.archived!==b.archived)return a.archived?1:-1;var ai=ds(la(a))>=ID?0:1,bi=ds(la(b))>=ID?0:1;if(ai!==bi)return ai-bi;return(a.displayName||'').localeCompare(b.displayName||'');});
-  h+='<div class="client-grid">';
-  sorted.forEach(function(c,i){var r=crate(c),sk=streak(c),lv=la(c),ina=ds(lv)>=ID;
-    h+='<div class="cc'+(ina&&!c.archived?' inactive':'')+(c.archived?' inactive':'')+'" onclick="selByUid(\''+c.uid+'\')" style="'+(c.archived?'opacity:0.6':'')+'">';
-    h+='<div class="ct">';if(c.photoURL)h+='<img class="ca" src="'+c.photoURL+'" alt="">';
-    h+='<div><div class="cn">'+e(c.displayName)+(c.archived?'<span class="itag" style="background:var(--cream-light);color:var(--text-muted)">Archived</span>':ina?'<span class="itag">'+ds(lv)+'d inactive</span>':'')+'</div>';
-    h+='<div class="ce">'+e(c.email)+(c.company?' &middot; '+e(c.company):'')+'</div></div></div>';
-    h+='<div class="cstats"><div><span class="csv">'+r+'%</span>rate</div><div><span class="csv">'+sk+'</span>streak</div><div><span class="csv">'+c.habits.length+'</span>habits</div><div><span class="csv">'+(lv||'\u2014')+'</span>last</div></div></div>';
-  });h+='</div>';
+
+  if(S._grpCo){
+    var groups={};sorted.forEach(function(c){var co=c.company||'No Company';if(!groups[co])groups[co]=[];groups[co].push(c);});
+    var gkeys=Object.keys(groups).sort(function(a,b){if(a==='No Company')return 1;if(b==='No Company')return -1;return a.localeCompare(b);});
+    gkeys.forEach(function(co){
+      h+='<div style="margin-bottom:20px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--green-muted);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">'+e(co)+' <span style="font-weight:400;color:var(--text-muted)">('+groups[co].length+')</span></div>';
+      h+='<div class="client-grid">';
+      groups[co].forEach(function(c){var r=crate(c),sk=streak(c),lv=la(c),ina=ds(lv)>=ID;
+        h+='<div class="cc'+(ina&&!c.archived?' inactive':'')+(c.archived?' inactive':'')+'" onclick="selByUid(\''+c.uid+'\')" style="'+(c.archived?'opacity:0.6':'')+'">';
+        h+='<div class="ct">';if(c.photoURL)h+='<img class="ca" src="'+c.photoURL+'" alt="">';
+        h+='<div><div class="cn">'+e(c.displayName)+(c.archived?'<span class="itag" style="background:var(--cream-light);color:var(--text-muted)">Archived</span>':ina?'<span class="itag">'+ds(lv)+'d inactive</span>':'')+'</div>';
+        h+='<div class="ce">'+e(c.email)+(c.title?' &middot; '+e(c.title):'')+'</div></div></div>';
+        h+='<div class="cstats"><div><span class="csv">'+r+'%</span>rate</div><div><span class="csv">'+sk+'</span>streak</div><div><span class="csv">'+c.habits.length+'</span>habits</div><div><span class="csv">'+(lv||'\u2014')+'</span>last</div></div></div>';
+      });h+='</div></div>';
+    });
+  } else {
+    h+='<div class="client-grid">';
+    sorted.forEach(function(c,i){var r=crate(c),sk=streak(c),lv=la(c),ina=ds(lv)>=ID;
+      h+='<div class="cc'+(ina&&!c.archived?' inactive':'')+(c.archived?' inactive':'')+'" onclick="selByUid(\''+c.uid+'\')" style="'+(c.archived?'opacity:0.6':'')+'">';
+      h+='<div class="ct">';if(c.photoURL)h+='<img class="ca" src="'+c.photoURL+'" alt="">';
+      h+='<div><div class="cn">'+e(c.displayName)+(c.archived?'<span class="itag" style="background:var(--cream-light);color:var(--text-muted)">Archived</span>':ina?'<span class="itag">'+ds(lv)+'d inactive</span>':'')+'</div>';
+      h+='<div class="ce">'+e(c.email)+(c.company?' &middot; '+e(c.company):'')+'</div></div></div>';
+      h+='<div class="cstats"><div><span class="csv">'+r+'%</span>rate</div><div><span class="csv">'+sk+'</span>streak</div><div><span class="csv">'+c.habits.length+'</span>habits</div><div><span class="csv">'+(lv||'\u2014')+'</span>last</div></div></div>';
+    });h+='</div>';
+  }
   if(!S._showArch&&archived.length>0)h+='<div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-muted)">'+archived.length+' archived client'+(archived.length!==1?'s':'')+' hidden</div>';
   return h;
 }
