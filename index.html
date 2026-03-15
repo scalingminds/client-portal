@@ -552,8 +552,13 @@ function rGoals(data){
 function gCard(g,isInactive){
   var pct=g.progress||0;
   var h='<div class="goal-card" style="'+(isInactive?'opacity:0.65;':'')+'"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">';
-  h+='<div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green)">'+e(g.title)+'</div>';
-  h+='<span class="goal-status gs-'+g.status+'">'+g.status+'</span></div>';
+  h+='<div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);flex:1">'+e(g.title)+'</div>';
+  h+='<select style="font-size:10px;font-weight:600;padding:3px 6px;border:1px solid var(--border);border-radius:4px;color:var(--green-muted);background:var(--white);cursor:pointer" onchange="cgst(\''+g.id+'\',this.value)">';
+  h+='<option value="active"'+(g.status==='active'?' selected':'')+'>Active</option>';
+  h+='<option value="completed"'+(g.status==='completed'?' selected':'')+'>Completed</option>';
+  h+='<option value="paused"'+(g.status==='paused'?' selected':'')+'>Paused</option>';
+  h+='<option value="inactive"'+(g.status==='inactive'?' selected':'')+'>Inactive</option>';
+  h+='</select></div>';
   if(g.outcome)h+='<div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">'+e(g.outcome)+'</div>';
   if(g.desc)h+='<div style="font-size:13px;line-height:1.5;margin-bottom:8px">'+e(g.desc)+'</div>';
   h+='<div style="display:flex;align-items:center;gap:10px"><div style="flex:1;background:var(--cream-light);border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+pct+'%;background:'+(isInactive?'#ccc':pct>=70?'var(--check-green)':pct>=40?'var(--gold)':'var(--green-muted)')+'"></div></div>';
@@ -1067,6 +1072,7 @@ function dtd(i){if(!confirm('Remove this to-do?'))return;S.data.todos=(S.data.to
 function ssp(v){S.data.sessionPrep=v;save();}
 function cag(){var t=document.getElementById('cgt').value.trim();if(!t)return;var o=document.getElementById('cgo').value.trim();S.data.goals=S.data.goals||[];S.data.goals.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active',progress:0});save();R();}
 function ugp(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.progress=parseInt(val)||0;save();}}
+function cgst(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.status=val;save();R();}}
 function sn(k,v){if(!S.data.notes)S.data.notes={};S.data.notes[k]=v;save();}
 function dn(k){if(!confirm('Delete?'))return;delete S.data.notes[k];save();R();}
 
