@@ -189,7 +189,7 @@ var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,
 
 // Helpers
 function dq(){var t=new Date();return QT[(t.getFullYear()*10000+(t.getMonth()+1)*100+t.getDate())%QT.length];}
-function dk(d){return d.toISOString().split('T')[0];}
+function dk(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function wd(){var t=new Date(),d=t.getDay(),m=new Date(t);m.setDate(t.getDate()-((d+6)%7));var r=[];for(var i=0;i<7;i++){var x=new Date(m);x.setDate(m.getDate()+i);r.push(x);}return r;}
 function ic(){return S.user&&CE.indexOf(S.user.email)!==-1;}
@@ -366,13 +366,14 @@ function rHome(td,ts,comp,sk,q){
     if(todos.length>0){var td2=todos.filter(function(t){return t.done;}).length;
       h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:var(--green)">To-Dos</div><span style="font-size:11px;color:var(--text-muted)">'+td2+'/'+todos.length+' done</span></div>';
       todos.forEach(function(t,i){
-        h+='<div style="display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--cream-light);cursor:pointer" onclick="tt('+i+')">';
-        h+='<div style="width:18px;height:18px;min-width:18px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;margin-top:1px">';
+        h+='<div style="display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--cream-light)">';
+        h+='<div style="width:18px;height:18px;min-width:18px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;margin-top:1px;cursor:pointer" onclick="tt('+i+')">';
         if(t.done)h+='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
         h+='</div><div style="flex:1"><div style="font-size:12px;'+(t.done?'color:var(--green-muted);text-decoration:line-through':'')+'">'+e(t.text)+'</div>';
         if(t.link)h+='<a href="'+e(t.link)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:10px;color:var(--green);text-decoration:none">↗ link</a>';
-        h+='</div></div>';
+        h+='</div><button class="abtn del" onclick="dtd('+i+')" style="opacity:0.5;width:20px;height:20px" title="Remove"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
       });
+      h+='<div style="display:flex;gap:6px;margin-top:8px"><input class="fi" id="ctd" type="text" placeholder="Add a to-do..." style="font-size:11px;padding:6px 10px"><button class="btn bp" onclick="catd()" style="padding:6px 12px;font-size:11px">Add</button></div>';
       h+='</div></div>';
     }
     // Goals
@@ -406,6 +407,24 @@ function rHome(td,ts,comp,sk,q){
     h+='<div style="font-size:24px;margin-bottom:12px">👋</div>';
     h+='<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:6px">Welcome to your coaching portal</div>';
     h+='<div style="font-size:13px;color:var(--text-muted);max-width:360px;margin:0 auto">Your coach will set things up for you soon. In the meantime, check out your Documents tab for onboarding materials.</div></div>';
+  }
+
+  // Compact habits on home
+  if(S.data.habits.length>0){
+    var dueToday=S.data.habits.filter(function(h2){return hdue(h2,td);});
+    if(dueToday.length>0){
+      var doneCount=dueToday.filter(function(h2){return comp.indexOf(h2.id)!==-1;}).length;
+      h+='<div class="card" style="margin-bottom:36px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div style="font-size:13px;font-weight:700;color:var(--green)">Today\'s Habits</div><span style="font-size:11px;color:var(--text-muted)">'+doneCount+'/'+dueToday.length+'</span></div>';
+      dueToday.forEach(function(hab){var ck=comp.indexOf(hab.id)!==-1;var flbl=hab.freq==='days'?(hab.freqDays||[]).map(function(d2){return DS[d2];}).join(', '):hab.freq==='weekly'?(hab.freqPerWeek||1)+'x/wk':'';
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--cream-light)">';
+        h+='<div style="width:20px;height:20px;min-width:20px;border-radius:50%;border:2px solid '+(ck?'var(--check-green)':'var(--border)')+';background:'+(ck?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="th(\''+hab.id+'\')">';
+        if(ck)h+='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        h+='</div><div style="font-size:12px;font-weight:500;flex:1;'+(ck?'color:var(--green-muted)':'')+'">'+e(hab.name)+'</div>';
+        if(flbl)h+='<span style="font-size:10px;color:var(--text-muted)">'+flbl+'</span>';
+        h+='</div>';
+      });
+      h+='</div>';
+    }
   }
 
   // Quick note
@@ -472,6 +491,10 @@ function rSessions(data){
     h+='<div><div style="font-size:14px;font-weight:600;color:var(--text)">No session scheduled</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">Book your next coaching session when you\'re ready.</div></div>';
     h+='<a href="'+CAL+'" target="_blank" class="schedule-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schedule a Session</a></div>';
   }
+  // Pre-session check-in link
+  h+='<a href="https://scalingminds.github.io/coaching-check-in/" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.boxShadow=\'0 2px 12px rgba(27,67,50,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
+  h+='<div style="width:36px;height:36px;min-width:36px;background:rgba(184,134,11,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>';
+  h+='<div><div style="font-size:14px;font-weight:600;color:var(--green)">Pre-Session Check-In</div><div style="font-size:12px;color:var(--text-muted)">Complete before your next session</div></div></a>';
   // Session prep
   var sp=false;
   if(data.nextSession){var nd;if(data.nextSession.indexOf('T')!==-1)nd=new Date(data.nextSession);else{var np=data.nextSession.split('-');nd=new Date(np[0],np[1]-1,np[2]);}if((nd-new Date())/36e5<=48&&(nd-new Date())/36e5>-24)sp=true;}
@@ -887,6 +910,8 @@ function cmo(ev){if(ev.target.classList.contains('modal-overlay'))cm();}
 function sh(){var n=document.getElementById('hn').value.trim(),d=document.getElementById('hd').value.trim(),c=document.getElementById('hcat').value,fr=document.getElementById('hfreq').value,fpw=parseInt(document.getElementById('hfpw').value)||1;if(!n)return;if(S.eh){var hb=S.data.habits.find(function(x){return x.id===S.eh;});if(hb){hb.name=n;hb.desc=d;hb.category=c;hb.freq=fr;hb.freqDays=_fdSel.slice();hb.freqPerWeek=fpw;}}else{S.data.habits.push({id:'h'+Date.now(),name:n,desc:d,category:c,freq:fr,freqDays:_fdSel.slice(),freqPerWeek:fpw});}save();cm();}
 function dh(id){if(!confirm('Remove this habit?'))return;S.data.habits=S.data.habits.filter(function(h){return h.id!==id;});save();R();}
 function tt(i){var t=S.data.todos||[];if(t[i]){t[i].done=!t[i].done;save();R();}}
+function catd(){var el=document.getElementById('ctd');if(!el)return;var t=el.value.trim();if(!t)return;S.data.todos=S.data.todos||[];S.data.todos.push({id:'t'+Date.now(),text:t,link:'',done:false});save();R();}
+function dtd(i){if(!confirm('Remove this to-do?'))return;S.data.todos=(S.data.todos||[]).slice();S.data.todos.splice(i,1);save();R();}
 function ssp(v){S.data.sessionPrep=v;save();}
 function cag(){var t=document.getElementById('cgt').value.trim();if(!t)return;var o=document.getElementById('cgo').value.trim();S.data.goals=S.data.goals||[];S.data.goals.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active',progress:0});save();R();}
 function ugp(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.progress=parseInt(val)||0;save();}}
