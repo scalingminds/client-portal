@@ -423,14 +423,6 @@ function rC(){
   h+='</div><div class="footer">&copy; Scaling Minds &middot; Client Portal</div>';
   h+='<div class="modal-overlay'+(S.mo?' open':'')+'" onclick="cmo(event)"><div class="modal">'+rModal()+'</div></div>';
   app.innerHTML=h;
-  // Init Calendly embed if on sessions page
-  if(S.view==='sessions'){
-    var calEmbed=document.getElementById('calendly-embed');
-    if(calEmbed&&window.Calendly){
-      var calEmbedUrl=(S.data.calendlyUrl||CAL)+'?hide_gdpr_banner=1&hide_landing_page_details=1';
-      window.Calendly.initInlineWidget({url:calEmbedUrl,parentElement:calEmbed,prefill:{name:S.user.displayName||'',email:S.user.email||''}});
-    }
-  }
 }
 
 // HOME
@@ -622,21 +614,16 @@ function rSessions(data){
     h+='<div style="width:36px;height:36px;min-width:36px;background:var(--cream-light);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>';
     h+='<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Upcoming</div><div style="font-weight:600;font-size:14px;color:var(--green)">'+fdt(data.nextSession)+'</div></div>';
     h+='<a href="'+ZM+'" target="_blank" class="zoom-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Zoom</a></div>';
-    h+='<a class="schedule-btn" href="'+calUrl+'" target="_blank"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schedule</a></div>';
+    h+='<div class="schedule-btn" onclick="openCal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schedule</div></div>';
   } else {
     h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin:14px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">';
     h+='<div><div style="font-size:14px;font-weight:600;color:var(--text)">No session scheduled</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">Book your next coaching session when you\'re ready.</div></div>';
-    h+='<a href="'+calUrl+'" target="_blank" class="schedule-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schedule a Session</a></div>';
+    h+='<div class="schedule-btn" onclick="openCal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schedule a Session</div></div>';
   }
   // Pre-session check-in link
   h+='<a href="https://scalingminds.github.io/coaching-check-in/" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.boxShadow=\'0 2px 12px rgba(27,67,50,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
   h+='<div style="width:36px;height:36px;min-width:36px;background:rgba(184,134,11,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>';
   h+='<div><div style="font-size:14px;font-weight:600;color:var(--green)">Pre-Session Check-In</div><div style="font-size:12px;color:var(--text-muted)">Complete before your next session</div></div></a>';
-
-  // Calendly inline embed
-  h+='<div class="card" style="margin-bottom:14px;padding:0;overflow:hidden">';
-  h+='<div style="padding:16px 20px 8px"><div style="font-size:14px;font-weight:700;color:var(--green)">Schedule a Session</div><div style="font-size:12px;color:var(--text-muted)">Pick a time that works for you</div></div>';
-  h+='<div id="calendly-embed" style="min-height:580px"></div></div>';
 
   // Session prep
   var sp=false;
@@ -1151,6 +1138,7 @@ function tt(i){var t=S.data.todos||[];if(t[i]){t[i].done=!t[i].done;save();R();}
 function catd(){var el=document.getElementById('ctd');if(!el)return;var t=el.value.trim();if(!t)return;S.data.todos=S.data.todos||[];S.data.todos.push({id:'t'+Date.now(),text:t,link:'',done:false});save();R();}
 function dtd(i){if(!confirm('Remove this to-do?'))return;S.data.todos=(S.data.todos||[]).slice();S.data.todos.splice(i,1);save();R();}
 function ssp(v){S.data.sessionPrep=v;save();}
+function openCal(){var url=(S.data.calendlyUrl||CAL);if(window.Calendly){window.Calendly.initPopupWidget({url:url+'?hide_gdpr_banner=1',prefill:{name:S.user.displayName||'',email:S.user.email||''}});}else{window.open(url,'_blank');}}
 function cag(){var t=document.getElementById('cgt').value.trim();if(!t)return;var o=document.getElementById('cgo').value.trim();S.data.goals=S.data.goals||[];S.data.goals.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active',progress:0});save();R();}
 function ugp(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.progress=parseInt(val)||0;save();}}
 function cgst(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.status=val;save();R();}}
