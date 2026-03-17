@@ -1254,11 +1254,22 @@ function _placeTourCard(step){
   }
 
   var hl='';
+  var cardTop=null,cardLeft=null,cardBottom=null,cardTransform='';
+
   if(targetEl&&!step.last){
     var r=targetEl.getBoundingClientRect();
-    hl='<div style="position:fixed;z-index:502;border-radius:6px;box-shadow:0 0 0 3px var(--gold),0 0 0 9999px rgba(0,0,0,0.5);pointer-events:none;top:'+(r.top-4)+'px;left:'+(r.left-6)+'px;width:'+(r.width+12)+'px;height:'+(r.height+8)+'px;transition:all 0.3s"></div>';
+    hl='<div style="position:fixed;z-index:502;border-radius:6px;box-shadow:0 0 0 4px var(--gold),0 0 0 9999px rgba(0,0,0,0.55);pointer-events:none;top:'+(r.top-5)+'px;left:'+(r.left-8)+'px;width:'+(r.width+16)+'px;height:'+(r.height+10)+'px;"></div>';
+    // Position card below the nav tab, centered on it
+    var cardW=340;
+    var cx=r.left+r.width/2;
+    var cl=Math.max(12,Math.min(window.innerWidth-cardW-12,cx-cardW/2));
+    cardTop=(r.bottom+16)+'px';
+    cardLeft=cl+'px';
   } else {
-    hl='<div style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:501;pointer-events:all" onclick=""></div>';
+    hl='<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:501;pointer-events:all;"></div>';
+    cardBottom='40px';
+    cardLeft='50%';
+    cardTransform='translateX(-50%)';
   }
 
   // Build dots
@@ -1266,17 +1277,20 @@ function _placeTourCard(step){
   for(var i=0;i<total;i++)dots+='<div class="tour-dot'+(i===_tourStep?' active':'')+'"></div>';
   dots+='</div>';
 
-  // Card position: bottom-center on mobile, near nav on desktop
-  var cardStyle='position:fixed;z-index:503;bottom:32px;left:50%;transform:translateX(-50%);background:var(--white);border-radius:16px;padding:22px 24px;width:min(360px,90vw);box-shadow:0 12px 40px rgba(27,67,50,0.22);pointer-events:all;';
+  var posStyle='position:fixed;z-index:503;width:min(340px,90vw);background:var(--white);border-radius:16px;padding:24px 26px;box-shadow:0 12px 48px rgba(27,67,50,0.25);pointer-events:all;';
+  if(cardTop)posStyle+='top:'+cardTop+';left:'+cardLeft+';';
+  else posStyle+='bottom:'+cardBottom+';left:'+cardLeft+';transform:'+cardTransform+';';
 
   var isLast=!!step.last;
-  var card='<div style="'+cardStyle+'">';
+  var card='<div style="'+posStyle+'">';
+  // Arrow pointing up to the nav tab
+  if(cardTop&&!step.last)card+='<div style="position:absolute;top:-9px;left:32px;width:18px;height:18px;background:var(--white);transform:rotate(45deg);border-radius:2px;box-shadow:-2px -2px 6px rgba(27,67,50,0.08)"></div>';
   card+=dots;
-  card+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:6px">'+step.title+'</h3>';
-  card+='<p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:18px">'+step.body+'</p>';
+  card+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:20px;color:var(--green);margin-bottom:8px">'+step.title+'</h3>';
+  card+='<p style="font-size:14px;color:var(--text-muted);line-height:1.65;margin-bottom:20px">'+step.body+'</p>';
   card+='<div style="display:flex;align-items:center;gap:8px">';
   if(!isLast)card+='<button class="tour-skip" onclick="endTour()">Skip tour</button>';
-  card+='<button class="tour-next" onclick="'+(isLast?'endTour()':'nextTourStep()')+'" style="margin-left:auto">'+(isLast?'Get started →':'Next →')+'</button>';
+  card+='<button class="tour-next" onclick="'+(isLast?'endTour()':'nextTourStep()')+'" style="margin-left:auto;padding:11px 22px;font-size:14px">'+(isLast?'Get started →':'Next →')+'</button>';
   card+='</div></div>';
 
   overlay.innerHTML=hl+card;
