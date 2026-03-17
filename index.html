@@ -1567,8 +1567,11 @@ function gbRender(){
 }
 
 function gbAiHtml(step){
-  if(!GB.aiResponses[step]) return '';
-  return '<div class="gb-ai-label">Coach response</div><div class="gb-ai-box">'+gbE(GB.aiResponses[step])+'</div>';
+  var r = GB.aiResponses[step];
+  if(!r) return '';
+  if(r === '__loading__') return '<div class="gb-ai-label" style="margin-top:16px">Coach response</div><div class="gb-ai-box gb-loading">Thinking</div>';
+  if(r === '__error__') return '';
+  return '<div class="gb-ai-label" style="margin-top:16px">Coach response</div><div class="gb-ai-box">'+gbE(r)+'</div>';
 }
 
 function gbStep0(){
@@ -1692,8 +1695,9 @@ function gbGetAI(step){
   var prompts = {0:p0, 1:p1, 2:p2, 3:p3};
   if(!prompts[step]) return;
 
-  var bodyEl = document.getElementById('gbBody');
-  if(bodyEl) bodyEl.innerHTML += '<div class="gb-ai-label" style="margin-top:16px">Coach response</div><div class="gb-ai-box gb-loading" id="gbAiBox'+step+'">Thinking</div>';
+  // Show loading state by re-rendering with a placeholder
+  GB.aiResponses[step] = '__loading__';
+  gbRender();
 
   fetch('https://anthropic-proxy.andy-91f.workers.dev',{
     method:'POST',
@@ -1706,13 +1710,12 @@ function gbGetAI(step){
   }).then(function(r){return r.json();})
   .then(function(data){
     var text = (data.content&&data.content[0]&&data.content[0].text) ? data.content[0].text : '';
-    GB.aiResponses[step] = text;
-    var box = document.getElementById('gbAiBox'+step);
-    if(box){ box.classList.remove('gb-loading'); box.textContent = text; }
+    GB.aiResponses[step] = text || '__error__';
+    gbRender();
   })
   .catch(function(){
-    var box = document.getElementById('gbAiBox'+step);
-    if(box){ box.classList.remove('gb-loading'); box.textContent = ''; }
+    GB.aiResponses[step] = '';
+    gbRender();
   });
 }
 
