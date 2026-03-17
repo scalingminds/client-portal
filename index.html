@@ -1576,31 +1576,29 @@ function gbAiHtml(step){
 
 function gbStep0(){
   return '<div class="gb-step-title">Name the goal</div>'+
-    '<div class="gb-step-desc">Write it in plain language, how you would say it out loud. Do not worry about making it perfect yet.</div>'+
+    '<div class="gb-step-desc">Write it the way you would say it to a trusted colleague. Plain language. No jargon. Do not edit yourself — you will sharpen it as you go.</div>'+
+    '<div style="background:#f0f7f3;border-left:3px solid #40916C;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:20px;font-size:13.5px;color:#1B4332;line-height:1.7;">'+
+    'Think about what has been on your mind lately — something you keep meaning to address, a gap between where you are and where you want to be, or a change you know needs to happen. Start there.'+
+    '</div>'+
     '<label class="gb-label">What do you want to achieve?</label>'+
-    '<textarea class="gb-input" id="gbTitle" rows="3" placeholder="e.g. Stop being the bottleneck on my team decisions">'+gbE(GB.data.title)+'</textarea>';
+    '<textarea class="gb-input" id="gbTitle" rows="4" placeholder="Write freely. e.g. I want to stop being the last person to leave every decision — my team needs to own more.">'+gbE(GB.data.title)+'</textarea>';
 }
 
 function gbStep1(){
-  var ai = gbAiHtml(0);
   return '<div class="gb-step-title">The why</div>'+
     '<div class="gb-step-desc">Goals without a strong reason behind them do not survive. What is really driving this?</div>'+
     '<label class="gb-label">Why does this matter to you right now?</label>'+
-    '<textarea class="gb-input" id="gbWhy" rows="4" placeholder="Be honest. Not what sounds good, what is true.">'+gbE(GB.data.why)+'</textarea>'+
-    (ai ? '<div style="margin-top:16px">'+ai+'</div>' : '');
+    '<textarea class="gb-input" id="gbWhy" rows="4" placeholder="Be honest. Not what sounds good, what is true.">'+gbE(GB.data.why)+'</textarea>';
 }
 
 function gbStep2(){
-  var ai = gbAiHtml(1);
   return '<div class="gb-step-title">Define success</div>'+
     '<div class="gb-step-desc">Vague goals stay vague. Name exactly what done looks like. Not how you feel, what you can observe or measure.</div>'+
     '<label class="gb-label">How will you know when you have achieved this?</label>'+
-    '<textarea class="gb-input" id="gbOutcome" rows="4" placeholder="e.g. My team makes 80% of routine decisions without looping me in">'+gbE(GB.data.outcome)+'</textarea>'+
-    (ai ? '<div style="margin-top:16px">'+ai+'</div>' : '');
+    '<textarea class="gb-input" id="gbOutcome" rows="4" placeholder="e.g. My team makes 80% of routine decisions without looping me in">'+gbE(GB.data.outcome)+'</textarea>';
 }
 
 function gbStep3(){
-  var ai = gbAiHtml(2);
   var h = '<div class="gb-step-title">Name the obstacles</div>'+
     '<div class="gb-step-desc">What is most likely to get in your way? Naming them now is how you beat them.</div>';
   for(var i=0;i<2;i++){
@@ -1609,7 +1607,6 @@ function gbStep3(){
       '<textarea class="gb-input" id="gbObs'+i+'" rows="2" placeholder="Obstacle '+(i+1)+'..." style="margin-top:8px">'+gbE(GB.data.obstacles[i])+'</textarea>'+
       '</div>';
   }
-  if(ai) h += '<div style="margin-top:16px">'+ai+'</div>';
   return h;
 }
 
@@ -1681,59 +1678,11 @@ function gbNext(){
   gbSaveCurrentStep();
   if(!gbValidate()) return;
   if(GB.step===GB_STEPS.length-1){ gbSaveGoal(); return; }
-  var stepToAI = GB.step;
   GB.step++;
   gbRender();
-  gbGetAI(stepToAI);
 }
 
-function gbGetAI(step){
-  if(GB.aiResponses[step] && GB.aiResponses[step] !== '__loading__') return;
-  var p0 = 'A coaching client just wrote their goal: "'+GB.data.title+'". In 2-3 sentences, reflect back what you hear, name what makes it compelling or where it might still be vague, and ask one clarifying question to sharpen it. Be direct and warm, like a coach not a therapist.';
-  var p1 = 'A coaching client said their goal is "'+GB.data.title+'" and their why is: "'+GB.data.why+'". In 2-3 sentences, acknowledge what you hear, note whether this why feels surface-level or genuinely motivating, and ask one question that goes deeper if needed. Be direct.';
-  var p2 = 'A client goal: "'+GB.data.title+'". Their success measure: "'+GB.data.outcome+'". In 2 sentences, confirm whether this is specific and observable enough to measure progress, and name one way to make it even crisper if needed.';
-  var obs = GB.data.obstacles.filter(function(o){return o;}).map(function(o){return '"'+o+'"';}).join(', ');
-  var p3 = 'A client goal: "'+GB.data.title+'". Obstacles they named: '+obs+'. In 2-3 sentences, acknowledge what they named and ask one question about the obstacle most likely to actually stop them.';
-  var prompts = {0:p0, 1:p1, 2:p2, 3:p3};
-  if(!prompts[step]) return;
-
-  GB.aiResponses[step] = '__loading__';
-  gbRender();
-
-  fetch('https://anthropic-proxy.andy-91f.workers.dev',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:200,
-      messages:[{role:'user',content:prompts[step]}]
-    })
-  })
-  .then(function(r){
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return r.json();
-  })
-  .then(function(data){
-    var text = '';
-    if(data && data.content && data.content[0] && data.content[0].text){
-      text = data.content[0].text;
-    } else if(data && data.error){
-      text = 'Note: '+data.error.message;
-    }
-    // Only update if we got something useful — never erase with empty
-    if(text) {
-      GB.aiResponses[step] = text;
-      gbRender();
-    }
-  })
-  .catch(function(){
-    // On failure just clear the loading state silently — don't wipe with empty
-    if(GB.aiResponses[step] === '__loading__'){
-      delete GB.aiResponses[step];
-      gbRender();
-    }
-  });
-}
+function gbGetAI(step){ /* AI removed — static prompts are enough */ }
 
 function gbSaveGoal(){
   var ns = GB.data.nextSteps.filter(function(s){ return s.task; });
