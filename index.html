@@ -798,15 +798,17 @@ function rSessions(data){
     h+='<div><div style="font-size:14px;font-weight:600;color:var(--text)">No session scheduled</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">Book your next coaching session when you\'re ready.</div></div>';
     h+='<div class="schedule-btn" onclick="openCal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schedule a Session</div></div>';
   }
-  // Pre-session check-in link + Zoom side by side
-  h+='<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">';
-  h+='<a onclick="openCheckin()" style="flex:1;cursor:pointer;min-width:180px;display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.boxShadow=\'0 2px 12px rgba(27,67,50,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
-  h+='<div style="width:36px;height:36px;min-width:36px;background:rgba(184,134,11,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>';
-  h+='<div><div style="font-size:14px;font-weight:600;color:var(--green)">Pre-Session Check-In</div><div style="font-size:12px;color:var(--text-muted)">Complete before your next session</div></div></div>';
-  h+='<a href="'+ZM+'" target="_blank" style="display:flex;align-items:center;gap:12px;background:#2D8CFF;border-radius:12px;padding:14px 18px;text-decoration:none">';
-  h+='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
-  h+='<div><div style="font-size:14px;font-weight:600;color:white">Join Zoom</div><div style="font-size:11px;color:rgba(255,255,255,0.75)">Open meeting room</div></div></a>';
-  h+='</div>';
+  // Pre-session check-in link + Zoom — only show when session is booked
+  if(data.nextSession){
+    h+='<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">';
+    h+='<a onclick="openCheckin()" style="flex:1;cursor:pointer;min-width:180px;display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.boxShadow=\'0 2px 12px rgba(27,67,50,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
+    h+='<div style="width:36px;height:36px;min-width:36px;background:rgba(184,134,11,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>';
+    h+='<div><div style="font-size:14px;font-weight:600;color:var(--green)">Pre-Session Check-In</div><div style="font-size:12px;color:var(--text-muted)">Complete before your next session</div></div></div>';
+    h+='<a href="'+ZM+'" target="_blank" style="display:flex;align-items:center;gap:12px;background:#2D8CFF;border-radius:12px;padding:14px 18px;text-decoration:none">';
+    h+='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
+    h+='<div><div style="font-size:14px;font-weight:600;color:white">Join Zoom</div><div style="font-size:11px;color:rgba(255,255,255,0.75)">Open meeting room</div></div></a>';
+    h+='</div>';
+  }
 
   // Session history
   var sn=(data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
