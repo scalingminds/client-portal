@@ -290,7 +290,7 @@ var DN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
 var ID=7;
 
 // Default data shape
-function dd(){return{habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:'',docs:[],goals:[],sessionNotes:[]};}
+function dd(){return{habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:'',docs:[],goals:[],sessionNotes:[],checkIns:[]};}
 var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,cv:'clients',lib:[]};
 
 // Helpers
@@ -321,11 +321,11 @@ function ep(data){if(!data.startDate||!data.endDate)return null;var sp=data.star
 
 // Firebase
 var st=null;
-function save(){if(!S.user)return;clearTimeout(st);st=setTimeout(function(){var d=S.data;db.collection('users').doc(S.user.uid).set({habits:d.habits,completions:d.completions,notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[],displayName:S.user.displayName||'',email:S.user.email||'',photoURL:S.user.photoURL||'',updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});},800);}
+function save(){if(!S.user)return;clearTimeout(st);st=setTimeout(function(){var d=S.data;db.collection('users').doc(S.user.uid).set({habits:d.habits,completions:d.completions,notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[],checkIns:d.checkIns||[],displayName:S.user.displayName||'',email:S.user.email||'',photoURL:S.user.photoURL||'',updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});},800);}
 
-function load(cb){if(!S.user)return;db.collection('users').doc(S.user.uid).get().then(function(doc){if(doc.exists){var d=doc.data();S.data.habits=d.habits||[];S.data.completions=d.completions||{};S.data.notes=d.notes||{};S.data.startDate=d.startDate||null;S.data.endDate=d.endDate||null;S.data.nextSession=d.nextSession||null;S.data.focusOfWeek=d.focusOfWeek||'';S.data.todos=d.todos||[];S.data.sessionPrep=d.sessionPrep||'';S.data.docs=d.docs||[];S.data.goals=d.goals||[];S.data.sessionNotes=d.sessionNotes||[];S.data.calendlyUrl=d.calendlyUrl||null;}if(cb)cb();}).catch(function(){if(cb)cb();});}
+function load(cb){if(!S.user)return;db.collection('users').doc(S.user.uid).get().then(function(doc){if(doc.exists){var d=doc.data();S.data.habits=d.habits||[];S.data.completions=d.completions||{};S.data.notes=d.notes||{};S.data.startDate=d.startDate||null;S.data.endDate=d.endDate||null;S.data.nextSession=d.nextSession||null;S.data.focusOfWeek=d.focusOfWeek||'';S.data.todos=d.todos||[];S.data.sessionPrep=d.sessionPrep||'';S.data.docs=d.docs||[];S.data.goals=d.goals||[];S.data.sessionNotes=d.sessionNotes||[];S.data.checkIns=d.checkIns||[];S.data.calendlyUrl=d.calendlyUrl||null;}if(cb)cb();}).catch(function(){if(cb)cb();});}
 
-function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.forEach(function(doc){var d=doc.data();if(CE.indexOf(d.email)===-1){S.cls.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',phone:d.phone||'',birthday:d.birthday||'',address:d.address||'',company:d.company||'',title:d.title||'',archived:d.archived||false,habits:d.habits||[],completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[],calendlyUrl:d.calendlyUrl||null});}});if(cb)cb();}).catch(function(e2){console.error(e2);if(cb)cb();});}
+function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.forEach(function(doc){var d=doc.data();if(CE.indexOf(d.email)===-1){S.cls.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',phone:d.phone||'',birthday:d.birthday||'',address:d.address||'',company:d.company||'',title:d.title||'',archived:d.archived||false,habits:d.habits||[],completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[],checkIns:d.checkIns||[],calendlyUrl:d.calendlyUrl||null});}});if(cb)cb();}).catch(function(e2){console.error(e2);if(cb)cb();});}
 
 function scf(uid,f){db.collection('users').doc(uid).set(f,{merge:true}).then(function(){var c=S.cls.find(function(x){return x.uid===uid;});if(c)Object.keys(f).forEach(function(k){c[k]=f[k];});if(S.sc&&S.sc.uid===uid)Object.keys(f).forEach(function(k){S.sc[k]=f[k];});R();});}
 
@@ -474,19 +474,23 @@ function rHome(td,ts,comp,sk,q){
     h+='</div>';
   }
 
-  // Pre-session check-in — featured card
+  // Pre-session check-in — featured card (only within 48hrs of session)
+  var _showCard=false;
+  if(S.data.nextSession){var _nd;if(S.data.nextSession.indexOf('T')!==-1)_nd=new Date(S.data.nextSession);else{var _np=S.data.nextSession.split('-');_nd=new Date(_np[0],_np[1]-1,_np[2]);}var _hoursUntil=(_nd-new Date())/36e5;if(_hoursUntil<=48&&_hoursUntil>-1)_showCard=true;}
+  if(_showCard){
   h+='<div onclick="openCheckin()" style="display:block;cursor:pointer;background:linear-gradient(135deg,var(--green) 60%,var(--green-light));border-radius:16px;padding:28px 28px 24px;margin-bottom:32px;position:relative;overflow:hidden" onmouseover="this.style.opacity=\'0.93\'" onmouseout="this.style.opacity=\'1\'">';
   h+='<div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;background:rgba(255,255,255,0.05);border-radius:50%"></div>';
   h+='<div style="position:absolute;right:20px;bottom:-30px;width:80px;height:80px;background:rgba(255,255,255,0.04);border-radius:50%"></div>';
   h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:10px">Before Your Next Session</div>';
-  if(S.data.nextSession)h+='<div style="font-size:15px;font-weight:600;color:var(--cream-light);margin-bottom:6px;opacity:0.9">'+fdt(S.data.nextSession)+'</div>';
+  h+='<div style="font-size:15px;font-weight:600;color:var(--cream-light);margin-bottom:6px;opacity:0.9">'+fdt(S.data.nextSession)+'</div>';
   h+='<div style="font-family:\'DM Serif Display\',serif;font-size:22px;color:var(--cream-light);margin-bottom:8px">Pre-Session Check-In</div>';
   h+='<div style="font-size:13px;color:var(--cream);opacity:0.75;margin-bottom:20px;max-width:340px;line-height:1.5">A few minutes of reflection helps you get more out of every session. Take it before you meet with Andy.</div>';
   h+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
   h+='<div style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--white);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700">Start Check-In <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></div>';
-  if(S.data.nextSession)h+='<a href="'+ZM+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);color:var(--cream-light);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,0.2)" onmouseover="this.style.background=\'rgba(255,255,255,0.25)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.15)\'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Join Zoom</a>';
+  h+='<a href="'+ZM+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);color:var(--cream-light);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,0.2)" onmouseover="this.style.background=\'rgba(255,255,255,0.25)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.15)\'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Join Zoom</a>';
   h+='</div>';
   h+='</div>';
+  }
 
   // Two column: Habits + Todos side by side
   var todos=S.data.todos||[],ag=(S.data.goals||[]).filter(function(g){return g.status==='active';});
@@ -576,14 +580,60 @@ function rHome(td,ts,comp,sk,q){
 function openCheckin(){
   var existing=document.getElementById('checkin-modal');
   if(existing){existing.style.display='flex';return;}
+  var session=S.data.nextSession?fdt(S.data.nextSession):'your next session';
   var overlay=document.createElement('div');
   overlay.id='checkin-modal';
   overlay.className='checkin-overlay';
-  overlay.innerHTML='<div class="checkin-modal"><div class="checkin-header"><span>Pre-Session Check-In</span><button class="checkin-close" onclick="closeCheckin()">&#215;</button></div><iframe class="checkin-frame" src="https://scalingminds.github.io/coaching-check-in/" title="Pre-Session Check-In" allow="forms"></iframe></div>';
-  overlay.addEventListener('click',function(e){if(e.target===overlay)closeCheckin();});
+  var modal=document.createElement('div');
+  modal.className='checkin-modal';
+  var FS='font-family:DM Sans,sans-serif';
+  modal.innerHTML='<div class="checkin-header"><div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:2px">Pre-Session Check-In</div><div style="font-size:14px;color:var(--cream-light);font-weight:600">'+session+'</div></div><button class="checkin-close" onclick="closeCheckin()">&#215;</button></div>'
+    +'<div style="flex:1;overflow-y:auto;padding:24px">'
+    +'<div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6">Take 5 minutes before your session. Your coach will see this.</div>'
+    +ciQ('ci-q1','What\'s on your mind going into this session?','What do you want to talk about or work through?')
+    +ciQ('ci-q2','What progress are you proud of since we last met?','Even small wins count.')
+    +ciQ('ci-q3','What has been hard or stuck?','What do you keep bumping into?')
+    +ciQ('ci-q4','What do you most want to walk away with?','What would make this session feel worth it?')
+    +'<div id="ci-msg" style="font-size:13px;color:var(--check-green);font-weight:600;margin-bottom:12px;display:none">&#10003; Submitted — your coach will see this before your session.</div>'
+    +'<div style="display:flex;gap:10px;justify-content:flex-end">'
+    +'<button onclick="closeCheckin()" style="padding:11px 20px;border-radius:10px;border:1px solid var(--border);background:var(--white);'+FS+';font-size:13px;font-weight:600;cursor:pointer;color:var(--text-muted)">Cancel</button>'
+    +'<button onclick="submitCheckin()" style="padding:11px 24px;border-radius:10px;border:none;background:var(--green);color:var(--cream-light);'+FS+';font-size:13px;font-weight:700;cursor:pointer">Submit Check-In</button>'
+    +'</div></div>';
+  overlay.appendChild(modal);
+  overlay.addEventListener('click',function(ev){if(ev.target===overlay)closeCheckin();});
   document.body.appendChild(overlay);
 }
+function ciQ(id,label,placeholder){
+  return '<div style="margin-bottom:18px">'
+    +'<label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--green);margin-bottom:6px">'+label+'</label>'
+    +'<textarea id="'+id+'" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;min-height:80px;resize:vertical;outline:none;color:var(--text);background:var(--white)" placeholder="'+placeholder+'"></textarea>'
+    +'</div>';
+}
 function closeCheckin(){var el=document.getElementById('checkin-modal');if(el)el.parentNode.removeChild(el);}
+function submitCheckin(){
+  var q1=document.getElementById('ci-q1').value.trim();
+  var q2=document.getElementById('ci-q2').value.trim();
+  var q3=document.getElementById('ci-q3').value.trim();
+  var q4=document.getElementById('ci-q4').value.trim();
+  if(!q1&&!q2&&!q3&&!q4){alert('Please answer at least one question.');return;}
+  var ci={
+    id:'ci'+Date.now(),
+    date:dk(new Date()),
+    submittedAt:new Date().toISOString(),
+    session:S.data.nextSession||null,
+    onMind:q1,
+    proud:q2,
+    stuck:q3,
+    wantFrom:q4
+  };
+  S.data.checkIns=S.data.checkIns||[];
+  S.data.checkIns.push(ci);
+  save();
+  var msg=document.getElementById('ci-msg');
+  if(msg)msg.style.display='block';
+  ['ci-q1','ci-q2','ci-q3','ci-q4'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=true;});
+  setTimeout(closeCheckin,2000);
+}
 
 function cancelSession(){
   var name=S.user.displayName||S.user.email||'';
@@ -1108,6 +1158,23 @@ function rCD(){
     h+='<div style="background:linear-gradient(135deg,rgba(184,134,11,0.06),rgba(184,134,11,0.02));border:1px solid rgba(184,134,11,0.3);border-radius:12px;padding:16px 20px;margin-bottom:14px">';
     h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--gold);margin-bottom:6px">Session Prep (from client)</h3>';
     h+='<div style="font-size:13px;line-height:1.6;white-space:pre-wrap">'+e(c.sessionPrep)+'</div></div>';
+  }
+
+  // Pre-session check-ins
+  var cis=(c.checkIns||[]).slice().sort(function(a,b){return b.submittedAt.localeCompare(a.submittedAt);});
+  if(cis.length>0){
+    h+='<div style="margin-bottom:14px">';
+    h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:12px">Pre-Session Check-Ins</h3>';
+    cis.forEach(function(ci){
+      h+='<div style="background:var(--white);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:10px">';
+      h+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--gold);margin-bottom:10px">'+fs(ci.date)+(ci.session?' &middot; For '+fdt(ci.session):'')+'</div>';
+      if(ci.onMind){h+='<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:3px">On their mind</div><div style="font-size:13px;line-height:1.5">'+e(ci.onMind)+'</div></div>';}
+      if(ci.proud){h+='<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:3px">Proud of</div><div style="font-size:13px;line-height:1.5">'+e(ci.proud)+'</div></div>';}
+      if(ci.stuck){h+='<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:3px">Stuck on</div><div style="font-size:13px;line-height:1.5">'+e(ci.stuck)+'</div></div>';}
+      if(ci.wantFrom){h+='<div style="margin-bottom:4px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:3px">Wants from session</div><div style="font-size:13px;line-height:1.5">'+e(ci.wantFrom)+'</div></div>';}
+      h+='</div>';
+    });
+    h+='</div>';
   }
   // Client notes
   var nd=Object.keys(c.notes||{}).filter(function(k){return c.notes[k]&&c.notes[k].trim();}).sort(function(a,b){return b.localeCompare(a);});
