@@ -244,6 +244,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
   .main div[style*="grid-template-columns"]{grid-template-columns:1fr!important;}
 }
 @keyframes cp{0%{transform:scale(1);}50%{transform:scale(1.3);}100%{transform:scale(1);}}
+@keyframes hlpulse{0%,100%{opacity:0.2;}50%{opacity:0.4;}}
 /* Tour */
 .tour-overlay{position:fixed;inset:0;z-index:500;pointer-events:none;}
 .tour-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:501;pointer-events:all;}
@@ -461,31 +462,26 @@ function rHome(td,ts,comp,sk,q){
   if(S.data.habits.length>0){var dueToday=S.data.habits.filter(function(h2){return hdue(h2,td);}).length,doneToday=comp.length;h+='<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green-muted)" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> '+doneToday+' of '+dueToday+' habits done today</span>';}
   h+='</div></div>';
 
-  // Quote + Daily resource side by side
+  // Quote
+  h+='<div class="quote-line" style="margin:24px 0 24px;font-size:24px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
+
+  // Daily resource
   var _lib=S.lib||[];
-  var _uid=S.user.uid||'x';
-  var _uidNum=0;for(var _i=0;_i<_uid.length;_i++){_uidNum+=_uid.charCodeAt(_i);}
-  var _today=new Date();
-  var _seed=_uidNum+(_today.getFullYear()*10000+(_today.getMonth()+1)*100+_today.getDate());
-  var _dr=_lib.length>0?_lib[_seed%_lib.length]:null;
-  h+='<div style="display:flex;gap:14px;margin:24px 0 24px;flex-wrap:wrap;align-items:stretch">';
-  h+='<div class="quote-line" style="flex:1;min-width:220px;margin:0;font-size:20px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
-  if(_dr){
-    h+='<a href="'+(_dr.link?e(_dr.link):'#')+'" target="_blank" style="flex:1;min-width:220px;text-decoration:none;display:flex;flex-direction:column;background:linear-gradient(135deg,#1B4332 0%,#2D6A4F 100%);border-radius:12px;overflow:hidden;position:relative;cursor:pointer" onmouseover="this.style.opacity=\'0.93\'" onmouseout="this.style.opacity=\'1\'">';
-    h+='<div style="position:absolute;top:-10px;right:-10px;width:60px;height:60px;border-radius:50%;background:rgba(184,134,11,0.15)"></div>';
-    h+='<div style="position:absolute;bottom:-15px;left:-8px;width:40px;height:40px;border-radius:50%;background:rgba(184,134,11,0.1)"></div>';
-    h+='<div style="padding:18px 20px;flex:1">';
-    h+='<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold);margin-bottom:6px">Today&#39;s Read</div>';
-    h+='<div style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--cream-light);line-height:1.3">'+e(_dr.title)+'</div>';
+  if(_lib.length>0){
+    var _uid=S.user.uid||'x';
+    var _uidNum=0;for(var _i=0;_i<_uid.length;_i++){_uidNum+=_uid.charCodeAt(_i);}
+    var _today=new Date();
+    var _seed=_uidNum+(_today.getFullYear()*10000+(_today.getMonth()+1)*100+_today.getDate());
+    var _dr=_lib[_seed%_lib.length];
+    h+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">';
+    h+='<div style="flex:1;min-width:0">';
+    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold);margin-bottom:6px">Today&#39;s Read</div>';
+    h+='<div style="font-family:DM Serif Display,serif;font-size:17px;color:var(--green);margin-bottom:4px;line-height:1.3">'+e(_dr.title)+'</div>';
+    if(_dr.desc)h+='<div style="font-size:13px;color:var(--text-muted);line-height:1.5">'+e(_dr.desc)+'</div>';
     h+='</div>';
-    h+='<div style="padding:8px 16px;display:flex;justify-content:space-between;align-items:center">';
-    if(_dr.category)h+='<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.12);color:var(--cream)">'+e(_dr.category)+'</div>';
-    else h+='<div></div>';
-    h+='<span style="font-size:12px;font-weight:700;color:var(--gold)">Read &rarr;</span>';
+    if(_dr.link)h+='<a href="'+e(_dr.link)+'" target="_blank" style="flex-shrink:0;background:var(--green);color:var(--cream-light);padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">Read &rarr;</a>';
     h+='</div>';
-    h+='</a>';
   }
-  h+='</div>';
 
   // Commitments from last session
   var sn=(S.data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
@@ -786,7 +782,7 @@ function rSessions(data){
   var calUrl=data.calendlyUrl||CAL;
   var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:6px">Sessions</h2>';
   // Email reminder for Calendly matching
-  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <span style="display:inline-block;background:var(--gold);color:#fff;font-weight:700;padding:2px 10px;border-radius:20px;margin:0 4px;font-size:11px">'+e(S.user.email)+'</span> so your session syncs automatically</div>';
+  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <span style="display:inline-block;position:relative;margin:0 4px"><span style="position:relative;z-index:1;font-weight:700;color:var(--green);padding:0 4px">'+e(S.user.email)+'</span><span style="position:absolute;inset:0;background:var(--gold);opacity:0.25;border-radius:3px;animation:hlpulse 2s ease-in-out infinite"></span></span> so your session syncs automatically</div>';
   // Next session
   if(data.nextSession){
     h+='<div style="display:flex;gap:10px;margin:14px 0;flex-wrap:wrap">';
@@ -1764,5 +1760,14 @@ function gbE(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 </script>
 <!-- ═══════════════════════════════════════════════════════════ END GOAL BUILDER -->
 
+<div id="bug-btn" onclick="openBugReport()" style="position:fixed;bottom:24px;right:24px;z-index:400;display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--border);border-radius:24px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;box-shadow:0 2px 12px rgba(27,67,50,0.1);transition:all 0.2s" onmouseover="this.style.boxShadow='0 4px 20px rgba(27,67,50,0.15)';this.style.borderColor='var(--green-muted)'" onmouseout="this.style.boxShadow='0 2px 12px rgba(27,67,50,0.1)';this.style.borderColor='var(--border)'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Report a Bug</div>
+<script>
+function openBugReport(){
+  var name=S.user&&S.user.displayName?S.user.displayName:S.user?S.user.email:'';
+  var subject='Bug Report — Scaling Minds Portal';
+  var body='Name: '+name+'\nPage: '+S.view+'\n\nDescribe the bug:\n';
+  window.location.href='mailto:andy@scalingminds.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+}
+</script>
 </body>
 </html>
