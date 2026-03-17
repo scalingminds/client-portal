@@ -680,12 +680,13 @@ function rGoals(data){
   } else {
     h+='<div class="empty"><div class="ei">🎯</div><h3>No goals yet</h3><p>Add a goal to get started, or your coach will set them with you.</p></div>';
   }
-  // Client can add goals
-  h+='<div class="card" style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Add a Goal</div>';
-  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">';
-  h+='<div class="fg" style="margin:0;flex:2;min-width:160px"><label class="fl">Goal</label><input class="fi" id="cgt" placeholder="What do you want to work toward?"></div>';
-  h+='<div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">Target Outcome</label><input class="fi" id="cgo" placeholder="How will you know?"></div>';
-  h+='<button class="btn bp" onclick="cag()">Add</button></div></div>';
+  // Client can add goals - guided builder
+  h+='<div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">';
+  h+='<button class="btn bp" style="display:flex;align-items:center;gap:8px;padding:14px 22px;font-size:14px" onclick="openGoalBuilder()">';
+  h+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>';
+  h+='Build a Goal</button>';
+  h+='<span style="font-size:12px;color:var(--text-muted)">Guided process — takes about 5 minutes</span>';
+  h+='</div>';
   return h;
 }
 function gCard(g,isInactive){
@@ -1422,5 +1423,321 @@ function removeTour(){var el=document.getElementById('sm-tour');if(el)el.parentN
 
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     GOAL BUILDER — Guided 5-step modal with AI coaching
+     Injects into S.data.goals and calls save()
+═══════════════════════════════════════════════════════════ -->
+<style>
+.gb-overlay{position:fixed;inset:0;background:rgba(27,67,50,0.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity 0.25s;}
+.gb-overlay.gb-show{opacity:1;}
+.gb-modal{background:#fff;border-radius:18px;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,0.25);transform:translateY(24px);transition:transform 0.25s;}
+.gb-overlay.gb-show .gb-modal{transform:translateY(0);}
+.gb-header{background:#1B4332;padding:22px 28px;border-radius:18px 18px 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.gb-header-title{font-family:"DM Serif Display",serif;font-size:20px;color:#F0EAD6;}
+.gb-header-sub{font-size:11px;color:#D4C5A9;opacity:0.8;margin-top:2px;}
+.gb-close{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:#F0EAD6;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.gb-steps{display:flex;gap:0;padding:0 28px;background:#f8f5f0;border-bottom:1px solid #e8dfd0;flex-shrink:0;}
+.gb-step{padding:12px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9a9080;border-bottom:3px solid transparent;cursor:pointer;margin-right:20px;transition:all 0.15s;white-space:nowrap;}
+.gb-step.gb-active{color:#1B4332;border-bottom-color:#B8860B;}
+.gb-step.gb-done{color:#40916C;}
+.gb-body{padding:28px;overflow-y:auto;flex:1;}
+.gb-step-title{font-family:"DM Serif Display",serif;font-size:22px;color:#1B4332;margin-bottom:6px;}
+.gb-step-desc{font-size:14px;color:#6b6b6b;margin-bottom:22px;line-height:1.6;}
+.gb-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#6b6b6b;margin-bottom:8px;display:block;}
+.gb-input{width:100%;padding:13px 16px;border:1.5px solid #e0d8c8;border-radius:10px;font-family:"DM Sans",sans-serif;font-size:15px;color:#1a1a1a;background:#FAF7F2;resize:none;transition:border-color 0.15s;line-height:1.5;}
+.gb-input:focus{outline:none;border-color:#40916C;background:#fff;}
+.gb-ai-box{background:#f0f7f3;border:1.5px solid #c8e0d0;border-radius:10px;padding:16px 18px;margin-top:16px;font-size:13.5px;color:#1B4332;line-height:1.7;min-height:48px;}
+.gb-ai-box.gb-loading::after{content:" ▋";animation:gb-blink 0.6s infinite;}
+@keyframes gb-blink{50%{opacity:0;}}
+.gb-ai-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#40916C;margin-bottom:6px;}
+.gb-footer{padding:18px 28px;border-top:1px solid #e8dfd0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:#fff;border-radius:0 0 18px 18px;}
+.gb-btn-back{background:transparent;border:1.5px solid #e0d8c8;color:#6b6b6b;padding:11px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;}
+.gb-btn-back:hover{border-color:#1B4332;color:#1B4332;}
+.gb-btn-next{background:#1B4332;color:#F0EAD6;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:"DM Sans",sans-serif;display:flex;align-items:center;gap:8px;transition:background 0.15s;}
+.gb-btn-next:hover{background:#2D6A4F;}
+.gb-btn-next:disabled{background:#9a9080;cursor:not-allowed;}
+.gb-btn-finish{background:#B8860B;color:#fff;}
+.gb-btn-finish:hover{background:#D4A017;}
+.gb-step-counter{font-size:12px;color:#9a9080;}
+.gb-obstacle-row{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
+.gb-obstacle-num{width:24px;height:24px;border-radius:50%;background:#1B4332;color:#F0EAD6;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:14px;}
+.gb-ns-row{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
+.gb-ns-num{width:24px;height:24px;border-radius:50%;background:#B8860B;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:14px;}
+.gb-ns-fields{flex:1;display:flex;gap:8px;flex-wrap:wrap;}
+.gb-ns-task{flex:2;min-width:160px;}
+.gb-ns-date{flex:1;min-width:120px;}
+.gb-summary-item{background:#FAF7F2;border-radius:10px;padding:14px 16px;margin-bottom:12px;}
+.gb-summary-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#B8860B;margin-bottom:4px;}
+.gb-summary-value{font-size:14px;color:#1a1a1a;line-height:1.6;}
+</style>
+
+<div id="gbOverlay" class="gb-overlay" onclick="gbOverlayClick(event)">
+  <div class="gb-modal">
+    <div class="gb-header">
+      <div>
+        <div class="gb-header-title">Build a Goal</div>
+        <div class="gb-header-sub" id="gbHeaderSub">Step 1 of 5</div>
+      </div>
+      <button class="gb-close" onclick="closeGoalBuilder()">✕</button>
+    </div>
+    <div class="gb-steps" id="gbStepNav"></div>
+    <div class="gb-body" id="gbBody"></div>
+    <div class="gb-footer">
+      <div>
+        <button class="gb-btn-back" id="gbBtnBack" onclick="gbBack()">← Back</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span class="gb-step-counter" id="gbStepCounter"></span>
+        <button class="gb-btn-next" id="gbBtnNext" onclick="gbNext()">Continue →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── GOAL BUILDER STATE ───────────────────────────────────────────────────────
+var GB = {
+  step: 0,
+  data: { title:'', why:'', outcome:'', obstacles:['',''], nextSteps:[{task:'',date:''},{task:'',date:''},{task:'',date:''}] },
+  aiResponses: {}
+};
+
+var GB_STEPS = ['The Goal','The Why','Success','Obstacles','Next Steps'];
+
+function openGoalBuilder(){
+  GB.step = 0;
+  GB.data = { title:'', why:'', outcome:'', obstacles:['',''], nextSteps:[{task:'',date:''},{task:'',date:''},{task:'',date:''}] };
+  GB.aiResponses = {};
+  var ov = document.getElementById('gbOverlay');
+  ov.style.display = 'flex';
+  requestAnimationFrame(function(){ ov.classList.add('gb-show'); });
+  gbRender();
+}
+
+function closeGoalBuilder(){
+  var ov = document.getElementById('gbOverlay');
+  ov.classList.remove('gb-show');
+  setTimeout(function(){ ov.style.display = 'none'; }, 250);
+}
+
+function gbOverlayClick(e){ if(e.target === document.getElementById('gbOverlay')) closeGoalBuilder(); }
+
+function gbRender(){
+  // Step nav
+  var nav = '';
+  GB_STEPS.forEach(function(s,i){
+    var cls = i===GB.step?'gb-step gb-active':i<GB.step?'gb-step gb-done':'gb-step';
+    nav += '<div class="'+cls+'">'+(i<GB.step?'✓ ':'')+s+'</div>';
+  });
+  document.getElementById('gbStepNav').innerHTML = nav;
+  document.getElementById('gbHeaderSub').textContent = 'Step '+(GB.step+1)+' of '+GB_STEPS.length;
+  document.getElementById('gbStepCounter').textContent = (GB.step+1)+' / '+GB_STEPS.length;
+
+  // Back button
+  document.getElementById('gbBtnBack').style.visibility = GB.step===0?'hidden':'visible';
+
+  // Next button
+  var btn = document.getElementById('gbBtnNext');
+  btn.textContent = GB.step===GB_STEPS.length-1 ? 'Save Goal ✓' : 'Continue →';
+  btn.className = GB.step===GB_STEPS.length-1 ? 'gb-btn-next gb-btn-finish' : 'gb-btn-next';
+
+  // Body
+  var body = '';
+  if(GB.step===0) body = gbStep0();
+  else if(GB.step===1) body = gbStep1();
+  else if(GB.step===2) body = gbStep2();
+  else if(GB.step===3) body = gbStep3();
+  else if(GB.step===4) body = gbStep4();
+  document.getElementById('gbBody').innerHTML = body;
+
+  // Restore saved values
+  gbRestoreValues();
+}
+
+function gbStep0(){
+  return '<div class="gb-step-title">Name the goal</div>'+
+    '<div class="gb-step-desc">Write it in plain language — how you would say it out loud. Don't worry about making it perfect yet.</div>'+
+    '<label class="gb-label">What do you want to achieve?</label>'+
+    '<textarea class="gb-input" id="gbTitle" rows="3" placeholder="e.g. Stop being the bottleneck on my team's decisions">'+gbE(GB.data.title)+'</textarea>'+
+    (GB.aiResponses[0]?'<div class="gb-ai-label">Coach response</div><div class="gb-ai-box">'+GB.aiResponses[0]+'</div>':'');
+}
+
+function gbStep1(){
+  return '<div class="gb-step-title">The why</div>'+
+    '<div class="gb-step-desc">Goals without a strong reason behind them don't survive. What's really driving this?</div>'+
+    '<label class="gb-label">Why does this matter to you right now?</label>'+
+    '<textarea class="gb-input" id="gbWhy" rows="4" placeholder="Be honest — not what sounds good, what's true">'+gbE(GB.data.why)+'</textarea>'+
+    (GB.aiResponses[1]?'<div class="gb-ai-label">Coach response</div><div class="gb-ai-box">'+GB.aiResponses[1]+'</div>':'');
+}
+
+function gbStep2(){
+  return '<div class="gb-step-title">Define success</div>'+
+    '<div class="gb-step-desc">Vague goals stay vague. Name exactly what done looks like — not how you feel, what you can observe or measure.</div>'+
+    '<label class="gb-label">How will you know when you've achieved this?</label>'+
+    '<textarea class="gb-input" id="gbOutcome" rows="4" placeholder="e.g. My team makes 80% of routine decisions without looping me in">'+gbE(GB.data.outcome)+'</textarea>'+
+    (GB.aiResponses[2]?'<div class="gb-ai-label">Coach response</div><div class="gb-ai-box">'+GB.aiResponses[2]+'</div>':'');
+}
+
+function gbStep3(){
+  var h = '<div class="gb-step-title">Name the obstacles</div>'+
+    '<div class="gb-step-desc">What's most likely to get in your way? Naming them now is how you beat them.</div>';
+  for(var i=0;i<2;i++){
+    h+='<div class="gb-obstacle-row">'+
+      '<div class="gb-obstacle-num">'+(i+1)+'</div>'+
+      '<textarea class="gb-input" id="gbObs'+i+'" rows="2" placeholder="Obstacle '+(i+1)+'..." style="margin-top:8px">'+gbE(GB.data.obstacles[i])+'</textarea>'+
+      '</div>';
+  }
+  if(GB.aiResponses[3]) h+='<div class="gb-ai-label" style="margin-top:8px">Coach response</div><div class="gb-ai-box">'+GB.aiResponses[3]+'</div>';
+  return h;
+}
+
+function gbStep4(){
+  var h = '<div class="gb-step-title">Next steps</div>'+
+    '<div class="gb-step-desc">Name three concrete actions. Each needs a what and a by-when. No task without a date.</div>';
+  for(var i=0;i<3;i++){
+    h+='<div class="gb-ns-row">'+
+      '<div class="gb-ns-num">'+(i+1)+'</div>'+
+      '<div class="gb-ns-fields">'+
+        '<input class="gb-input gb-ns-task" id="gbNsT'+i+'" type="text" placeholder="What will you do?" value="'+gbE(GB.data.nextSteps[i].task)+'">'+
+        '<input class="gb-input gb-ns-date" id="gbNsD'+i+'" type="date" value="'+gbE(GB.data.nextSteps[i].date)+'">'+
+      '</div></div>';
+  }
+
+  // Summary preview
+  h += '<div style="margin-top:24px;padding-top:20px;border-top:1px solid #e8dfd0">';
+  h += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#B8860B;margin-bottom:14px">Your goal summary</div>';
+  h += '<div class="gb-summary-item"><div class="gb-summary-label">Goal</div><div class="gb-summary-value">'+gbE(GB.data.title)+'</div></div>';
+  h += '<div class="gb-summary-item"><div class="gb-summary-label">Why it matters</div><div class="gb-summary-value">'+gbE(GB.data.why)+'</div></div>';
+  h += '<div class="gb-summary-item"><div class="gb-summary-label">Success looks like</div><div class="gb-summary-value">'+gbE(GB.data.outcome)+'</div></div>';
+  var obs = GB.data.obstacles.filter(function(o){return o.trim();});
+  if(obs.length) h += '<div class="gb-summary-item"><div class="gb-summary-label">Obstacles</div><div class="gb-summary-value">'+obs.map(function(o,i){return (i+1)+'. '+gbE(o);}).join('<br>')+'</div></div>';
+  h += '</div>';
+  return h;
+}
+
+function gbRestoreValues(){
+  // Values are baked into the HTML via GB.data, no restore needed
+}
+
+function gbSaveCurrentStep(){
+  if(GB.step===0){ var v=document.getElementById('gbTitle'); if(v) GB.data.title=v.value.trim(); }
+  if(GB.step===1){ var v=document.getElementById('gbWhy'); if(v) GB.data.why=v.value.trim(); }
+  if(GB.step===2){ var v=document.getElementById('gbOutcome'); if(v) GB.data.outcome=v.value.trim(); }
+  if(GB.step===3){
+    GB.data.obstacles = [];
+    for(var i=0;i<2;i++){ var v=document.getElementById('gbObs'+i); GB.data.obstacles.push(v?v.value.trim():''); }
+  }
+  if(GB.step===4){
+    GB.data.nextSteps = [];
+    for(var i=0;i<3;i++){
+      var t=document.getElementById('gbNsT'+i), d=document.getElementById('gbNsD'+i);
+      GB.data.nextSteps.push({task:t?t.value.trim():'', date:d?d.value:''});
+    }
+  }
+}
+
+function gbValidate(){
+  if(GB.step===0 && !GB.data.title){ gbShake('gbTitle'); return false; }
+  if(GB.step===1 && !GB.data.why){ gbShake('gbWhy'); return false; }
+  if(GB.step===2 && !GB.data.outcome){ gbShake('gbOutcome'); return false; }
+  return true;
+}
+
+function gbShake(id){
+  var el=document.getElementById(id);
+  if(!el)return;
+  el.style.borderColor='#c0392b';
+  el.style.animation='none';
+  setTimeout(function(){el.style.animation='';el.style.borderColor='';},600);
+}
+
+function gbBack(){
+  gbSaveCurrentStep();
+  if(GB.step>0){GB.step--;gbRender();}
+}
+
+function gbNext(){
+  gbSaveCurrentStep();
+  if(!gbValidate()) return;
+
+  if(GB.step===GB_STEPS.length-1){
+    gbSaveGoal();
+    return;
+  }
+
+  // Get AI response for current step before advancing
+  var stepToAI = GB.step;
+  GB.step++;
+  gbRender();
+  gbGetAI(stepToAI);
+}
+
+function gbGetAI(step){
+  if(GB.aiResponses[step]) return; // already have it
+
+  var prompts = {
+    0: 'A coaching client just wrote their goal: "'+GB.data.title+'". In 2-3 sentences, reflect back what you hear, name what makes it compelling or where it might still be vague, and ask one clarifying question to sharpen it. Be direct and warm — like a coach, not a therapist.',
+    1: 'A coaching client said their goal is "'+GB.data.title+'" and their why is: "'+GB.data.why+'". In 2-3 sentences, acknowledge what you hear, note whether this why feels surface-level or genuinely motivating, and ask one question that goes deeper if needed. Be direct.',
+    2: 'A client's goal: "'+GB.data.title+'". Their success measure: "'+GB.data.outcome+'". In 2 sentences, confirm whether this is specific and observable enough to actually measure progress, and name one way to make it even crisper if needed.',
+    3: 'A client's goal: "'+GB.data.title+'". Obstacles they named: '+GB.data.obstacles.filter(function(o){return o;}).map(function(o){return '"'+o+'"';}).join(', ')+'. In 2-3 sentences, acknowledge what they named and ask one question about the obstacle most likely to actually stop them.'
+  };
+
+  if(!prompts[step]) return;
+
+  // Show loading
+  var aiBox = '<div class="gb-ai-label">Coach response</div><div class="gb-ai-box gb-loading">Thinking</div>';
+  var body = document.getElementById('gbBody');
+  if(body) body.innerHTML += aiBox;
+
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:200,
+      messages:[{role:'user',content:prompts[step]}]
+    })
+  }).then(function(r){return r.json();})
+  .then(function(data){
+    var text = (data.content&&data.content[0]&&data.content[0].text) ? data.content[0].text : '';
+    GB.aiResponses[step] = text;
+    // Re-render just the AI box
+    var boxes = document.querySelectorAll('.gb-ai-box');
+    if(boxes.length){boxes[boxes.length-1].classList.remove('gb-loading');boxes[boxes.length-1].textContent=text;}
+  })
+  .catch(function(){ /* silent fail */ });
+}
+
+function gbSaveGoal(){
+  var ns = GB.data.nextSteps.filter(function(s){return s.task;});
+  var obs = GB.data.obstacles.filter(function(o){return o;});
+
+  var goal = {
+    id: 'g'+Date.now(),
+    title: GB.data.title,
+    outcome: GB.data.outcome,
+    why: GB.data.why,
+    obstacles: obs,
+    nextSteps: ns.map(function(s){return {task:s.task,date:s.date,done:false};}),
+    desc: 'Why: '+GB.data.why+(obs.length?'
+
+Obstacles: '+obs.join('; '):''),
+    status: 'active',
+    progress: 0,
+    builtAt: new Date().toISOString()
+  };
+
+  S.data.goals = S.data.goals || [];
+  S.data.goals.push(goal);
+  save();
+  closeGoalBuilder();
+  R();
+}
+
+function gbE(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+<!-- ═══════════════════════════════════════════════════════════ END GOAL BUILDER -->
+
 </body>
 </html>
