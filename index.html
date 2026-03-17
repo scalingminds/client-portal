@@ -1578,36 +1578,35 @@ function gbStep0(){
   return '<div class="gb-step-title">Name the goal</div>'+
     '<div class="gb-step-desc">Write it in plain language, how you would say it out loud. Do not worry about making it perfect yet.</div>'+
     '<label class="gb-label">What do you want to achieve?</label>'+
-    '<textarea class="gb-input" id="gbTitle" rows="3" placeholder="e.g. Stop being the bottleneck on my team decisions">'+gbE(GB.data.title)+'</textarea>'+
-    gbAiHtml(0);
+    '<textarea class="gb-input" id="gbTitle" rows="3" placeholder="e.g. Stop being the bottleneck on my team decisions">'+gbE(GB.data.title)+'</textarea>';
 }
 
 function gbStep1(){
   return '<div class="gb-step-title">The why</div>'+
     '<div class="gb-step-desc">Goals without a strong reason behind them do not survive. What is really driving this?</div>'+
-    '<label class="gb-label">Why does this matter to you right now?</label>'+
-    '<textarea class="gb-input" id="gbWhy" rows="4" placeholder="Be honest. Not what sounds good, what is true.">'+gbE(GB.data.why)+'</textarea>'+
-    gbAiHtml(1);
+    gbAiHtml(0)+
+    '<label class="gb-label" style="margin-top:18px">Why does this matter to you right now?</label>'+
+    '<textarea class="gb-input" id="gbWhy" rows="4" placeholder="Be honest. Not what sounds good, what is true.">'+gbE(GB.data.why)+'</textarea>';
 }
 
 function gbStep2(){
   return '<div class="gb-step-title">Define success</div>'+
     '<div class="gb-step-desc">Vague goals stay vague. Name exactly what done looks like. Not how you feel, what you can observe or measure.</div>'+
-    '<label class="gb-label">How will you know when you have achieved this?</label>'+
-    '<textarea class="gb-input" id="gbOutcome" rows="4" placeholder="e.g. My team makes 80% of routine decisions without looping me in">'+gbE(GB.data.outcome)+'</textarea>'+
-    gbAiHtml(2);
+    gbAiHtml(1)+
+    '<label class="gb-label" style="margin-top:18px">How will you know when you have achieved this?</label>'+
+    '<textarea class="gb-input" id="gbOutcome" rows="4" placeholder="e.g. My team makes 80% of routine decisions without looping me in">'+gbE(GB.data.outcome)+'</textarea>';
 }
 
 function gbStep3(){
   var h = '<div class="gb-step-title">Name the obstacles</div>'+
-    '<div class="gb-step-desc">What is most likely to get in your way? Naming them now is how you beat them.</div>';
+    '<div class="gb-step-desc">What is most likely to get in your way? Naming them now is how you beat them.</div>'+
+    gbAiHtml(2);
   for(var i=0;i<2;i++){
-    h += '<div class="gb-obstacle-row">'+
+    h += '<div class="gb-obstacle-row" style="margin-top:'+(i===0?'18px':'0')+'">'+
       '<div class="gb-obstacle-num">'+(i+1)+'</div>'+
       '<textarea class="gb-input" id="gbObs'+i+'" rows="2" placeholder="Obstacle '+(i+1)+'..." style="margin-top:8px">'+gbE(GB.data.obstacles[i])+'</textarea>'+
       '</div>';
   }
-  h += gbAiHtml(3);
   return h;
 }
 
@@ -1709,11 +1708,17 @@ function gbGetAI(step){
     })
   }).then(function(r){return r.json();})
   .then(function(data){
+    console.log('GB AI response:', JSON.stringify(data).substring(0,200));
     var text = (data.content&&data.content[0]&&data.content[0].text) ? data.content[0].text : '';
-    GB.aiResponses[step] = text || '__error__';
+    if(text){
+      GB.aiResponses[step] = text;
+    } else {
+      GB.aiResponses[step] = data.error ? 'Error: '+data.error.message : '__error__';
+    }
     gbRender();
   })
-  .catch(function(){
+  .catch(function(err){
+    console.log('GB AI error:', err);
     GB.aiResponses[step] = '';
     gbRender();
   });
