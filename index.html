@@ -1569,9 +1569,9 @@ function gbRender(){
 function gbAiHtml(step){
   var r = GB.aiResponses[step];
   if(!r) return '';
-  if(r === '__loading__') return '<div class="gb-ai-label" style="margin-top:16px">Coach response</div><div class="gb-ai-box gb-loading">Thinking</div>';
+  if(r === '__loading__') return '<div class="gb-ai-label">Coach response</div><div class="gb-ai-box gb-loading">Thinking</div>';
   if(r === '__error__') return '';
-  return '<div class="gb-ai-label" style="margin-top:16px">Coach response</div><div class="gb-ai-box">'+gbE(r)+'</div>';
+  return '<div class="gb-ai-label">Coach response</div><div class="gb-ai-box">'+gbE(r)+'</div>';
 }
 
 function gbStep0(){
@@ -1582,31 +1582,34 @@ function gbStep0(){
 }
 
 function gbStep1(){
+  var ai = gbAiHtml(0);
   return '<div class="gb-step-title">The why</div>'+
     '<div class="gb-step-desc">Goals without a strong reason behind them do not survive. What is really driving this?</div>'+
-    gbAiHtml(0)+
-    '<label class="gb-label" style="margin-top:18px">Why does this matter to you right now?</label>'+
-    '<textarea class="gb-input" id="gbWhy" rows="4" placeholder="Be honest. Not what sounds good, what is true.">'+gbE(GB.data.why)+'</textarea>';
+    '<label class="gb-label">Why does this matter to you right now?</label>'+
+    '<textarea class="gb-input" id="gbWhy" rows="4" placeholder="Be honest. Not what sounds good, what is true.">'+gbE(GB.data.why)+'</textarea>'+
+    (ai ? '<div style="margin-top:16px">'+ai+'</div>' : '');
 }
 
 function gbStep2(){
+  var ai = gbAiHtml(1);
   return '<div class="gb-step-title">Define success</div>'+
     '<div class="gb-step-desc">Vague goals stay vague. Name exactly what done looks like. Not how you feel, what you can observe or measure.</div>'+
-    gbAiHtml(1)+
-    '<label class="gb-label" style="margin-top:18px">How will you know when you have achieved this?</label>'+
-    '<textarea class="gb-input" id="gbOutcome" rows="4" placeholder="e.g. My team makes 80% of routine decisions without looping me in">'+gbE(GB.data.outcome)+'</textarea>';
+    '<label class="gb-label">How will you know when you have achieved this?</label>'+
+    '<textarea class="gb-input" id="gbOutcome" rows="4" placeholder="e.g. My team makes 80% of routine decisions without looping me in">'+gbE(GB.data.outcome)+'</textarea>'+
+    (ai ? '<div style="margin-top:16px">'+ai+'</div>' : '');
 }
 
 function gbStep3(){
+  var ai = gbAiHtml(2);
   var h = '<div class="gb-step-title">Name the obstacles</div>'+
-    '<div class="gb-step-desc">What is most likely to get in your way? Naming them now is how you beat them.</div>'+
-    gbAiHtml(2);
+    '<div class="gb-step-desc">What is most likely to get in your way? Naming them now is how you beat them.</div>';
   for(var i=0;i<2;i++){
-    h += '<div class="gb-obstacle-row" style="margin-top:'+(i===0?'18px':'0')+'">'+
+    h += '<div class="gb-obstacle-row">'+
       '<div class="gb-obstacle-num">'+(i+1)+'</div>'+
       '<textarea class="gb-input" id="gbObs'+i+'" rows="2" placeholder="Obstacle '+(i+1)+'..." style="margin-top:8px">'+gbE(GB.data.obstacles[i])+'</textarea>'+
       '</div>';
   }
+  if(ai) h += '<div style="margin-top:16px">'+ai+'</div>';
   return h;
 }
 
