@@ -438,6 +438,7 @@ function rC(){
   h+='</div><div class="footer">&copy; Scaling Minds &middot; Client Portal</div>';
   h+='<div class="modal-overlay'+(S.mo?' open':'')+'" onclick="cmo(event)"><div class="modal">'+rModal()+'</div></div>';
   app.innerHTML=h;
+  if(S.view==='sessions'&&S.data.nextSession)setTimeout(function(){startCountdown(S.data.nextSession);},50);
 }
 
 // HOME
@@ -455,7 +456,7 @@ function rHome(td,ts,comp,sk,q){
   h+='</div></div>';
 
   // Quote
-  h+='<div class="quote-line" style="margin:24px 0 24px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
+  h+='<div class="quote-line" style="margin:24px 0 24px;font-size:24px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
 
   // Pre-session check-in — featured card
   h+='<a href="https://scalingminds.github.io/coaching-check-in/" target="_blank" style="display:block;background:linear-gradient(135deg,var(--green) 60%,var(--green-light));border-radius:16px;padding:28px 28px 24px;margin-bottom:32px;text-decoration:none;position:relative;overflow:hidden" onmouseover="this.style.opacity=\'0.93\'" onmouseout="this.style.opacity=\'1\'">';
@@ -467,16 +468,6 @@ function rHome(td,ts,comp,sk,q){
   h+='<div style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--white);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700">';
   h+='Start Check-In <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></div>';
   h+='</a>';
-
-  // Session prep textarea (48hrs before — time-sensitive)
-  var showPrep=false;
-  if(S.data.nextSession){var nd;if(S.data.nextSession.indexOf('T')!==-1)nd=new Date(S.data.nextSession);else{var np=S.data.nextSession.split('-');nd=new Date(np[0],np[1]-1,np[2]);}if((nd-new Date())/36e5<=48&&(nd-new Date())/36e5>-24)showPrep=true;}
-  if(showPrep){
-    h+='<div style="background:linear-gradient(135deg,rgba(184,134,11,0.06),rgba(184,134,11,0.02));border:1px solid rgba(184,134,11,0.3);border-radius:12px;padding:18px 22px;margin-bottom:36px">';
-    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gold);margin-bottom:4px">Session Prep</div>';
-    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your session is coming up. Take a few minutes to reflect.</div>';
-    h+='<textarea class="ft" style="min-height:80px;border-color:rgba(184,134,11,0.3)" placeholder="What do you want to focus on? What has been hard? What are you proud of?" oninput="ssp(this.value)">'+e(S.data.sessionPrep||'')+'</textarea></div>';
-  }
 
   // Commitments from last session
   var sn=(S.data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
@@ -567,7 +558,32 @@ function rHome(td,ts,comp,sk,q){
   h+='<div style="width:34px;height:34px;min-width:34px;background:var(--cream-light);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>';
   h+='<div style="font-size:13px;color:var(--text-muted)">Jot something down for your next session...</div></div>';
 
-  // Coach line
+  function cancelSession(){
+  var name=S.user.displayName||S.user.email||'';
+  var subject='Session Cancellation Request';
+  var body='Hi Andy,\n\nI need to cancel my upcoming session.\n\nThanks,\n'+name;
+  window.location.href='mailto:andy@scalingminds.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+}
+
+function startCountdown(nextSession){
+  var el=document.getElementById('session-countdown');
+  if(!el||!nextSession)return;
+  var nd=nextSession.indexOf('T')!==-1?new Date(nextSession):new Date((function(){var p=nextSession.split('-');return new Date(p[0],p[1]-1,p[2]);})());
+  function tick(){
+    var el2=document.getElementById('session-countdown');
+    if(!el2)return;
+    var diff=nd-new Date();
+    if(diff<=0){el2.textContent='Session is now';return;}
+    var d=Math.floor(diff/864e5),h=Math.floor((diff%864e5)/36e5),m=Math.floor((diff%36e5)/6e4),s=Math.floor((diff%6e4)/1e3);
+    if(d>0)el2.textContent='in '+d+'d '+h+'h '+m+'m';
+    else if(h>0)el2.textContent='in '+h+'h '+m+'m '+s+'s';
+    else el2.textContent='in '+m+'m '+s+'s';
+    setTimeout(tick,1000);
+  }
+  tick();
+}
+
+// Coach line
   h+='<div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:14px;font-size:12px;color:var(--text-muted);flex-wrap:wrap">';
   h+='<span><strong style="color:var(--green)">Your Coach</strong> Andy Hite</span>';
   h+='<span style="color:var(--border)">|</span><a href="tel:3127728525" style="color:var(--green);text-decoration:none">312-772-8525</a>';
@@ -634,27 +650,32 @@ function rSessions(data){
   var calUrl=data.calendlyUrl||CAL;
   var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:6px">Sessions</h2>';
   // Email reminder for Calendly matching
-  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <strong style="color:var(--green)">'+e(S.user.email)+'</strong> so your session syncs automatically</div>';
+  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <strong style="color:var(--green);margin:0 2px">'+e(S.user.email)+'</strong> so your session syncs automatically</div>';
   // Next session
   if(data.nextSession){
     h+='<div style="display:flex;gap:10px;margin:14px 0;flex-wrap:wrap">';
     h+='<div style="flex:1;min-width:200px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px">';
     h+='<div style="width:36px;height:36px;min-width:36px;background:var(--cream-light);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>';
-    h+='<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Upcoming</div><div style="font-weight:600;font-size:14px;color:var(--green)">'+fdt(data.nextSession)+'</div></div>';
+    h+='<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)">Upcoming</div><div style="font-weight:600;font-size:14px;color:var(--green)">'+fdt(data.nextSession)+'</div><div id="session-countdown" style="font-size:11px;color:var(--gold);font-weight:600;margin-top:2px"></div></div>';
     h+='<a href="'+ZM+'" target="_blank" class="zoom-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Zoom</a></div>';
     h+='<div style="display:flex;flex-direction:column;gap:8px">';
     h+='<div class="schedule-btn" onclick="openCal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Reschedule</div>';
-    h+='<a href="mailto:andy@scalingminds.com?subject=Session+Cancellation+Request&body=Hi+Andy%2C%0A%0AI+need+to+cancel+my+upcoming+session.%0A%0AThanks%2C%0A'+encodeURIComponent(S.user.displayName||S.user.email||'')+'" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:12px;font-family:\'DM Sans\',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap" onmouseover="this.style.borderColor=\'#c0392b\';this.style.color=\'#c0392b\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--text-muted)\'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Cancel Session</a>';
+    h+='<div onclick="cancelSession()" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:12px;font-family:\'DM Sans\',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" onmouseover="this.style.borderColor=\'#c0392b\';this.style.color=\'#c0392b\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--text-muted)\'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Cancel Session</div>';
     h+='</div></div>';
   } else {
     h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;margin:14px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">';
     h+='<div><div style="font-size:14px;font-weight:600;color:var(--text)">No session scheduled</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">Book your next coaching session when you\'re ready.</div></div>';
     h+='<div class="schedule-btn" onclick="openCal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schedule a Session</div></div>';
   }
-  // Pre-session check-in link
-  h+='<a href="https://scalingminds.github.io/coaching-check-in/" target="_blank" style="display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.boxShadow=\'0 2px 12px rgba(27,67,50,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
+  // Pre-session check-in link + Zoom side by side
+  h+='<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">';
+  h+='<a href="https://scalingminds.github.io/coaching-check-in/" target="_blank" style="flex:1;min-width:180px;display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.boxShadow=\'0 2px 12px rgba(27,67,50,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
   h+='<div style="width:36px;height:36px;min-width:36px;background:rgba(184,134,11,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>';
   h+='<div><div style="font-size:14px;font-weight:600;color:var(--green)">Pre-Session Check-In</div><div style="font-size:12px;color:var(--text-muted)">Complete before your next session</div></div></a>';
+  h+='<a href="'+ZM+'" target="_blank" style="display:flex;align-items:center;gap:12px;background:#2D8CFF;border-radius:12px;padding:14px 18px;text-decoration:none">';
+  h+='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
+  h+='<div><div style="font-size:14px;font-weight:600;color:white">Join Zoom</div><div style="font-size:11px;color:rgba(255,255,255,0.75)">Open meeting room</div></div></a>';
+  h+='</div>';
 
   // Session prep
   var sp=false;
