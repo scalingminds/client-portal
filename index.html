@@ -474,6 +474,16 @@ function rHome(td,ts,comp,sk,q){
   // Quote
   h+='<div class="quote-line" style="margin:24px 0 24px;font-size:24px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
 
+  // Commitments from last session
+  var sn=(S.data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
+  if(sn.length>0&&sn[0].commitments){
+    h+='<div style="background:var(--white);border-left:4px solid var(--green);border-radius:0 12px 12px 0;padding:18px 22px;margin-bottom:36px">';
+    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green-muted);margin-bottom:3px">What You\'re Working On</div>';
+    h+='<div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">From your '+fs(sn[0].date)+' session</div>';
+    sn[0].commitments.split('\n').forEach(function(line){if(line.trim())h+='<div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;font-size:14px;line-height:1.5"><span style="color:var(--green);font-weight:700;margin-top:1px">&rarr;</span> '+e(line.trim())+'</div>';});
+    h+='</div>';
+  }
+
   // Pre-session check-in — featured card
   h+='<div onclick="openCheckin()" style="display:block;cursor:pointer;background:linear-gradient(135deg,var(--green) 60%,var(--green-light));border-radius:16px;padding:28px 28px 24px;margin-bottom:32px;position:relative;overflow:hidden" onmouseover="this.style.opacity=\'0.93\'" onmouseout="this.style.opacity=\'1\'">';
   h+='<div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;background:rgba(255,255,255,0.05);border-radius:50%"></div>';
@@ -485,26 +495,7 @@ function rHome(td,ts,comp,sk,q){
   h+='<div style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--white);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700">Start Check-In <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></div>';
   if(S.data.nextSession)h+='<a href="'+ZM+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);color:var(--cream-light);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,0.2)" onmouseover="this.style.background=\'rgba(255,255,255,0.25)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.15)\'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>Join Zoom</a>';
   h+='</div>';
-  // Session prep inside the card when session is within 48hrs
-  var showPrep=false;
-  if(S.data.nextSession){var nd;if(S.data.nextSession.indexOf('T')!==-1)nd=new Date(S.data.nextSession);else{var np=S.data.nextSession.split('-');nd=new Date(np[0],np[1]-1,np[2]);}if((nd-new Date())/36e5<=48&&(nd-new Date())/36e5>-24)showPrep=true;}
-  if(showPrep){
-    h+='<div style="margin-top:20px;border-top:1px solid rgba(255,255,255,0.15);padding-top:16px">';
-    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gold);margin-bottom:6px">Your Session is Coming Up — Reflect Before You Go</div>';
-    h+='<textarea onclick="event.stopPropagation()" style="width:100%;padding:12px 14px;border:1px solid rgba(255,255,255,0.2);border-radius:10px;background:rgba(255,255,255,0.08);color:var(--cream-light);font-family:\'DM Sans\',sans-serif;font-size:13px;min-height:80px;resize:vertical;outline:none" placeholder="What do you want to focus on? What has been hard? What are you proud of?" oninput="ssp(this.value)">'+e(S.data.sessionPrep||'')+'</textarea>';
-    h+='</div>';
-  }
   h+='</div>';
-
-  // Commitments from last session
-  var sn=(S.data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
-  if(sn.length>0&&sn[0].commitments){
-    h+='<div style="background:var(--white);border-left:4px solid var(--green);border-radius:0 12px 12px 0;padding:18px 22px;margin-bottom:36px">';
-    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green-muted);margin-bottom:3px">What You\'re Working On</div>';
-    h+='<div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">From your '+fs(sn[0].date)+' session</div>';
-    sn[0].commitments.split('\n').forEach(function(line){if(line.trim())h+='<div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;font-size:14px;line-height:1.5"><span style="color:var(--green);font-weight:700;margin-top:1px">&rarr;</span> '+e(line.trim())+'</div>';});
-    h+='</div>';
-  }
 
   // Two column: Habits + Todos side by side
   var todos=S.data.todos||[],ag=(S.data.goals||[]).filter(function(g){return g.status==='active';});
@@ -585,7 +576,8 @@ function rHome(td,ts,comp,sk,q){
   h+='<div style="width:34px;height:34px;min-width:34px;background:var(--cream-light);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>';
   h+='<div style="font-size:13px;color:var(--text-muted)">Jot something down for your next session...</div></div>';
 
-  function openCheckin(){
+
+function openCheckin(){
   var existing=document.getElementById('checkin-modal');
   if(existing){existing.style.display='flex';return;}
   var overlay=document.createElement('div');
