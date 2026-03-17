@@ -461,24 +461,26 @@ function rHome(td,ts,comp,sk,q){
   if(S.data.habits.length>0){var dueToday=S.data.habits.filter(function(h2){return hdue(h2,td);}).length,doneToday=comp.length;h+='<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green-muted)" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> '+doneToday+' of '+dueToday+' habits done today</span>';}
   h+='</div></div>';
 
-  // Quote + Daily resource side by side
+  // Quote
+  h+='<div class="quote-line" style="margin:24px 0 24px;font-size:24px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
+
+  // Daily resource
   var _lib=S.lib||[];
-  var _uid=S.user.uid||'x';
-  var _uidNum=0;for(var _i=0;_i<_uid.length;_i++){_uidNum+=_uid.charCodeAt(_i);}
-  var _today=new Date();
-  var _seed=_uidNum+(_today.getFullYear()*10000+(_today.getMonth()+1)*100+_today.getDate());
-  var _dr=_lib.length>0?_lib[_seed%_lib.length]:null;
-  h+='<div style="display:grid;grid-template-columns:1fr'+((_dr)?(' auto'):'')+';gap:16px;align-items:stretch;margin:24px 0 28px">';
-  h+='<div class="quote-line" style="margin:0;font-size:18px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
-  if(_dr){
-    h+='<div style="background:linear-gradient(135deg,#1B4332 0%,#2D6A4F 100%);border-radius:12px;padding:14px 16px;min-width:180px;max-width:220px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;position:relative;overflow:hidden;cursor:pointer" '+((_dr.link)?'onclick="window.open(\''+e(_dr.link)+'\',\'_blank\')"':'')+' >';
-    h+='<div style="position:absolute;top:-12px;right:-12px;width:56px;height:56px;border-radius:50%;background:rgba(184,134,11,0.18)"></div>';
-    h+='<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold-light)">Today\'s Read</div>';
-    h+='<div style="font-family:\'DM Serif Display\',serif;font-size:14px;color:var(--cream-light);line-height:1.4;flex:1;position:relative">'+e(_dr.title)+'</div>';
-    h+='<div style="font-size:11px;font-weight:700;color:var(--gold-light);position:relative">Read Brief &rarr;</div>';
+  if(_lib.length>0){
+    var _uid=S.user.uid||'x';
+    var _uidNum=0;for(var _i=0;_i<_uid.length;_i++){_uidNum+=_uid.charCodeAt(_i);}
+    var _today=new Date();
+    var _seed=_uidNum+(_today.getFullYear()*10000+(_today.getMonth()+1)*100+_today.getDate());
+    var _dr=_lib[_seed%_lib.length];
+    h+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">';
+    h+='<div style="flex:1;min-width:0">';
+    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold);margin-bottom:6px">Today&#39;s Read</div>';
+    h+='<div style="font-family:DM Serif Display,serif;font-size:17px;color:var(--green);margin-bottom:4px;line-height:1.3">'+e(_dr.title)+'</div>';
+    if(_dr.desc)h+='<div style="font-size:13px;color:var(--text-muted);line-height:1.5">'+e(_dr.desc)+'</div>';
+    h+='</div>';
+    if(_dr.link)h+='<a href="'+e(_dr.link)+'" target="_blank" style="flex-shrink:0;background:var(--green);color:var(--cream-light);padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">Read &rarr;</a>';
     h+='</div>';
   }
-  h+='</div>';
 
   // Commitments from last session
   var sn=(S.data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
@@ -517,15 +519,7 @@ function rHome(td,ts,comp,sk,q){
     h+='<div style="display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap">';
 
     // Habits (left)
-    if(dueToday.length===0){
-      h+='<div style="flex:1;min-width:260px">';
-      h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:3px;height:16px;background:var(--green-muted);border-radius:2px"></div><div style="font-family:\'DM Serif Display\',serif;font-size:15px;color:var(--green)">Today\'s Habits</div></div>';
-      h+='<div style="border:1.5px dashed var(--border);border-radius:12px;padding:20px 18px;text-align:center;background:var(--white)">';
-      h+='<div style="font-family:\'DM Serif Display\',serif;font-size:14px;color:var(--green);font-style:italic;line-height:1.6;margin-bottom:8px">&ldquo;We are what we repeatedly do.&rdquo;</div>';
-      h+='<div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:14px">Small daily actions compound into real results. Add a habit or ask your coach to set some up.</div>';
-      h+='<button class="btn bp" onclick="oam()" style="font-size:12px;padding:8px 16px">+ Add a Habit</button>';
-      h+='</div></div>';
-    } else if(dueToday.length>0){
+    if(dueToday.length>0){
       var allDone=doneCount===dueToday.length&&dueToday.length>0;
       h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:700;color:var(--green)">Today\'s Habits</div><span style="font-size:11px;color:'+(allDone?'var(--check-green)':'var(--text-muted)')+';">'+(allDone?'✓ All done':doneCount+'/'+dueToday.length)+'</span></div>';
       if(allDone)h+='<div style="text-align:center;padding:10px 8px;margin-bottom:8px;background:rgba(45,106,79,0.06);border-radius:8px;font-size:12px;color:var(--check-green);font-weight:600">🔥 All habits done. Strong day.</div>';
@@ -569,16 +563,17 @@ function rHome(td,ts,comp,sk,q){
       h+='</div>';
     });
     h+='</div>';
-  } else {
-    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:3px;height:16px;background:var(--gold);border-radius:2px"></div><div style="font-family:\'DM Serif Display\',serif;font-size:15px;color:var(--green)">Active Goals</div></div>';
-    h+='<div style="border:1.5px dashed var(--border);border-radius:12px;padding:22px 20px;text-align:center;background:var(--white);margin-bottom:28px">';
-    h+='<div style="font-family:\'DM Serif Display\',serif;font-size:14px;color:var(--green);font-style:italic;line-height:1.6;margin-bottom:8px">&ldquo;Growth comes through action, not intention.&rdquo;</div>';
-    h+='<div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:14px">A goal without a plan is just a wish. Define what you\'re working toward and track your progress here.</div>';
-    h+='<button class="btn bp" onclick="sv(\'goals\')" style="font-size:12px;padding:8px 16px">+ Build a Goal</button>';
-    h+='</div>';
   }
 
 
+
+  // Empty state for new clients
+  if(sn.length===0&&todos.length===0&&ag.length===0&&S.data.habits.length===0){
+    h+='<div style="text-align:center;padding:40px 20px;background:var(--white);border:1px solid var(--border);border-radius:12px;margin-bottom:36px">';
+    h+='<div style="font-size:24px;margin-bottom:12px">👋</div>';
+    h+='<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:6px">Welcome to your coaching portal</div>';
+    h+='<div style="font-size:13px;color:var(--text-muted);max-width:360px;margin:0 auto">Your coach will set things up for you soon. In the meantime, check out your Documents tab for onboarding materials.</div></div>';
+  }
 
   // Message coach
   h+='<a href="mailto:andy@scalingminds.com?subject=Message from '+encodeURIComponent(S.data.displayName||S.user.displayName||'your client')+'" style="display:flex;align-items:center;gap:10px;background:var(--green);border-radius:12px;padding:14px 18px;margin-bottom:14px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.opacity=\'0.9\'" onmouseout="this.style.opacity=\'1\'">';
@@ -763,7 +758,8 @@ function rSessions(data){
   var calUrl=data.calendlyUrl||CAL;
   var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:6px">Sessions</h2>';
   // Email reminder for Calendly matching
-  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <strong style="color:var(--green);margin:0 2px">'+e(S.user.email)+'</strong> so your session syncs automatically</div>';
+  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <span style="position:relative;display:inline-block;font-weight:700;color:var(--green);margin:0 2px;padding:0 3px;"><span style="position:relative;z-index:2;">'+e(S.user.email)+'</span><span id="hlbar" style="position:absolute;left:0;top:0;height:100%;width:0;background:#fff176;border-radius:2px;z-index:1;"></span></span> so your session syncs automatically</div>';
+  h+='<script>setTimeout(function(){var b=document.getElementById("hlbar");if(b){b.style.transition="width 0.85s cubic-bezier(0.4,0,0.2,1)";b.style.width="100%";}},600);<\/script>';
   // Next session
   if(data.nextSession){
     h+='<div style="display:flex;gap:10px;margin:14px 0;flex-wrap:wrap">';
