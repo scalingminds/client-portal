@@ -718,7 +718,7 @@ function rSessions(data){
       if(s.notes){h+='<div class="sn-field"><div class="sn-field-label">Notes</div><div style="font-size:13px;line-height:1.5;white-space:pre-wrap">'+e(s.notes)+'</div></div>';}
       h+='</div>';
     });
-  } else if(!sp){
+  } else {
     h+='<div class="empty" style="padding:32px"><div class="ei">📝</div><h3>No session notes yet</h3><p>Your coach will add notes after each session.</p></div>';
   }
   return h;
