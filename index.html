@@ -1695,7 +1695,7 @@ function gbGetAI(step){
   var bodyEl = document.getElementById('gbBody');
   if(bodyEl) bodyEl.innerHTML += '<div class="gb-ai-label" style="margin-top:16px">Coach response</div><div class="gb-ai-box gb-loading" id="gbAiBox'+step+'">Thinking</div>';
 
-  fetch('https://api.anthropic.com/v1/messages',{
+  fetch('https://anthropic-proxy.andy-91f.workers.dev',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
