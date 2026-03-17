@@ -131,7 +131,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .gs-inactive{background:#f0f0f0;color:#999;}
 
 /* Session notes */
-.sn-card{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--green);border-radius:12px;padding:18px 22px;margin-bottom:12px;}
+.sn-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:12px;box-shadow:inset 4px 0 0 var(--green);}
 .sn-date{font-size:11px;font-weight:700;color:var(--green-muted);text-transform:uppercase;letter-spacing:0.5px;}
 .sn-field{margin-top:10px;}
 .sn-field-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:3px;}
@@ -787,7 +787,7 @@ function rSessions(data){
   var calUrl=data.calendlyUrl||CAL;
   var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:6px">Sessions</h2>';
   // Email reminder for Calendly matching
-  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <span style="display:inline-block;position:relative;margin:0 4px"><span style="position:relative;z-index:1;font-weight:700;color:var(--green);padding:2px 4px">'+e(S.user.email)+'</span><span style="position:absolute;left:0;top:0;height:100%;width:0;background:rgba(184,134,11,0.3);border-radius:2px;animation:hlsweep 1s 0.3s ease-out forwards"></span></span> so your session syncs automatically</div>';
+  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <span style="display:inline-block;position:relative;margin:0 4px"><span style="position:relative;z-index:1;font-weight:700;color:var(--green);padding:2px 4px">'+e(S.user.email)+'</span><span style="position:absolute;left:0;top:0;height:100%;width:0;background:rgba(255,255,0,0.55);border-radius:2px;animation:hlsweep 1s 0.3s ease-out forwards"></span></span> so your session syncs automatically</div>';
   // Next session
   if(data.nextSession){
     h+='<div style="display:flex;gap:10px;margin:14px 0;flex-wrap:wrap">';
