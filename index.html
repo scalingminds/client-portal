@@ -455,9 +455,20 @@ function rHome(td,ts,comp,sk,q){
   h+='</div></div>';
 
   // Quote
-  h+='<div class="quote-line" style="margin:24px 0 36px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
+  h+='<div class="quote-line" style="margin:24px 0 24px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
 
-  // Session prep (48hrs before - stays on home as it's time-sensitive)
+  // Pre-session check-in — featured card
+  h+='<a href="https://scalingminds.github.io/coaching-check-in/" target="_blank" style="display:block;background:linear-gradient(135deg,var(--green) 60%,var(--green-light));border-radius:16px;padding:28px 28px 24px;margin-bottom:32px;text-decoration:none;position:relative;overflow:hidden" onmouseover="this.style.opacity=\'0.93\'" onmouseout="this.style.opacity=\'1\'">';
+  h+='<div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;background:rgba(255,255,255,0.05);border-radius:50%"></div>';
+  h+='<div style="position:absolute;right:20px;bottom:-30px;width:80px;height:80px;background:rgba(255,255,255,0.04);border-radius:50%"></div>';
+  h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:10px">Before Your Next Session</div>';
+  h+='<div style="font-family:\'DM Serif Display\',serif;font-size:22px;color:var(--cream-light);margin-bottom:8px">Pre-Session Check-In</div>';
+  h+='<div style="font-size:13px;color:var(--cream);opacity:0.75;margin-bottom:20px;max-width:340px;line-height:1.5">A few minutes of reflection helps you get more out of every session. Take it before you meet with Andy.</div>';
+  h+='<div style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--white);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700">';
+  h+='Start Check-In <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></div>';
+  h+='</a>';
+
+  // Session prep textarea (48hrs before — time-sensitive)
   var showPrep=false;
   if(S.data.nextSession){var nd;if(S.data.nextSession.indexOf('T')!==-1)nd=new Date(S.data.nextSession);else{var np=S.data.nextSession.split('-');nd=new Date(np[0],np[1]-1,np[2]);}if((nd-new Date())/36e5<=48&&(nd-new Date())/36e5>-24)showPrep=true;}
   if(showPrep){
