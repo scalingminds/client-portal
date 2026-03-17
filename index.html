@@ -461,7 +461,6 @@ function rHome(td,ts,comp,sk,q){
   if(S.data.habits.length>0){var dueToday=S.data.habits.filter(function(h2){return hdue(h2,td);}).length,doneToday=comp.length;h+='<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green-muted)" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> '+doneToday+' of '+dueToday+' habits done today</span>';}
   h+='</div></div>';
 
-  // Quote
   // Quote + Daily resource side by side
   var _lib=S.lib||[];
   var _uid=S.user.uid||'x';
@@ -514,7 +513,7 @@ function rHome(td,ts,comp,sk,q){
   var dueToday=S.data.habits.filter(function(h2){return hdue(h2,td);});
   var doneCount=dueToday.filter(function(h2){return comp.indexOf(h2.id)!==-1;}).length;
 
-  if(dueToday.length>0||true){
+  if(true){
     h+='<div style="display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap">';
 
     // Habits (left)
@@ -762,8 +761,7 @@ function rSessions(data){
   var calUrl=data.calendlyUrl||CAL;
   var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:6px">Sessions</h2>';
   // Email reminder for Calendly matching
-  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <span style="position:relative;display:inline-block;font-weight:700;color:var(--green);margin:0 2px;padding:0 3px;"><span style="position:relative;z-index:2;">'+e(S.user.email)+'</span><span id="hlbar" style="position:absolute;left:0;top:0;height:100%;width:0;background:#fff176;border-radius:2px;z-index:1;"></span></span> so your session syncs automatically</div>';
-  h+='<script>setTimeout(function(){var b=document.getElementById("hlbar");if(b){b.style.transition="width 0.85s cubic-bezier(0.4,0,0.2,1)";b.style.width="100%";}},600);<\/script>';
+  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <span style="position:relative;display:inline-block;font-weight:700;color:var(--green);margin:0 2px;padding:0 3px;"><span style="position:relative;z-index:2;">'+e(S.user.email)+'</span><span id="hlbar" style="position:absolute;left:0;top:0;height:100%;width:0;background:#fff176;border-radius:2px;z-index:1;display:block;"></span></span> so your session syncs automatically</div>';
   // Next session
   if(data.nextSession){
     h+='<div style="display:flex;gap:10px;margin:14px 0;flex-wrap:wrap">';
@@ -794,6 +792,7 @@ function rSessions(data){
   var sn=(data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
   if(sn.length>0){
     h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);margin:20px 0 12px">Session History</h3>';
+    h+='<div style="max-width:860px">';
     sn.forEach(function(s){
       h+='<div class="sn-card"><div class="sn-date">'+fs(s.date)+'</div>';
       if(s.themes){h+='<div class="sn-field"><div class="sn-field-label">Key Themes</div><div style="font-size:13px;line-height:1.5">'+e(s.themes)+'</div></div>';}
@@ -802,6 +801,7 @@ function rSessions(data){
       if(s.notes){h+='<div class="sn-field"><div class="sn-field-label">Notes</div><div style="font-size:13px;line-height:1.5;white-space:pre-wrap">'+e(s.notes)+'</div></div>';}
       h+='</div>';
     });
+    h+='</div>';
   } else {
     h+='<div class="empty" style="padding:32px"><div class="ei">📝</div><h3>No session notes yet</h3><p>Your coach will add notes after each session.</p></div>';
   }
@@ -1740,8 +1740,9 @@ function gbE(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 <!-- ═══════════════════════════════════════════════════════════ END GOAL BUILDER -->
 
 <!-- Floating bug report button -->
-<div onclick="openBugReport()" title="Report a bug" style="position:fixed;bottom:24px;right:24px;z-index:999;width:42px;height:42px;background:var(--white);border:1px solid var(--border);border-radius:50%;box-shadow:0 2px 12px rgba(27,67,50,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.boxShadow='0 4px 20px rgba(27,67,50,0.18)';this.style.transform='scale(1.08)'" onmouseout="this.style.boxShadow='0 2px 12px rgba(27,67,50,0.12)';this.style.transform='scale(1)'">
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--green-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+<div onclick="openBugReport()" style="position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--border);border-radius:24px;padding:10px 16px;box-shadow:0 2px 12px rgba(27,67,50,0.12);cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--green-muted);" onmouseover="this.style.boxShadow='0 4px 20px rgba(27,67,50,0.18)';this.style.color='var(--green)'" onmouseout="this.style.boxShadow='0 2px 12px rgba(27,67,50,0.12)';this.style.color='var(--green-muted)'">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  Report a Bug
 </div>
 
 <!-- Bug report modal -->
@@ -1784,6 +1785,24 @@ function submitBugReport(){
   window.open('mailto:andy@scalingminds.com?subject='+subject+'&body='+body);
   closeBugReport();
 }
+
+// Highlighter — watches for hlbar appearing in the DOM after each render
+function runHL(){
+  var b=document.getElementById('hlbar');
+  if(b&&b.style.width!=='100%'){
+    b.style.transition='none';
+    b.style.width='0';
+    setTimeout(function(){
+      b.style.transition='width 0.85s cubic-bezier(0.4,0,0.2,1)';
+      b.style.width='100%';
+    },50);
+  }
+}
+var _hlObserver=new MutationObserver(function(){
+  var b=document.getElementById('hlbar');
+  if(b&&b.style.width!=='100%') setTimeout(runHL,600);
+});
+_hlObserver.observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
 </script>
 
 </body>
