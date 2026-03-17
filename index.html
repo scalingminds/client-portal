@@ -792,7 +792,6 @@ function rSessions(data){
   var sn=(data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
   if(sn.length>0){
     h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);margin:20px 0 12px">Session History</h3>';
-    h+='<div style="max-width:860px">';
     sn.forEach(function(s){
       h+='<div class="sn-card"><div class="sn-date">'+fs(s.date)+'</div>';
       if(s.themes){h+='<div class="sn-field"><div class="sn-field-label">Key Themes</div><div style="font-size:13px;line-height:1.5">'+e(s.themes)+'</div></div>';}
@@ -801,7 +800,6 @@ function rSessions(data){
       if(s.notes){h+='<div class="sn-field"><div class="sn-field-label">Notes</div><div style="font-size:13px;line-height:1.5;white-space:pre-wrap">'+e(s.notes)+'</div></div>';}
       h+='</div>';
     });
-    h+='</div>';
   } else {
     h+='<div class="empty" style="padding:32px"><div class="ei">📝</div><h3>No session notes yet</h3><p>Your coach will add notes after each session.</p></div>';
   }
