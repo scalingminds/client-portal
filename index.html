@@ -507,7 +507,9 @@ function rHome(td,ts,comp,sk,q){
 
     // Habits (left)
     if(dueToday.length>0){
-      h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><div style="font-size:13px;font-weight:700;color:var(--green)">Today\'s Habits</div><span style="font-size:11px;color:var(--text-muted)">'+doneCount+'/'+dueToday.length+'</span></div>';
+      var allDone=doneCount===dueToday.length&&dueToday.length>0;
+      h+='<div style="flex:1;min-width:260px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:13px;font-weight:700;color:var(--green)">Today\'s Habits</div><span style="font-size:11px;color:'+(allDone?'var(--check-green)':'var(--text-muted)')+';">'+(allDone?'✓ All done':doneCount+'/'+dueToday.length)+'</span></div>';
+      if(allDone)h+='<div style="text-align:center;padding:10px 8px;margin-bottom:8px;background:rgba(45,106,79,0.06);border-radius:8px;font-size:12px;color:var(--check-green);font-weight:600">🔥 All habits done. Strong day.</div>';
       dueToday.forEach(function(hab){var ck=comp.indexOf(hab.id)!==-1;var flbl=hab.freq==='days'?(hab.freqDays||[]).map(function(d2){return DS[d2];}).join(', '):hab.freq==='weekly'?(hab.freqPerWeek||1)+'x/wk':'';
         h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--cream-light)">';
         h+='<div style="width:20px;height:20px;min-width:20px;border-radius:50%;border:2px solid '+(ck?'var(--check-green)':'var(--border)')+';background:'+(ck?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="th(\''+hab.id+'\')">';
@@ -550,13 +552,7 @@ function rHome(td,ts,comp,sk,q){
     h+='</div>';
   }
 
-  // Encouragement
-  var allTodosDone=todos.length>0&&todos.every(function(t){return t.done;});
-  var allHabitsDone=dueToday.length>0&&dueToday.every(function(h2){return comp.indexOf(h2.id)!==-1;});
-  if(allTodosDone||allHabitsDone){
-    var msg=allTodosDone&&allHabitsDone?'All habits and to-dos done. Strong day.':allTodosDone?'All to-dos complete. Keep it going.':'All habits done today. Nice work.';
-    h+='<div style="text-align:center;padding:14px;background:rgba(45,106,79,0.05);border-radius:10px;margin-bottom:36px;font-size:13px;color:var(--green);font-weight:500">✓ '+msg+'</div>';
-  }
+
 
   // Empty state for new clients
   if(sn.length===0&&todos.length===0&&ag.length===0&&S.data.habits.length===0){
@@ -575,7 +571,8 @@ function rHome(td,ts,comp,sk,q){
   h+='<div style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:36px;cursor:pointer" onclick="sv(\'journal\')">';
   h+='<div style="width:34px;height:34px;min-width:34px;background:var(--cream-light);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>';
   h+='<div style="font-size:13px;color:var(--text-muted)">Jot something down for your next session...</div></div>';
-
+  return h;
+}
 
 function openCheckin(){
   var existing=document.getElementById('checkin-modal');
