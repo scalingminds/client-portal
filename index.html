@@ -626,7 +626,6 @@ function openCheckin(){
   overlay.appendChild(modal);
   overlay.addEventListener('click',function(ev){if(ev.target===overlay)closeCheckin();});
   document.body.appendChild(overlay);
-  // Init slider displays
   ['ci-energy','ci-stress','ci-clarity','ci-confidence'].forEach(function(id){
     var el=document.getElementById(id);
     if(el)el.addEventListener('input',function(){var v=document.getElementById(id+'-val');if(v)v.textContent=el.value;});
