@@ -479,6 +479,7 @@ function rHome(td,ts,comp,sk,q){
   h+='<div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;background:rgba(255,255,255,0.05);border-radius:50%"></div>';
   h+='<div style="position:absolute;right:20px;bottom:-30px;width:80px;height:80px;background:rgba(255,255,255,0.04);border-radius:50%"></div>';
   h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:10px">Before Your Next Session</div>';
+  if(S.data.nextSession)h+='<div style="font-size:15px;font-weight:600;color:var(--cream-light);margin-bottom:6px;opacity:0.9">'+fdt(S.data.nextSession)+'</div>';
   h+='<div style="font-family:\'DM Serif Display\',serif;font-size:22px;color:var(--cream-light);margin-bottom:8px">Pre-Session Check-In</div>';
   h+='<div style="font-size:13px;color:var(--cream);opacity:0.75;margin-bottom:20px;max-width:340px;line-height:1.5">A few minutes of reflection helps you get more out of every session. Take it before you meet with Andy.</div>';
   h+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
