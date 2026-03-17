@@ -1210,13 +1210,14 @@ function dlc(rows,fn){var csv=rows.map(function(r){return r.map(function(c){retu
 // ══════════════════════════════════
 var TOUR_KEY='sm_tour_seen_v1';
 var TOUR_STEPS=[
-  {tab:'home',   title:'Welcome to your portal',      body:'This is your home base. You\'ll see your session info, commitments from your last session, habits, to-dos, and goals — all in one place.',selector:null},
-  {tab:'sessions',title:'Book & manage sessions',     body:'Schedule your next coaching session, join Zoom, or reschedule if needed. Your session history lives here too.',selector:null},
-  {tab:'habits',  title:'Track your habits',           body:'Add habits that matter to you and check them off each day. Your streak and completion rate update automatically.',selector:null},
-  {tab:'goals',   title:'Set goals, track progress',  body:'Work with your coach to define goals and see how far you\'ve come. You can update your own progress anytime.',selector:null},
-  {tab:'journal', title:'Capture your thinking',      body:'Jot down reflections, ideas, or prep notes between sessions. Your coach can see these and they inform your next conversation.',selector:null},
-  {tab:'docs',    title:'Your resources',              body:'Find handouts, assessments, and materials your coach has shared — organized and always accessible.',selector:null},
-  {tab:'home',    title:'You\'re all set',             body:'That\'s the tour. Explore at your own pace, and reach out to Andy or Sasha anytime. Let\'s get to work.',selector:null,last:true}
+  {tab:'home',     title:'Welcome to your portal',    body:'This is your home base. You\'ll see your session info, commitments from your last session, habits, to-dos, and goals — all in one place.'},
+  {tab:'goals',    title:'Set goals, track progress', body:'Work with your coach to define goals and see how far you\'ve come. You can update your own progress anytime.'},
+  {tab:'sessions', title:'Book & manage sessions',    body:'Schedule your next coaching session, join Zoom, or reschedule if needed. Your session history lives here too.'},
+  {tab:'habits',   title:'Track your habits',         body:'Add habits that matter to you and check them off each day. Your streak and completion rate update automatically.'},
+  {tab:'journal',  title:'Capture your thinking',     body:'Jot down reflections, ideas, or prep notes between sessions. Your coach can see these and they inform your next conversation.'},
+  {tab:'progress', title:'See how far you\'ve come', body:'Your habit completion rate, streak, and per-habit breakdown over time. Progress is tracked from your engagement start date.'},
+  {tab:'docs',     title:'Your resources',            body:'Find handouts, assessments, and materials your coach has shared — organized and always accessible.'},
+  {tab:'home',     title:'You\'re all set',           body:'That\'s the tour. Explore at your own pace, and reach out to Andy or Sasha anytime. Let\'s get to work.',last:true}
 ];
 var _tourStep=0;
 
@@ -1234,7 +1235,7 @@ function renderTourStep(){
   var step=TOUR_STEPS[_tourStep];
 
   // Switch to the right tab first
-  if(step.tab&&step.tab!==S.view){S.view=step.tab;rC();setTimeout(function(){_placeTourCard(step);},200);}
+  if(step.tab&&step.tab!==S.view){S.view=step.tab;rC();setTimeout(function(){_placeTourCard(step);},400);}
   else{_placeTourCard(step);}
 }
 
