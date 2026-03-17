@@ -1545,7 +1545,6 @@ function gbOverlayClick(e){
 }
 
 function gbRender(){
-  console.log('gbRender called, step='+GB.step+', aiResponses='+JSON.stringify(GB.aiResponses));
   var nav = '';
   GB_STEPS.forEach(function(s,i){
     var cls = i===GB.step ? 'gb-step gb-active' : i<GB.step ? 'gb-step gb-done' : 'gb-step';
@@ -1564,7 +1563,6 @@ function gbRender(){
   else if(GB.step===2) body = gbStep2();
   else if(GB.step===3) body = gbStep3();
   else if(GB.step===4) body = gbStep4();
-  console.log('Setting gbBody, body length='+body.length+', ai keys='+Object.keys(GB.aiResponses));
   document.getElementById('gbBody').innerHTML = body;
 }
 
