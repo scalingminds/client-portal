@@ -244,6 +244,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
   .main div[style*="grid-template-columns"]{grid-template-columns:1fr!important;}
 }
 @keyframes cp{0%{transform:scale(1);}50%{transform:scale(1.3);}100%{transform:scale(1);}}
+/* Tour */
+.tour-overlay{position:fixed;inset:0;z-index:500;pointer-events:none;}
+.tour-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:501;pointer-events:all;}
+.tour-highlight{position:fixed;z-index:502;border-radius:8px;box-shadow:0 0 0 4px var(--gold),0 0 0 9999px rgba(0,0,0,0.55);pointer-events:none;transition:all 0.35s cubic-bezier(0.4,0,0.2,1);}
+.tour-card{position:fixed;z-index:503;background:var(--white);border-radius:16px;padding:22px 24px;max-width:320px;width:90vw;box-shadow:0 12px 40px rgba(27,67,50,0.2);pointer-events:all;transition:all 0.35s cubic-bezier(0.4,0,0.2,1);}
+.tour-card h3{font-family:'DM Serif Display',serif;font-size:18px;color:var(--green);margin-bottom:6px;}
+.tour-card p{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:18px;}
+.tour-dots{display:flex;gap:6px;margin-bottom:14px;}
+.tour-dot{width:7px;height:7px;border-radius:50%;background:var(--border);}
+.tour-dot.active{background:var(--gold);}
+.tour-btns{display:flex;gap:8px;justify-content:flex-end;}
+.tour-skip{background:none;border:none;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-muted);cursor:pointer;padding:8px 4px;margin-right:auto;}
+.tour-skip:hover{color:var(--text);}
+.tour-next{background:var(--green);color:var(--cream-light);border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;padding:10px 20px;border-radius:10px;cursor:pointer;}
+.tour-next:hover{background:var(--green-light);}
 .habit-card.jc .hc{animation:cp 0.35s cubic-bezier(0.4,0,0.2,1);}
 </style>
 <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
@@ -326,7 +341,7 @@ function siep(){
   });
 }
 function so(){auth.signOut();}
-auth.onAuthStateChanged(function(u){if(u){S.user=u;S.ic=ic();if(S.ic){S.view='clients';S.cv='clients';db.collection('users').doc(u.uid).set({displayName:u.displayName||'',email:u.email||'',photoURL:u.photoURL||''},{merge:true});loadAll(function(){loadLib(function(){R();});});}else{var sv2='home';try{sv2=localStorage.getItem('sm_view')||'home';}catch(e){}var validViews=['home','goals','sessions','habits','journal','progress','docs','profile'];S.view=validViews.indexOf(sv2)!==-1?sv2:'home';load(function(){loadLib(function(){save();R();});});}}else{S.user=null;S.ic=false;S.data=dd();S.cls=[];S.lib=[];rl();}});
+auth.onAuthStateChanged(function(u){if(u){S.user=u;S.ic=ic();if(S.ic){S.view='clients';S.cv='clients';db.collection('users').doc(u.uid).set({displayName:u.displayName||'',email:u.email||'',photoURL:u.photoURL||''},{merge:true});loadAll(function(){loadLib(function(){R();});});}else{var sv2='home';try{sv2=localStorage.getItem('sm_view')||'home';}catch(e){}var validViews=['home','goals','sessions','habits','journal','progress','docs','profile'];S.view=validViews.indexOf(sv2)!==-1?sv2:'home';load(function(){loadLib(function(){save();R();if(!tourSeen())setTimeout(startTour,600);});});}}else{S.user=null;S.ic=false;S.data=dd();S.cls=[];S.lib=[];rl();}});
 
 function rl(){document.getElementById('app').innerHTML='<div class="login-screen"><div class="login-card"><img class="login-logo" src="'+L+'" alt="Scaling Minds"><h1>Client Portal</h1><p>Track habits, reflect, and grow. Sign in to sync across all your devices.</p><div id="login-err" class="login-error"></div><input class="login-input" id="login-email" type="email" placeholder="Email address"><div style="font-size:11px;color:var(--text-muted);margin:-8px 0 10px 4px">Use this same email when booking on Calendly</div><div style="position:relative"><input class="login-input" id="login-pw" type="password" placeholder="Password" style="padding-right:44px"><button onclick="var p=document.getElementById(\'login-pw\');p.type=p.type===\'password\'?\'text\':\'password\';this.innerHTML=p.type===\'password\'?\'Show\':\'Hide\'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:12px;color:var(--green-muted);cursor:pointer;font-family:\'DM Sans\',sans-serif;font-weight:600">Show</button></div><button class="login-btn" onclick="siep()">Sign In</button><div class="login-divider">or</div><button class="google-btn" onclick="si()"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Sign in with Google</button><div class="login-footer">&copy; Scaling Minds</div></div></div>';}
 
@@ -1105,6 +1120,10 @@ function rProfile(){
   h+='<div class="fg"><label class="fl">Email</label><div style="font-size:14px;color:var(--text-muted);padding:10px 0">'+e(u.email)+'</div></div>';
   h+='<div style="margin-top:12px;text-align:right"><button class="btn bp" onclick="saveProfile()">Save Changes</button></div>';
   h+='</div>';
+  h+='<div class="card" style="margin-top:14px;display:flex;align-items:center;justify-content:space-between">';
+  h+='<div><div style="font-size:13px;font-weight:600;color:var(--green)">Portal Tour</div><div style="font-size:12px;color:var(--text-muted)">Replay the guided walkthrough anytime</div></div>';
+  h+='<button class="btn bp" onclick="startTour()">Take the Tour</button>';
+  h+='</div>';
   return h;
 }
 
@@ -1119,15 +1138,21 @@ function saveProfile(){
     address:document.getElementById('paddress').value.trim()
   };
   S.user.updateProfile({displayName:name}).then(function(){
-    db.collection('users').doc(S.user.uid).set(profile,{merge:true});
+    return db.collection('users').doc(S.user.uid).set(profile,{merge:true});
+  }).then(function(){
     S.data.displayName=name;
     S.data.company=profile.company;
     S.data.title=profile.title;
     S.data.phone=profile.phone;
     S.data.address=profile.address;
-    alert('Profile updated');
     R();
-  });
+    // Show a brief success banner instead of alert
+    var banner=document.createElement('div');
+    banner.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:var(--cream-light);padding:12px 24px;border-radius:10px;font-family:"DM Sans",sans-serif;font-size:14px;font-weight:600;z-index:999;box-shadow:0 4px 20px rgba(27,67,50,0.2)';
+    banner.textContent='✓ Profile saved';
+    document.body.appendChild(banner);
+    setTimeout(function(){if(banner.parentNode)banner.parentNode.removeChild(banner);},2500);
+  }).catch(function(err){alert('Error saving profile: '+err.message);});
 }
 function toggleMobNav(){var m=document.getElementById('mob-menu');if(m)m.style.display=m.style.display==='none'?'block':'none';}
 function closeMobNav(){var m=document.getElementById('mob-menu');if(m)m.style.display='none';}
@@ -1179,6 +1204,95 @@ function rlb(i){if(!confirm('Remove?'))return;var lib=(S.lib||[]).slice();lib.sp
 function eacsv(){var rows=[['Name','Email','Habits','Rate','Streak','Start','End','Last Active']];S.cls.forEach(function(c){rows.push([c.displayName,c.email,c.habits.length,crate(c)+'%',streak(c),c.startDate||'',c.endDate||'',la(c)||'Never']);});dlc(rows,'scaling-minds-all-clients.csv');}
 function eccsv(){var c=S.sc;if(!c)return;var td=new Date(),ad=Math.min(90,adays(c)),days=[];for(var i=ad-1;i>=0;i--){var d=new Date(td);d.setDate(d.getDate()-i);days.push(dk(d));}var hdr=['Date'];c.habits.forEach(function(h){hdr.push(h.name);});var rows=[hdr];days.forEach(function(k){var r=[k];c.habits.forEach(function(h){var co=c.completions[k]||[];r.push(co.indexOf(h.id)!==-1?'Yes':'');});rows.push(r);});dlc(rows,'scaling-minds-'+c.displayName.replace(/\s+/g,'-').toLowerCase()+'.csv');}
 function dlc(rows,fn){var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');var b=new Blob([csv],{type:'text/csv'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download=fn;a.click();URL.revokeObjectURL(u);}
+
+// ══════════════════════════════════
+// GUIDED TOUR
+// ══════════════════════════════════
+var TOUR_KEY='sm_tour_seen_v1';
+var TOUR_STEPS=[
+  {tab:'home',   title:'Welcome to your portal',      body:'This is your home base. You\'ll see your session info, commitments from your last session, habits, to-dos, and goals — all in one place.',selector:null},
+  {tab:'sessions',title:'Book & manage sessions',     body:'Schedule your next coaching session, join Zoom, or reschedule if needed. Your session history lives here too.',selector:null},
+  {tab:'habits',  title:'Track your habits',           body:'Add habits that matter to you and check them off each day. Your streak and completion rate update automatically.',selector:null},
+  {tab:'goals',   title:'Set goals, track progress',  body:'Work with your coach to define goals and see how far you\'ve come. You can update your own progress anytime.',selector:null},
+  {tab:'journal', title:'Capture your thinking',      body:'Jot down reflections, ideas, or prep notes between sessions. Your coach can see these and they inform your next conversation.',selector:null},
+  {tab:'docs',    title:'Your resources',              body:'Find handouts, assessments, and materials your coach has shared — organized and always accessible.',selector:null},
+  {tab:'home',    title:'You\'re all set',             body:'That\'s the tour. Explore at your own pace, and reach out to Andy or Sasha anytime. Let\'s get to work.',selector:null,last:true}
+];
+var _tourStep=0;
+
+function tourSeen(){try{return localStorage.getItem(TOUR_KEY)==='1';}catch(e){return false;}}
+function markTourSeen(){try{localStorage.setItem(TOUR_KEY,'1');}catch(e){}}
+
+function startTour(){
+  _tourStep=0;
+  renderTourStep();
+}
+
+function renderTourStep(){
+  removeTour();
+  if(_tourStep>=TOUR_STEPS.length){endTour();return;}
+  var step=TOUR_STEPS[_tourStep];
+
+  // Switch to the right tab first
+  if(step.tab&&step.tab!==S.view){S.view=step.tab;rC();setTimeout(function(){_placeTourCard(step);},200);}
+  else{_placeTourCard(step);}
+}
+
+function _placeTourCard(step){
+  removeTour();
+  var total=TOUR_STEPS.length;
+  var overlay=document.createElement('div');
+  overlay.id='sm-tour';
+  overlay.style.cssText='position:fixed;inset:0;z-index:500;pointer-events:none;';
+
+  // Find nav tab element to highlight
+  var targetEl=null;
+  if(step.tab){
+    var navTabs=document.querySelectorAll('.nav-tab');
+    navTabs.forEach(function(el){if(el.textContent.trim().toLowerCase()===_tabLabel(step.tab).toLowerCase())targetEl=el;});
+    if(!targetEl){var mobItems=document.querySelectorAll('.mob-nav-item');mobItems.forEach(function(el){if(el.textContent.trim().toLowerCase()===_tabLabel(step.tab).toLowerCase())targetEl=el;});}
+  }
+
+  var hl='';
+  if(targetEl&&!step.last){
+    var r=targetEl.getBoundingClientRect();
+    hl='<div style="position:fixed;z-index:502;border-radius:6px;box-shadow:0 0 0 3px var(--gold),0 0 0 9999px rgba(0,0,0,0.5);pointer-events:none;top:'+(r.top-4)+'px;left:'+(r.left-6)+'px;width:'+(r.width+12)+'px;height:'+(r.height+8)+'px;transition:all 0.3s"></div>';
+  } else {
+    hl='<div style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:501;pointer-events:all" onclick=""></div>';
+  }
+
+  // Build dots
+  var dots='<div class="tour-dots">';
+  for(var i=0;i<total;i++)dots+='<div class="tour-dot'+(i===_tourStep?' active':'')+'"></div>';
+  dots+='</div>';
+
+  // Card position: bottom-center on mobile, near nav on desktop
+  var cardStyle='position:fixed;z-index:503;bottom:32px;left:50%;transform:translateX(-50%);background:var(--white);border-radius:16px;padding:22px 24px;width:min(360px,90vw);box-shadow:0 12px 40px rgba(27,67,50,0.22);pointer-events:all;';
+
+  var isLast=!!step.last;
+  var card='<div style="'+cardStyle+'">';
+  card+=dots;
+  card+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:6px">'+step.title+'</h3>';
+  card+='<p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:18px">'+step.body+'</p>';
+  card+='<div style="display:flex;align-items:center;gap:8px">';
+  if(!isLast)card+='<button class="tour-skip" onclick="endTour()">Skip tour</button>';
+  card+='<button class="tour-next" onclick="'+(isLast?'endTour()':'nextTourStep()')+'" style="margin-left:auto">'+(isLast?'Get started →':'Next →')+'</button>';
+  card+='</div></div>';
+
+  overlay.innerHTML=hl+card;
+  document.body.appendChild(overlay);
+}
+
+function _tabLabel(tab){
+  var map={home:'Home',goals:'Goals',sessions:'Sessions',habits:'Habits',journal:'Journal',progress:'Progress',docs:'Documents',profile:'Profile'};
+  return map[tab]||tab;
+}
+
+function nextTourStep(){_tourStep++;renderTourStep();}
+
+function endTour(){markTourSeen();removeTour();if(S.view!=='home'){S.view='home';rC();}}
+
+function removeTour(){var el=document.getElementById('sm-tour');if(el)el.parentNode.removeChild(el);}
 
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
 </script>
