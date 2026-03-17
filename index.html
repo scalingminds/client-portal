@@ -131,7 +131,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .gs-inactive{background:#f0f0f0;color:#999;}
 
 /* Session notes */
-.sn-card{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--green);border-radius:0 12px 12px 0;padding:18px 22px;margin-bottom:12px;}
+.sn-card{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--green);border-radius:12px;padding:18px 22px;margin-bottom:12px;}
 .sn-date{font-size:11px;font-weight:700;color:var(--green-muted);text-transform:uppercase;letter-spacing:0.5px;}
 .sn-field{margin-top:10px;}
 .sn-field-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:3px;}
@@ -670,6 +670,7 @@ function submitCheckin(){
   S.data.checkIns=S.data.checkIns||[];
   S.data.checkIns.push(ci);
   save();
+  fetch('https://formspree.io/f/mgonornw',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({email:S.user.email||'',name:S.user.displayName||S.user.email||'',session:ci.session||'',date:ci.date,energy:ci.energy,stress:ci.stress,clarity:ci.clarity,confidence:ci.confidence,wins:ci.wins||'',challenges:ci.challenges||'',patterns:ci.patterns||'',coachingFocus:ci.coachingFocus})}).catch(function(err){console.error('Formspree error:',err);});
   var msg=document.getElementById('ci-msg');
   if(msg)msg.style.display='block';
   ['ci-q1','ci-q2','ci-q3','ci-q4','ci-energy','ci-stress','ci-clarity','ci-confidence'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=true;});
