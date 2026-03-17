@@ -1688,7 +1688,7 @@ function gbNext(){
 }
 
 function gbGetAI(step){
-  if(GB.aiResponses[step]) return;
+  if(GB.aiResponses[step] && GB.aiResponses[step] !== '__loading__') return;
   var p0 = 'A coaching client just wrote their goal: "'+GB.data.title+'". In 2-3 sentences, reflect back what you hear, name what makes it compelling or where it might still be vague, and ask one clarifying question to sharpen it. Be direct and warm, like a coach not a therapist.';
   var p1 = 'A coaching client said their goal is "'+GB.data.title+'" and their why is: "'+GB.data.why+'". In 2-3 sentences, acknowledge what you hear, note whether this why feels surface-level or genuinely motivating, and ask one question that goes deeper if needed. Be direct.';
   var p2 = 'A client goal: "'+GB.data.title+'". Their success measure: "'+GB.data.outcome+'". In 2 sentences, confirm whether this is specific and observable enough to measure progress, and name one way to make it even crisper if needed.';
@@ -1697,7 +1697,6 @@ function gbGetAI(step){
   var prompts = {0:p0, 1:p1, 2:p2, 3:p3};
   if(!prompts[step]) return;
 
-  // Show loading state by re-rendering with a placeholder
   GB.aiResponses[step] = '__loading__';
   gbRender();
 
@@ -1709,21 +1708,30 @@ function gbGetAI(step){
       max_tokens:200,
       messages:[{role:'user',content:prompts[step]}]
     })
-  }).then(function(r){return r.json();})
-  .then(function(data){
-    console.log('GB AI response:', JSON.stringify(data).substring(0,200));
-    var text = (data.content&&data.content[0]&&data.content[0].text) ? data.content[0].text : '';
-    if(text){
-      GB.aiResponses[step] = text;
-    } else {
-      GB.aiResponses[step] = data.error ? 'Error: '+data.error.message : '__error__';
-    }
-    gbRender();
   })
-  .catch(function(err){
-    console.log('GB AI error:', err);
-    GB.aiResponses[step] = '';
-    gbRender();
+  .then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  })
+  .then(function(data){
+    var text = '';
+    if(data && data.content && data.content[0] && data.content[0].text){
+      text = data.content[0].text;
+    } else if(data && data.error){
+      text = 'Note: '+data.error.message;
+    }
+    // Only update if we got something useful — never erase with empty
+    if(text) {
+      GB.aiResponses[step] = text;
+      gbRender();
+    }
+  })
+  .catch(function(){
+    // On failure just clear the loading state silently — don't wipe with empty
+    if(GB.aiResponses[step] === '__loading__'){
+      delete GB.aiResponses[step];
+      gbRender();
+    }
   });
 }
 
