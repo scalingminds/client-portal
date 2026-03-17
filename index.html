@@ -682,9 +682,7 @@ function rGoals(data){
   }
   // Client can add goals - guided builder
   h+='<div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">';
-  h+='<button class="btn bp" style="display:flex;align-items:center;gap:8px;padding:14px 22px;font-size:14px" onclick="openGoalBuilder()">';
-  h+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>';
-  h+='Build a Goal</button>';
+  h+='<button class="btn bp" style="padding:13px 22px;font-size:14px;font-weight:700;" onclick="openGoalBuilder()">+ Build a Goal</button>';
   h+='<span style="font-size:12px;color:var(--text-muted)">Guided process — takes about 5 minutes</span>';
   h+='</div>';
   return h;
@@ -1496,13 +1494,12 @@ if('serviceWorker' in navigator){window.addEventListener('load',function(){navig
 </div>
 
 <script>
-// ─── GOAL BUILDER STATE ───────────────────────────────────────────────────────
+// ─── GOAL BUILDER ────────────────────────────────────────────────────────────
 var GB = {
   step: 0,
   data: { title:'', why:'', outcome:'', obstacles:['',''], nextSteps:[{task:'',date:''},{task:'',date:''},{task:'',date:''}] },
   aiResponses: {}
 };
-
 var GB_STEPS = ['The Goal','The Why','Success','Obstacles','Next Steps'];
 
 function openGoalBuilder(){
@@ -1518,31 +1515,26 @@ function openGoalBuilder(){
 function closeGoalBuilder(){
   var ov = document.getElementById('gbOverlay');
   ov.classList.remove('gb-show');
-  setTimeout(function(){ ov.style.display = 'none'; ov.style.opacity = ''; }, 260);
+  setTimeout(function(){ ov.style.display = 'none'; }, 260);
 }
 
-function gbOverlayClick(e){ if(e.target === document.getElementById('gbOverlay')) closeGoalBuilder(); }
+function gbOverlayClick(e){
+  if(e.target === document.getElementById('gbOverlay')) closeGoalBuilder();
+}
 
 function gbRender(){
-  // Step nav
   var nav = '';
   GB_STEPS.forEach(function(s,i){
-    var cls = i===GB.step?'gb-step gb-active':i<GB.step?'gb-step gb-done':'gb-step';
-    nav += '<div class="'+cls+'">'+(i<GB.step?'✓ ':'')+s+'</div>';
+    var cls = i===GB.step ? 'gb-step gb-active' : i<GB.step ? 'gb-step gb-done' : 'gb-step';
+    nav += '<div class="'+cls+'">'+(i<GB.step?'&#10003; ':'')+s+'</div>';
   });
   document.getElementById('gbStepNav').innerHTML = nav;
   document.getElementById('gbHeaderSub').textContent = 'Step '+(GB.step+1)+' of '+GB_STEPS.length;
   document.getElementById('gbStepCounter').textContent = (GB.step+1)+' / '+GB_STEPS.length;
-
-  // Back button
-  document.getElementById('gbBtnBack').style.visibility = GB.step===0?'hidden':'visible';
-
-  // Next button
+  document.getElementById('gbBtnBack').style.visibility = GB.step===0 ? 'hidden' : 'visible';
   var btn = document.getElementById('gbBtnNext');
-  btn.textContent = GB.step===GB_STEPS.length-1 ? 'Save Goal ✓' : 'Continue →';
+  btn.textContent = GB.step===GB_STEPS.length-1 ? 'Save Goal' : 'Continue';
   btn.className = GB.step===GB_STEPS.length-1 ? 'gb-btn-next gb-btn-finish' : 'gb-btn-next';
-
-  // Body
   var body = '';
   if(GB.step===0) body = gbStep0();
   else if(GB.step===1) body = gbStep1();
@@ -1550,45 +1542,47 @@ function gbRender(){
   else if(GB.step===3) body = gbStep3();
   else if(GB.step===4) body = gbStep4();
   document.getElementById('gbBody').innerHTML = body;
+}
 
-  // Restore saved values
-  gbRestoreValues();
+function gbAiHtml(step){
+  if(!GB.aiResponses[step]) return '';
+  return '<div class="gb-ai-label">Coach response</div><div class="gb-ai-box">'+gbE(GB.aiResponses[step])+'</div>';
 }
 
 function gbStep0(){
   return '<div class="gb-step-title">Name the goal</div>'+
-    '<div class="gb-step-desc">Write it in plain language — how you would say it out loud. Don't worry about making it perfect yet.</div>'+
+    '<div class="gb-step-desc">Write it in plain language, how you would say it out loud. Do not worry about making it perfect yet.</div>'+
     '<label class="gb-label">What do you want to achieve?</label>'+
-    '<textarea class="gb-input" id="gbTitle" rows="3" placeholder="e.g. Stop being the bottleneck on my team's decisions">'+gbE(GB.data.title)+'</textarea>'+
-    (GB.aiResponses[0]?'<div class="gb-ai-label">Coach response</div><div class="gb-ai-box">'+GB.aiResponses[0]+'</div>':'');
+    '<textarea class="gb-input" id="gbTitle" rows="3" placeholder="e.g. Stop being the bottleneck on my team decisions">'+gbE(GB.data.title)+'</textarea>'+
+    gbAiHtml(0);
 }
 
 function gbStep1(){
   return '<div class="gb-step-title">The why</div>'+
-    '<div class="gb-step-desc">Goals without a strong reason behind them don't survive. What's really driving this?</div>'+
+    '<div class="gb-step-desc">Goals without a strong reason behind them do not survive. What is really driving this?</div>'+
     '<label class="gb-label">Why does this matter to you right now?</label>'+
-    '<textarea class="gb-input" id="gbWhy" rows="4" placeholder="Be honest — not what sounds good, what's true">'+gbE(GB.data.why)+'</textarea>'+
-    (GB.aiResponses[1]?'<div class="gb-ai-label">Coach response</div><div class="gb-ai-box">'+GB.aiResponses[1]+'</div>':'');
+    '<textarea class="gb-input" id="gbWhy" rows="4" placeholder="Be honest. Not what sounds good, what is true.">'+gbE(GB.data.why)+'</textarea>'+
+    gbAiHtml(1);
 }
 
 function gbStep2(){
   return '<div class="gb-step-title">Define success</div>'+
-    '<div class="gb-step-desc">Vague goals stay vague. Name exactly what done looks like — not how you feel, what you can observe or measure.</div>'+
-    '<label class="gb-label">How will you know when you've achieved this?</label>'+
+    '<div class="gb-step-desc">Vague goals stay vague. Name exactly what done looks like. Not how you feel, what you can observe or measure.</div>'+
+    '<label class="gb-label">How will you know when you have achieved this?</label>'+
     '<textarea class="gb-input" id="gbOutcome" rows="4" placeholder="e.g. My team makes 80% of routine decisions without looping me in">'+gbE(GB.data.outcome)+'</textarea>'+
-    (GB.aiResponses[2]?'<div class="gb-ai-label">Coach response</div><div class="gb-ai-box">'+GB.aiResponses[2]+'</div>':'');
+    gbAiHtml(2);
 }
 
 function gbStep3(){
   var h = '<div class="gb-step-title">Name the obstacles</div>'+
-    '<div class="gb-step-desc">What's most likely to get in your way? Naming them now is how you beat them.</div>';
+    '<div class="gb-step-desc">What is most likely to get in your way? Naming them now is how you beat them.</div>';
   for(var i=0;i<2;i++){
-    h+='<div class="gb-obstacle-row">'+
+    h += '<div class="gb-obstacle-row">'+
       '<div class="gb-obstacle-num">'+(i+1)+'</div>'+
       '<textarea class="gb-input" id="gbObs'+i+'" rows="2" placeholder="Obstacle '+(i+1)+'..." style="margin-top:8px">'+gbE(GB.data.obstacles[i])+'</textarea>'+
       '</div>';
   }
-  if(GB.aiResponses[3]) h+='<div class="gb-ai-label" style="margin-top:8px">Coach response</div><div class="gb-ai-box">'+GB.aiResponses[3]+'</div>';
+  h += gbAiHtml(3);
   return h;
 }
 
@@ -1596,42 +1590,42 @@ function gbStep4(){
   var h = '<div class="gb-step-title">Next steps</div>'+
     '<div class="gb-step-desc">Name three concrete actions. Each needs a what and a by-when. No task without a date.</div>';
   for(var i=0;i<3;i++){
-    h+='<div class="gb-ns-row">'+
+    h += '<div class="gb-ns-row">'+
       '<div class="gb-ns-num">'+(i+1)+'</div>'+
       '<div class="gb-ns-fields">'+
         '<input class="gb-input gb-ns-task" id="gbNsT'+i+'" type="text" placeholder="What will you do?" value="'+gbE(GB.data.nextSteps[i].task)+'">'+
         '<input class="gb-input gb-ns-date" id="gbNsD'+i+'" type="date" value="'+gbE(GB.data.nextSteps[i].date)+'">'+
       '</div></div>';
   }
-
-  // Summary preview
   h += '<div style="margin-top:24px;padding-top:20px;border-top:1px solid #e8dfd0">';
   h += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#B8860B;margin-bottom:14px">Your goal summary</div>';
   h += '<div class="gb-summary-item"><div class="gb-summary-label">Goal</div><div class="gb-summary-value">'+gbE(GB.data.title)+'</div></div>';
   h += '<div class="gb-summary-item"><div class="gb-summary-label">Why it matters</div><div class="gb-summary-value">'+gbE(GB.data.why)+'</div></div>';
   h += '<div class="gb-summary-item"><div class="gb-summary-label">Success looks like</div><div class="gb-summary-value">'+gbE(GB.data.outcome)+'</div></div>';
-  var obs = GB.data.obstacles.filter(function(o){return o.trim();});
-  if(obs.length) h += '<div class="gb-summary-item"><div class="gb-summary-label">Obstacles</div><div class="gb-summary-value">'+obs.map(function(o,i){return (i+1)+'. '+gbE(o);}).join('<br>')+'</div></div>';
+  var obs = GB.data.obstacles.filter(function(o){ return o.trim(); });
+  if(obs.length){
+    h += '<div class="gb-summary-item"><div class="gb-summary-label">Obstacles</div><div class="gb-summary-value">'+
+      obs.map(function(o,i){ return (i+1)+'. '+gbE(o); }).join('<br>')+
+      '</div></div>';
+  }
   h += '</div>';
   return h;
 }
 
-function gbRestoreValues(){
-  // Values are baked into the HTML via GB.data, no restore needed
-}
-
 function gbSaveCurrentStep(){
-  if(GB.step===0){ var v=document.getElementById('gbTitle'); if(v) GB.data.title=v.value.trim(); }
-  if(GB.step===1){ var v=document.getElementById('gbWhy'); if(v) GB.data.why=v.value.trim(); }
-  if(GB.step===2){ var v=document.getElementById('gbOutcome'); if(v) GB.data.outcome=v.value.trim(); }
+  var el;
+  if(GB.step===0){ el=document.getElementById('gbTitle'); if(el) GB.data.title=el.value.trim(); }
+  if(GB.step===1){ el=document.getElementById('gbWhy'); if(el) GB.data.why=el.value.trim(); }
+  if(GB.step===2){ el=document.getElementById('gbOutcome'); if(el) GB.data.outcome=el.value.trim(); }
   if(GB.step===3){
-    GB.data.obstacles = [];
-    for(var i=0;i<2;i++){ var v=document.getElementById('gbObs'+i); GB.data.obstacles.push(v?v.value.trim():''); }
+    GB.data.obstacles=[];
+    for(var i=0;i<2;i++){ el=document.getElementById('gbObs'+i); GB.data.obstacles.push(el?el.value.trim():''); }
   }
   if(GB.step===4){
-    GB.data.nextSteps = [];
+    GB.data.nextSteps=[];
     for(var i=0;i<3;i++){
-      var t=document.getElementById('gbNsT'+i), d=document.getElementById('gbNsD'+i);
+      var t=document.getElementById('gbNsT'+i);
+      var d=document.getElementById('gbNsD'+i);
       GB.data.nextSteps.push({task:t?t.value.trim():'', date:d?d.value:''});
     }
   }
@@ -1646,27 +1640,20 @@ function gbValidate(){
 
 function gbShake(id){
   var el=document.getElementById(id);
-  if(!el)return;
+  if(!el) return;
   el.style.borderColor='#c0392b';
-  el.style.animation='none';
-  setTimeout(function(){el.style.animation='';el.style.borderColor='';},600);
+  setTimeout(function(){ el.style.borderColor=''; },800);
 }
 
 function gbBack(){
   gbSaveCurrentStep();
-  if(GB.step>0){GB.step--;gbRender();}
+  if(GB.step>0){ GB.step--; gbRender(); }
 }
 
 function gbNext(){
   gbSaveCurrentStep();
   if(!gbValidate()) return;
-
-  if(GB.step===GB_STEPS.length-1){
-    gbSaveGoal();
-    return;
-  }
-
-  // Get AI response for current step before advancing
+  if(GB.step===GB_STEPS.length-1){ gbSaveGoal(); return; }
   var stepToAI = GB.step;
   GB.step++;
   gbRender();
@@ -1674,21 +1661,17 @@ function gbNext(){
 }
 
 function gbGetAI(step){
-  if(GB.aiResponses[step]) return; // already have it
-
-  var prompts = {
-    0: 'A coaching client just wrote their goal: "'+GB.data.title+'". In 2-3 sentences, reflect back what you hear, name what makes it compelling or where it might still be vague, and ask one clarifying question to sharpen it. Be direct and warm — like a coach, not a therapist.',
-    1: 'A coaching client said their goal is "'+GB.data.title+'" and their why is: "'+GB.data.why+'". In 2-3 sentences, acknowledge what you hear, note whether this why feels surface-level or genuinely motivating, and ask one question that goes deeper if needed. Be direct.',
-    2: 'A client's goal: "'+GB.data.title+'". Their success measure: "'+GB.data.outcome+'". In 2 sentences, confirm whether this is specific and observable enough to actually measure progress, and name one way to make it even crisper if needed.',
-    3: 'A client's goal: "'+GB.data.title+'". Obstacles they named: '+GB.data.obstacles.filter(function(o){return o;}).map(function(o){return '"'+o+'"';}).join(', ')+'. In 2-3 sentences, acknowledge what they named and ask one question about the obstacle most likely to actually stop them.'
-  };
-
+  if(GB.aiResponses[step]) return;
+  var p0 = 'A coaching client just wrote their goal: "'+GB.data.title+'". In 2-3 sentences, reflect back what you hear, name what makes it compelling or where it might still be vague, and ask one clarifying question to sharpen it. Be direct and warm, like a coach not a therapist.';
+  var p1 = 'A coaching client said their goal is "'+GB.data.title+'" and their why is: "'+GB.data.why+'". In 2-3 sentences, acknowledge what you hear, note whether this why feels surface-level or genuinely motivating, and ask one question that goes deeper if needed. Be direct.';
+  var p2 = 'A client goal: "'+GB.data.title+'". Their success measure: "'+GB.data.outcome+'". In 2 sentences, confirm whether this is specific and observable enough to measure progress, and name one way to make it even crisper if needed.';
+  var obs = GB.data.obstacles.filter(function(o){return o;}).map(function(o){return '"'+o+'"';}).join(', ');
+  var p3 = 'A client goal: "'+GB.data.title+'". Obstacles they named: '+obs+'. In 2-3 sentences, acknowledge what they named and ask one question about the obstacle most likely to actually stop them.';
+  var prompts = {0:p0, 1:p1, 2:p2, 3:p3};
   if(!prompts[step]) return;
 
-  // Show loading
-  var aiBox = '<div class="gb-ai-label">Coach response</div><div class="gb-ai-box gb-loading">Thinking</div>';
-  var body = document.getElementById('gbBody');
-  if(body) body.innerHTML += aiBox;
+  var bodyEl = document.getElementById('gbBody');
+  if(bodyEl) bodyEl.innerHTML += '<div class="gb-ai-label" style="margin-top:16px">Coach response</div><div class="gb-ai-box gb-loading" id="gbAiBox'+step+'">Thinking</div>';
 
   fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
@@ -1702,32 +1685,32 @@ function gbGetAI(step){
   .then(function(data){
     var text = (data.content&&data.content[0]&&data.content[0].text) ? data.content[0].text : '';
     GB.aiResponses[step] = text;
-    // Re-render just the AI box
-    var boxes = document.querySelectorAll('.gb-ai-box');
-    if(boxes.length){boxes[boxes.length-1].classList.remove('gb-loading');boxes[boxes.length-1].textContent=text;}
+    var box = document.getElementById('gbAiBox'+step);
+    if(box){ box.classList.remove('gb-loading'); box.textContent = text; }
   })
-  .catch(function(){ /* silent fail */ });
+  .catch(function(){
+    var box = document.getElementById('gbAiBox'+step);
+    if(box){ box.classList.remove('gb-loading'); box.textContent = ''; }
+  });
 }
 
 function gbSaveGoal(){
-  var ns = GB.data.nextSteps.filter(function(s){return s.task;});
-  var obs = GB.data.obstacles.filter(function(o){return o;});
-
+  var ns = GB.data.nextSteps.filter(function(s){ return s.task; });
+  var obs = GB.data.obstacles.filter(function(o){ return o; });
+  var descParts = ['Why: '+GB.data.why];
+  if(obs.length) descParts.push('Obstacles: '+obs.join('; '));
   var goal = {
     id: 'g'+Date.now(),
     title: GB.data.title,
     outcome: GB.data.outcome,
     why: GB.data.why,
     obstacles: obs,
-    nextSteps: ns.map(function(s){return {task:s.task,date:s.date,done:false};}),
-    desc: 'Why: '+GB.data.why+(obs.length?'
-
-Obstacles: '+obs.join('; '):''),
+    nextSteps: ns.map(function(s){ return {task:s.task, date:s.date, done:false}; }),
+    desc: descParts.join('\n\n'),
     status: 'active',
     progress: 0,
     builtAt: new Date().toISOString()
   };
-
   S.data.goals = S.data.goals || [];
   S.data.goals.push(goal);
   save();
