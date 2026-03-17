@@ -1610,7 +1610,12 @@ function gbStep3(){
 
 function gbStep4(){
   var h = '<div class="gb-step-title">Next steps</div>'+
-    '<div class="gb-step-desc">Name three concrete actions. Each needs a what and a by-when. No task without a date.</div>';
+    '<div class="gb-step-desc">Name three concrete actions. Each needs a what and a by-when. No task without a date.</div>'+
+    '<div style="margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid #e8dfd0">'+
+    '<label class="gb-label">Give this goal a short name</label>'+
+    '<input class="gb-input" id="gbGoalName" type="text" placeholder="e.g. Delegate more, Grow client base, Improve team trust" value="'+gbE(GB.data.goalName||'')+'">'+
+    '<div style="font-size:11px;color:#9a9080;margin-top:6px">This is how it will appear on your goals page.</div>'+
+    '</div>';
   for(var i=0;i<3;i++){
     h += '<div class="gb-ns-row">'+
       '<div class="gb-ns-num">'+(i+1)+'</div>'+
@@ -1621,7 +1626,7 @@ function gbStep4(){
   }
   h += '<div style="margin-top:24px;padding-top:20px;border-top:1px solid #e8dfd0">';
   h += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#B8860B;margin-bottom:14px">Your goal summary</div>';
-  h += '<div class="gb-summary-item"><div class="gb-summary-label">Goal</div><div class="gb-summary-value">'+gbE(GB.data.title)+'</div></div>';
+  h += '<div class="gb-summary-item"><div class="gb-summary-label">What you wrote</div><div class="gb-summary-value" style="font-size:12px;color:#6b6b6b">'+gbE(GB.data.title)+'</div></div>';
   h += '<div class="gb-summary-item"><div class="gb-summary-label">Why it matters</div><div class="gb-summary-value">'+gbE(GB.data.why)+'</div></div>';
   h += '<div class="gb-summary-item"><div class="gb-summary-label">Success looks like</div><div class="gb-summary-value">'+gbE(GB.data.outcome)+'</div></div>';
   var obs = GB.data.obstacles.filter(function(o){ return o.trim(); });
@@ -1644,6 +1649,7 @@ function gbSaveCurrentStep(){
     for(var i=0;i<2;i++){ el=document.getElementById('gbObs'+i); GB.data.obstacles.push(el?el.value.trim():''); }
   }
   if(GB.step===4){
+    var gn=document.getElementById('gbGoalName'); if(gn&&gn.value.trim()) GB.data.goalName=gn.value.trim();
     GB.data.nextSteps=[];
     for(var i=0;i<3;i++){
       var t=document.getElementById('gbNsT'+i);
@@ -1689,7 +1695,7 @@ function gbSaveGoal(){
   if(obs.length) descParts.push('Obstacles: '+obs.join('; '));
   var goal = {
     id: 'g'+Date.now(),
-    title: GB.data.title,
+    title: GB.data.goalName || GB.data.title,
     outcome: GB.data.outcome,
     why: GB.data.why,
     obstacles: obs,
