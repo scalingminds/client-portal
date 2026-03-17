@@ -758,8 +758,7 @@ function rSessions(data){
   var calUrl=data.calendlyUrl||CAL;
   var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:6px">Sessions</h2>';
   // Email reminder for Calendly matching
-  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <span style="position:relative;display:inline-block;font-weight:700;color:var(--green);margin:0 2px;padding:0 3px;"><span style="position:relative;z-index:2;">'+e(S.user.email)+'</span><span id="hlbar" style="position:absolute;left:0;top:0;height:100%;width:0;background:#fff176;border-radius:2px;z-index:1;"></span></span> so your session syncs automatically</div>';
-  h+='<script>setTimeout(function(){var b=document.getElementById("hlbar");if(b){b.style.transition="width 0.85s cubic-bezier(0.4,0,0.2,1)";b.style.width="100%";}},600);<\/script>';
+  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <strong style="color:var(--green);margin:0 2px">'+e(S.user.email)+'</strong> so your session syncs automatically</div>';
   // Next session
   if(data.nextSession){
     h+='<div style="display:flex;gap:10px;margin:14px 0;flex-wrap:wrap">';
@@ -1734,6 +1733,61 @@ function gbSaveGoal(){
 function gbE(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 </script>
 <!-- ═══════════════════════════════════════════════════════════ END GOAL BUILDER -->
+
+<!-- Floating bug report button -->
+<div id="bug-btn" onclick="openBugReport()" title="Report a bug" style="position:fixed;bottom:24px;right:24px;z-index:999;width:42px;height:42px;background:var(--white);border:1px solid var(--border);border-radius:50%;box-shadow:0 2px 12px rgba(27,67,50,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.boxShadow='0 4px 20px rgba(27,67,50,0.18)';this.style.transform='scale(1.08)'" onmouseout="this.style.boxShadow='0 2px 12px rgba(27,67,50,0.12)';this.style.transform='scale(1)'">
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--green-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+</div>
+
+<!-- Bug report modal -->
+<div id="bug-overlay" style="display:none;position:fixed;inset:0;background:rgba(27,67,50,0.4);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--white);border-radius:16px;width:460px;max-width:92vw;box-shadow:0 8px 32px rgba(27,67,50,0.15);overflow:hidden;">
+    <div style="padding:20px 22px 0;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--green)">Report a Bug</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Something not working? Let us know.</div>
+      </div>
+      <button onclick="closeBugReport()" style="width:32px;height:32px;border:none;background:var(--cream-light);border-radius:50%;cursor:pointer;font-size:16px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">&#215;</button>
+    </div>
+    <div style="padding:18px 22px 22px;">
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:6px;">What page were you on?</label>
+        <input id="bug-page" class="fi" type="text" placeholder="e.g. Home, Sessions, Habits...">
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:6px;">What happened?</label>
+        <textarea id="bug-desc" class="ft" rows="4" placeholder="Describe what you expected vs what actually happened..." style="resize:vertical;min-height:90px;"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button onclick="closeBugReport()" class="btn bs">Cancel</button>
+        <button onclick="submitBugReport()" class="btn bp">Send Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openBugReport(){
+  var o=document.getElementById('bug-overlay');
+  o.style.display='flex';
+}
+function closeBugReport(){
+  var o=document.getElementById('bug-overlay');
+  o.style.display='none';
+  document.getElementById('bug-page').value='';
+  document.getElementById('bug-desc').value='';
+}
+function submitBugReport(){
+  var page=document.getElementById('bug-page').value.trim();
+  var desc=document.getElementById('bug-desc').value.trim();
+  if(!desc){document.getElementById('bug-desc').style.borderColor='#c0392b';setTimeout(function(){document.getElementById('bug-desc').style.borderColor='';},800);return;}
+  var user=(window.S&&S.user)?S.user.email:'unknown';
+  var subject=encodeURIComponent('Bug Report — Scaling Minds Portal');
+  var body=encodeURIComponent('Reported by: '+user+'\nPage: '+(page||'Not specified')+'\n\nDescription:\n'+desc);
+  window.open('mailto:andy@scalingminds.com?subject='+subject+'&body='+body);
+  closeBugReport();
+}
+</script>
 
 </body>
 </html>
