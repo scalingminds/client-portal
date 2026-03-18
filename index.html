@@ -1138,7 +1138,7 @@ function rCA(){
 function rCL(){
   var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green)">Your Clients</h2>';
   h+='<div style="display:flex;gap:8px;align-items:center"><label style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="grp-co" onchange="S._grpCo=this.checked;R()"'+(S._grpCo?' checked':'')+'> Group by company</label><label style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="show-arch" onchange="R()"'+(S._showArch?' checked':'')+'> Archived</label><button class="exp" onclick="eacsv()">Export</button><button class="btn bs" onclick="ref()">Refresh</button></div></div>';
-  S._showArch=document.getElementById('show-arch')&&document.getElementById('show-arch').checked;
+  if(document.getElementById('show-arch'))S._showArch=document.getElementById('show-arch').checked;
   var active=S.cls.filter(function(c){return !c.archived;});
   var archived=S.cls.filter(function(c){return c.archived;});
   var list=S._showArch?S.cls:active;
@@ -1360,7 +1360,7 @@ function rCD(){
     }
 
     // Check-ins
-    var cis=(c.checkIns||[]).sort(function(a,b){return b.submittedAt.localeCompare(a.submittedAt);});
+    var cis=(c.checkIns||[]).filter(function(ci){return ci.submittedAt;}).sort(function(a,b){return b.submittedAt.localeCompare(a.submittedAt);});
     if(cis.length>0){
       h+='<div style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Pre-session check-ins</div>';
       cis.slice(0,5).forEach(function(ci){
@@ -1510,7 +1510,7 @@ var NU='https://us-central1-scaling-minds-portal.cloudfunctions.net/sendNotifica
 function notify(type,data){if(!S.sc||!S.sc.email)return;fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:S.sc.email,toName:S.sc.displayName||'',type:type,data:data})}).catch(function(err){console.error('Notify failed:',err);});}
 function asn(){var d=document.getElementById('snd').value,t=document.getElementById('snt').value.trim(),c=document.getElementById('snc').value.trim(),ex=document.getElementById('sne').value.trim(),n=document.getElementById('snn').value.trim();if(!d)return;var sn2=(S.sc.sessionNotes||[]).slice();sn2.push({id:'sn'+Date.now(),date:d,themes:t,commitments:c,experiments:ex,notes:n});scf(S.sc.uid,{sessionNotes:sn2});notify('session_note',{date:d,themes:t,commitments:c});}
 function rsn(i){if(!confirm('Remove?'))return;var sn2=(S.sc.sessionNotes||[]).slice();sn2.splice(i,1);scf(S.sc.uid,{sessionNotes:sn2});}
-function atd(){var t=document.getElementById('ntt').value.trim();if(!t)return;var l=document.getElementById('ntl').value.trim();var td=(S.sc.todos||[]).slice();td.push({id:'t'+Date.now(),text:t,link:l||'',done:false});scf(S.sc.uid,{todos:td});notify('todo',{text:t,link:l||''});}
+function atd(){var t=document.getElementById('ntt').value.trim();if(!t)return;var lel=document.getElementById('ntl');var l=lel?lel.value.trim():'';var td=(S.sc.todos||[]).slice();td.push({id:'t'+Date.now(),text:t,link:l||'',done:false});scf(S.sc.uid,{todos:td});notify('todo',{text:t,link:l||''});}
 function rtd(i){if(!confirm('Remove?'))return;var td=(S.sc.todos||[]).slice();td.splice(i,1);scf(S.sc.uid,{todos:td});}
 function adc(){var t=document.getElementById('ndt').value.trim();if(!t)return;var l=document.getElementById('ndl').value.trim();if(!l)return;var c=document.getElementById('ndc').value;var d=(S.sc.docs||[]).slice();d.push({id:'d'+Date.now(),title:t,link:l,category:c||'General',desc:''});scf(S.sc.uid,{docs:d});notify('document',{title:t,desc:''});}
 function rdc(i){if(!confirm('Remove?'))return;var d=(S.sc.docs||[]).slice();d.splice(i,1);scf(S.sc.uid,{docs:d});}
