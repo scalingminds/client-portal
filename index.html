@@ -749,6 +749,44 @@ function rGoals(data){
   return h;
 }
 
+function gCard(g,isInactive){
+  var pct=g.progress||0;
+  var isBuilt=!!g.builtAt;
+  var h='<div class="goal-card" style="'+(isInactive?'opacity:0.65;':'')+'"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">';
+  h+='<div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);flex:1">'+e(g.title)+'</div>';
+  h+='<select style="font-size:10px;font-weight:600;padding:3px 6px;border:1px solid var(--border);border-radius:4px;color:var(--green-muted);background:var(--white);cursor:pointer" onchange="cgst(\''+g.id+'\',this.value)">';
+  h+='<option value="active"'+(g.status==='active'?' selected':'')+'>Active</option>';
+  h+='<option value="completed"'+(g.status==='completed'?' selected':'')+'>Completed</option>';
+  h+='<option value="paused"'+(g.status==='paused'?' selected':'')+'>Paused</option>';
+  h+='<option value="inactive"'+(g.status==='inactive'?' selected':'')+'>Inactive</option>';
+  h+='</select></div>';
+  if(g.outcome)h+='<div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;font-style:italic">'+e(g.outcome)+'</div>';
+  if(isBuilt){
+    if(g.why)h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-style:italic">Why: '+e(g.why)+'</div>';
+    if(g.nextSteps&&g.nextSteps.length){
+      h+='<div style="margin-bottom:12px">';
+      h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--green-muted);margin-bottom:6px">Next Steps</div>';
+      g.nextSteps.forEach(function(ns,i){
+        var done=ns.done||false;
+        h+='<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--cream-light)">';
+        h+='<input type="checkbox"'+(done?' checked':'')+' style="margin-top:3px;accent-color:var(--green);cursor:pointer" onchange="gnsToggle(\''+g.id+'\','+i+',this.checked)">';
+        h+='<div style="flex:1">';
+        h+='<span style="font-size:13px;'+(done?'text-decoration:line-through;color:var(--text-muted);':'color:var(--text);')+'">'+e(ns.task)+'</span>';
+        if(ns.date)h+=' <span style="font-size:11px;color:var(--gold);margin-left:4px">by '+fd(ns.date)+'</span>';
+        h+='</div></div>';
+      });
+      h+='</div>';
+    }
+  } else {
+    if(g.desc)h+='<div style="font-size:13px;line-height:1.5;margin-bottom:8px">'+e(g.desc)+'</div>';
+  }
+  h+='<div style="display:flex;align-items:center;gap:10px;margin-top:8px"><div style="flex:1;background:var(--cream-light);border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+pct+'%;background:'+(isInactive?'#ccc':pct>=70?'var(--check-green)':pct>=40?'var(--gold)':'var(--green-muted)')+'"></div></div>';
+  h+='<span style="font-size:13px;font-weight:700;color:'+(isInactive?'var(--text-muted)':'var(--green)')+';min-width:36px;text-align:right">'+pct+'%</span></div>';
+  if(g.status==='active'){h+='<div style="margin-top:8px"><input type="range" min="0" max="100" value="'+pct+'" style="width:100%;accent-color:var(--green)" onchange="ugp(\''+g.id+'\',this.value)"></div>';}
+  h+='</div>';return h;
+}
+
+
 // SESSIONS
 function rSessions(data){
   var calUrl=data.calendlyUrl||CAL;
