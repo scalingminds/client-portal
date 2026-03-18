@@ -5,7 +5,7 @@ const sgMail = require('@sendgrid/mail');
 
 admin.initializeApp();
 const db = admin.firestore();
-const https = require('https');
+const axios = require('axios');
 
 const FROM_EMAIL = 'andy@scalingminds.com';
 const FROM_NAME = 'Andy Hite — Scaling Minds';
@@ -201,42 +201,6 @@ exports.calendlyWebhook = functions.onRequest(
 );
 
 // ─── registerCalendlyWebhook ──────────────────────────────────────────────────
-function httpsGet(url, token) {
-  return new Promise((resolve, reject) => {
-    const opts = { headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' } };
-    https.get(url, opts, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
-    }).on('error', reject);
-  });
-}
-
-function httpsPost(url, token, body) {
-  return new Promise((resolve, reject) => {
-    const payload = JSON.stringify(body);
-    const urlObj = new URL(url);
-    const opts = {
-      hostname: urlObj.hostname,
-      path: urlObj.pathname,
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(payload)
-      }
-    };
-    const req = https.request(opts, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
-    });
-    req.on('error', reject);
-    req.write(payload);
-    req.end();
-  });
-}
-
 exports.registerCalendlyWebhook = functions.onRequest(
   { cors: true, secrets: ['CALENDLY_TOKEN'] },
   async (req, res) => {
@@ -246,20 +210,25 @@ exports.registerCalendlyWebhook = functions.onRequest(
     const webhookUrl = 'https://us-central1-scaling-minds-portal.cloudfunctions.net/calendlyWebhook';
 
     try {
-      const me = await httpsGet('https://api.calendly.com/users/me', token);
+      const meRes = await axios.get('https://api.calendly.com/users/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const me = meRes.data;
       const userUri = me && me.resource && me.resource.uri;
-      if (!userUri) { res.status(500).json({ error: 'Could not get Calendly user URI', me }); return; }
+      if (!userUri) { res.status(500).json({ error: 'Could not get Calendly user URI' }); return; }
 
-      const wh = await httpsPost('https://api.calendly.com/webhook_subscriptions', token, {
+      const whRes = await axios.post('https://api.calendly.com/webhook_subscriptions', {
         url: webhookUrl,
         events: ['invitee.created', 'invitee.canceled'],
         organization: me.resource.current_organization,
         user: userUri,
         scope: 'user',
+      }, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
-      res.json({ success: true, webhook: wh });
+      res.json({ success: true, webhook: whRes.data });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: err.message, detail: err.response && err.response.data });
     }
   }
 );
