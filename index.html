@@ -463,12 +463,11 @@ function rHome(td,ts,comp,sk,q){
   h+='</div></div>';
 
   // Quote + Daily resource side by side
-  var _lib=S.lib||[];
   var _uid=S.user.uid||'x';
   var _uidNum=0;for(var _i=0;_i<_uid.length;_i++){_uidNum+=_uid.charCodeAt(_i);}
   var _today=new Date();
   var _seed=_uidNum+(_today.getFullYear()*10000+(_today.getMonth()+1)*100+_today.getDate());
-  var _dr=_lib.length>0?_lib[_seed%_lib.length]:null;
+  var _dr=RESOURCES[_seed%RESOURCES.length];
   h+='<div style="display:flex;gap:14px;margin:24px 0 24px;flex-wrap:wrap;align-items:stretch">';
   h+='<div class="quote-line" style="flex:3;min-width:220px;margin:0;font-size:20px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
   if(_dr){
