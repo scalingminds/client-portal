@@ -711,73 +711,42 @@ function startCountdown(nextSession){
 // GOALS
 function rGoals(data){
   var goals=data.goals||[];
-  var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:16px">Goals</h2>';
+  var active=goals.filter(function(g){return g.status==='active';});
+  var completed=goals.filter(function(g){return g.status==='completed';});
+  var paused=goals.filter(function(g){return g.status==='paused';});
+  var inactive=goals.filter(function(g){return g.status==='inactive';});
+  var gQuotes=['A goal without a plan is just a wish.','The secret of getting ahead is getting started.','Small steps every day.','Direction is more important than speed.','Clarity precedes mastery.'];
+  var gq=gQuotes[new Date().getDay()%gQuotes.length];
+  var h='';
+  // Hero banner
+  h+='<div style="background:#1B4332;border-radius:16px;padding:28px 32px;margin-bottom:20px;position:relative;overflow:hidden">';
+  h+='<div style="position:absolute;right:-20px;top:-20px;width:140px;height:140px;border-radius:50%;background:rgba(184,134,11,0.12)"></div>';
+  h+='<div style="position:absolute;right:60px;bottom:-40px;width:80px;height:80px;border-radius:50%;background:rgba(184,134,11,0.08)"></div>';
+  h+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold);margin-bottom:8px;position:relative">Your Goals</div>';
+  h+='<div style="font-family:\'DM Serif Display\',serif;font-size:20px;color:#F5F0E8;line-height:1.4;max-width:480px;margin-bottom:20px;position:relative;font-style:italic">&ldquo;'+gq+'&rdquo;</div>';
+  h+='<div style="display:flex;gap:24px;position:relative">';
+  h+='<div><div style="font-size:22px;font-weight:700;color:#F5F0E8">'+active.length+'</div><div style="font-size:11px;color:rgba(212,197,169,0.7)">Active</div></div>';
+  h+='<div style="width:1px;background:rgba(255,255,255,0.1)"></div>';
+  h+='<div><div style="font-size:22px;font-weight:700;color:var(--gold)">'+completed.length+'</div><div style="font-size:11px;color:rgba(212,197,169,0.7)">Completed</div></div>';
+  h+='</div></div>';
+  // Goal cards
   if(goals.length>0){
-    var active=goals.filter(function(g){return g.status==='active';}),completed=goals.filter(function(g){return g.status==='completed';}),paused=goals.filter(function(g){return g.status==='paused';}),inactive=goals.filter(function(g){return g.status==='inactive';});
-    if(active.length>0){h+='<div class="card-label" style="margin-bottom:10px">Active</div>';active.forEach(function(g){h+=gCard(g);});}
-    if(completed.length>0){h+='<div class="card-label" style="margin-top:20px;margin-bottom:10px">Completed</div>';completed.forEach(function(g){h+=gCard(g);});}
-    if(paused.length>0){h+='<div class="card-label" style="margin-top:20px;margin-bottom:10px">Paused</div>';paused.forEach(function(g){h+=gCard(g);});}
+    if(active.length>0){h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green-muted);margin-bottom:10px">Active</div>';active.forEach(function(g){h+=gCard(g);});}
+    if(completed.length>0){h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green-muted);margin-top:24px;margin-bottom:10px">Completed</div>';completed.forEach(function(g){h+=gCard(g);});}
+    if(paused.length>0){h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-top:24px;margin-bottom:10px">Paused</div>';paused.forEach(function(g){h+=gCard(g);});}
     if(inactive.length>0){
-      h+='<div class="card-label" style="margin-top:28px;margin-bottom:10px;color:var(--text-muted)">Inactive</div>';
-      h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Goals that are no longer being tracked. Progress is preserved.</div>';
+      h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-top:28px;margin-bottom:6px">Inactive</div>';
+      h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Goals that are no longer being tracked. Progress is preserved.</div>';
       inactive.forEach(function(g){h+=gCard(g,true);});
     }
   } else {
     h+='<div class="empty"><div class="ei">🎯</div><h3>No goals yet</h3><p>Add a goal to get started, or your coach will set them with you.</p></div>';
   }
-  // Client can add goals - guided builder
   h+='<div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">';
-  h+='<button class="btn bp" style="padding:13px 22px;font-size:14px;font-weight:700;" onclick="openGoalBuilder()">+ Build a Goal</button>';
+  h+='<button class="btn bp" style="padding:13px 22px;font-size:14px;font-weight:700" onclick="openGoalBuilder()">+ Build a Goal</button>';
   h+='<span style="font-size:12px;color:var(--text-muted)">Guided process — takes about 5 minutes</span>';
   h+='</div>';
   return h;
-}
-function gCard(g,isInactive){
-  var pct=g.progress||0;
-  var isBuilt=!!g.builtAt;
-  var h='<div class="goal-card" style="'+(isInactive?'opacity:0.65;':'')+'"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">';
-  h+='<div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);flex:1">'+e(g.title)+'</div>';
-  h+='<select style="font-size:10px;font-weight:600;padding:3px 6px;border:1px solid var(--border);border-radius:4px;color:var(--green-muted);background:var(--white);cursor:pointer" onchange="cgst(\''+g.id+'\',this.value)">';
-  h+='<option value="active"'+(g.status==='active'?' selected':'')+'>Active</option>';
-  h+='<option value="completed"'+(g.status==='completed'?' selected':'')+'>Completed</option>';
-  h+='<option value="paused"'+(g.status==='paused'?' selected':'')+'>Paused</option>';
-  h+='<option value="inactive"'+(g.status==='inactive'?' selected':'')+'>Inactive</option>';
-  h+='</select></div>';
-  // Outcome — always show clean
-  if(g.outcome) h+='<div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">'+e(g.outcome)+'</div>';
-  // For builder goals: show why and next steps structured. For legacy: show desc.
-  if(isBuilt){
-    if(g.why) h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px"><span style="font-weight:700;color:var(--green-muted);text-transform:uppercase;letter-spacing:0.04em;font-size:10px">Why</span><br>'+e(g.why)+'</div>';
-    if(g.nextSteps&&g.nextSteps.length){
-      h+='<div style="margin-bottom:12px">';
-      h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--green-muted);margin-bottom:6px">Next Steps</div>';
-      g.nextSteps.forEach(function(ns,i){
-        var done=ns.done||false;
-        h+='<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--cream-light)">';
-        h+='<input type="checkbox"'+(done?' checked':'')+' style="margin-top:3px;accent-color:var(--green);cursor:pointer" onchange="gnsToggle(\''+g.id+'\','+i+',this.checked)">';
-        h+='<div style="flex:1">';
-        h+='<span style="font-size:13px;'+(done?'text-decoration:line-through;color:var(--text-muted);':'color:var(--text);')+'">'+e(ns.task)+'</span>';
-        if(ns.date) h+=' <span style="font-size:11px;color:var(--gold);margin-left:4px">by '+fd(ns.date)+'</span>';
-        h+='</div></div>';
-      });
-      h+='</div>';
-    }
-  } else {
-    if(g.desc) h+='<div style="font-size:13px;line-height:1.5;margin-bottom:8px">'+e(g.desc)+'</div>';
-  }
-  // Progress bar
-  h+='<div style="display:flex;align-items:center;gap:10px;margin-top:8px"><div style="flex:1;background:var(--cream-light);border-radius:4px;height:8px;overflow:hidden"><div style="height:100%;border-radius:4px;width:'+pct+'%;background:'+(isInactive?'#ccc':pct>=70?'var(--check-green)':pct>=40?'var(--gold)':'var(--green-muted)')+'"></div></div>';
-  h+='<span style="font-size:13px;font-weight:700;color:'+(isInactive?'var(--text-muted)':'var(--green)')+';min-width:36px;text-align:right">'+pct+'%</span></div>';
-  if(g.status==='active'){h+='<div style="margin-top:8px"><input type="range" min="0" max="100" value="'+pct+'" style="width:100%;accent-color:var(--green)" onchange="ugp(\''+g.id+'\',this.value)"></div>';}
-  if(g.history&&g.history.length>0){
-    h+='<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--cream-light)">';
-    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:4px">History</div>';
-    g.history.forEach(function(ev){
-      h+='<div style="font-size:11px;color:var(--text-muted);padding:2px 0"><span style="color:var(--green-muted);font-weight:600">'+ev.status+'</span> &middot; '+fs(ev.date)+'</div>';
-    });
-    h+='</div>';
-  }
-  h+='</div>';return h;
 }
 
 // SESSIONS
@@ -867,15 +836,55 @@ function rHabits(td,ts,comp){
 
 // JOURNAL (was Notes)
 function rJournal(ts){
-  if(!S.data.notes)S.data.notes={};var tn=S.data.notes[ts]||'';
+  if(!S.data.notes)S.data.notes={};
+  var tn=S.data.notes[ts]||'';
   var nd=Object.keys(S.data.notes).filter(function(k){return S.data.notes[k]&&S.data.notes[k].trim();}).sort(function(a,b){return b.localeCompare(a);});
   var past=nd.filter(function(k){return k!==ts;});
-  var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:4px">Journal</h2><div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Reflections, observations, things to bring to your next session.</div>';
-  h+='<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="fl" style="margin:0">Today</span><span style="font-size:11px;color:var(--text-muted)">'+fs(ts)+'</span></div>';
-  h+='<textarea class="ft" style="min-height:120px;font-size:13px;line-height:1.7" placeholder="What came up today? What did you notice?" oninput="sn(\''+ts+'\',this.value)">'+e(tn)+'</textarea></div>';
-  if(past.length>0){h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--green);margin:6px 0 10px">Previous</h3>';
-    past.forEach(function(k){h+='<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600;font-size:12px;color:var(--green)">'+fs(k)+'</span><button class="abtn del" onclick="dn(\''+k+'\')" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div><div style="font-size:13px;line-height:1.6;white-space:pre-wrap">'+e(S.data.notes[k])+'</div></div>';});}
-  else{h+='<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px">Your entries will show up here as you write them.</div>';}
+  var prompts=[
+    'What\'s one thing you noticed about yourself this week that surprised you?',
+    'Where did you feel most like yourself lately?',
+    'What\'s something you\'re avoiding — and what\'s underneath that?',
+    'What would you do differently if you weren\'t afraid of what people think?',
+    'What did you learn about yourself in your last session?',
+    'Where are you being hard on yourself right now?',
+    'What\'s working that you\'re not giving yourself credit for?'
+  ];
+  var prompt=prompts[new Date().getDay()%prompts.length];
+  var h='';
+  // Header
+  h+='<div style="margin-bottom:20px">';
+  h+='<div style="font-family:\'DM Serif Display\',serif;font-size:26px;color:var(--green);margin-bottom:4px">Journal</div>';
+  h+='<div style="font-size:13px;color:var(--text-muted)">'+fs(ts)+' &nbsp;&middot;&nbsp; Reflections and observations to bring to your next session</div>';
+  h+='</div>';
+  // Daily prompt card
+  h+='<div style="background:linear-gradient(135deg,#1B4332,#2D6A4F);border-radius:12px;padding:20px 24px;margin-bottom:20px;position:relative;overflow:hidden">';
+  h+='<div style="position:absolute;right:-15px;top:-15px;width:80px;height:80px;border-radius:50%;background:rgba(184,134,11,0.25)"></div>';
+  h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold);margin-bottom:8px;position:relative">Today\'s prompt</div>';
+  h+='<div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:#F5F0E8;line-height:1.5;position:relative">'+prompt+'</div>';
+  h+='</div>';
+  // Write area
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px">';
+  h+='<div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">';
+  h+='<span style="font-size:12px;font-weight:700;color:var(--green)">Today</span>';
+  h+='<span style="font-size:11px;color:var(--text-muted)">'+fs(ts)+'</span>';
+  h+='</div>';
+  h+='<textarea class="ft" style="border:none;border-radius:0;min-height:140px;font-size:14px;line-height:1.7;padding:16px 18px" placeholder="What came up today? What did you notice?" oninput="sn(\''+ts+'\',this.value)">'+e(tn)+'</textarea>';
+  h+='</div>';
+  // Past entries
+  if(past.length>0){
+    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:12px">Previous entries</div>';
+    past.forEach(function(k){
+      h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:8px">';
+      h+='<div style="display:flex;justify-content:space-between;margin-bottom:8px">';
+      h+='<span style="font-size:12px;font-weight:600;color:var(--green)">'+fs(k)+'</span>';
+      h+='<button class="abtn del" onclick="dn(\''+k+'\')" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+      h+='</div>';
+      h+='<div style="font-size:13px;line-height:1.6;white-space:pre-wrap;color:var(--text-muted)">'+e(S.data.notes[k])+'</div>';
+      h+='</div>';
+    });
+  } else {
+    h+='<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">Your entries will show up here as you write them.</div>';
+  }
   return h;
 }
 
