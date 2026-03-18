@@ -1130,126 +1130,218 @@ function rCL(){
 
 function rCD(){
   var c=S.sc,td=new Date();
-  var h='<button class="back" onclick="scv(\'clients\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> All Clients</button>';
-  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div style="display:flex;align-items:center;gap:12px">';
-  if(c.photoURL)h+='<img style="width:48px;height:48px;border-radius:50%;border:2px solid var(--gold)" src="'+c.photoURL+'" alt="">';
-  h+='<div><h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green)">'+e(c.displayName)+'</h2><div style="font-size:12px;color:var(--text-muted)">'+e(c.email)+'</div></div></div>';
-  h+='<button class="exp" onclick="eccsv()">Export CSV</button></div>';
+  var initials=(c.displayName||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  var goals=(c.goals||[]).filter(function(g){return g.status==='active';});
+  var todos=c.todos||[];
+  var sn=(c.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
+  var habits=c.habits||[];
+  var rate=crate(c);
+  var sk=streak(c);
+  var openTodos=todos.filter(function(t){return !t.done;}).length;
 
-  // Name edit
-  h+='<div class="card"><h3>Client Name</h3><div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="fg" style="margin:0;flex:1;min-width:200px"><input class="fi" id="cnm" type="text" value="'+e(c.displayName)+'" placeholder="Client name"></div><button class="btn bp" onclick="scnm()">Save</button></div>';
-  // Contact info
-  var ci=[];
-  if(c.company||c.title)ci.push((c.title||'')+(c.title&&c.company?' at ':'')+(c.company||''));
-  if(c.phone)ci.push(c.phone);if(c.birthday)ci.push('Birthday: '+c.birthday);if(c.address)ci.push(c.address);
-  if(ci.length>0)h+='<div style="margin-top:10px;font-size:12px;color:var(--text-muted);line-height:1.8">'+ci.map(function(x){return e(x);}).join('<br>')+'</div>';
-  h+='<div style="margin-top:12px;display:flex;gap:8px"><button class="btn bs" style="font-size:11px;padding:6px 14px" onclick="archClient()">'+( c.archived?'Unarchive':'Archive')+'</button><button class="btn bs" style="font-size:11px;padding:6px 14px;color:#c0392b" onclick="delClient()">Delete</button></div>';
+  var h='<button class="back" onclick="scv(\'clients\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> All Clients</button>';
+
+  // Header
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">';
+  h+='<div style="display:flex;align-items:center;gap:12px">';
+  if(c.photoURL){h+='<img style="width:48px;height:48px;border-radius:50%;border:2px solid var(--gold)" src="'+c.photoURL+'" alt="">';}
+  else{h+='<div style="width:48px;height:48px;border-radius:50%;background:var(--cream-light);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green)">'+initials+'</div>';}
+  h+='<div><div style="font-family:\'DM Serif Display\',serif;font-size:22px;color:var(--green)">'+e(c.displayName)+'</div>';
+  h+='<div style="font-size:12px;color:var(--text-muted)">'+e(c.email);
+  if(c.nextSession)h+=' &middot; Next session: '+fdt(c.nextSession);
+  h+='</div></div></div>';
+  h+='<div style="display:flex;gap:8px">';
+  h+='<button class="btn bs" style="font-size:12px;padding:6px 14px" onclick="S._cdExpanded=!S._cdExpanded;rC()">'+( S._cdExpanded?'Hide details':'Edit client')+'</button>';
+  h+='<button class="exp" onclick="eccsv()">Export CSV</button>';
+  h+='</div></div>';
+
+  // Stat cards
+  h+='<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px">';
+  h+='<div style="background:var(--cream-light);border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Habit rate</div><div style="font-size:24px;font-weight:700;color:var(--green)">'+rate+'%</div></div>';
+  h+='<div style="background:var(--cream-light);border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Streak</div><div style="font-size:24px;font-weight:700;color:var(--green)">'+sk+' day'+(sk!==1?'s':'')+'</div></div>';
+  h+='<div style="background:var(--cream-light);border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Active goals</div><div style="font-size:24px;font-weight:700;color:var(--green)">'+goals.length+'</div></div>';
+  h+='<div style="background:var(--cream-light);border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Open to-dos</div><div style="font-size:24px;font-weight:700;color:var(--green)">'+openTodos+'</div></div>';
   h+='</div>';
 
-  // Dates
-  h+='<div class="card"><h3>Engagement</h3><div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">Start</label><input class="fi" type="date" id="cs" value="'+(c.startDate||'')+'"></div><div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">End</label><input class="fi" type="date" id="ce2" value="'+(c.endDate||'')+'"></div><button class="btn bp" onclick="scd()">Save</button></div></div>';
-  // Next session
-  h+='<div class="card"><h3>Next Session</h3><div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="fg" style="margin:0;flex:1;min-width:180px"><input class="fi" type="datetime-local" id="cns" step="900" value="'+(c.nextSession||'')+'"></div><button class="btn bp" onclick="scns()">Save</button></div>';
-  h+='<div style="margin-top:10px"><div class="fg" style="margin:0"><label class="fl">Custom Calendly URL (optional)</label><div style="display:flex;gap:8px"><input class="fi" id="ccal" type="url" placeholder="https://calendly.com/..." value="'+e(c.calendlyUrl||'')+'"><button class="btn bp" onclick="sccal()">Save</button></div></div></div></div>';
-  // Focus
-  h+='<div class="card"><h3>Focus This Week</h3><textarea class="ft" id="cfw" placeholder="What should this client hold between sessions?">'+e(c.focusOfWeek||'')+'</textarea><div style="margin-top:8px;text-align:right"><button class="btn bp" onclick="scfw()">Save</button></div></div>';
+  // Main dashboard grid
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:start;margin-bottom:14px">';
+
+  // Session notes — spans 2 cols
+  h+='<div style="grid-column:1/3;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  h+='<div style="font-size:14px;font-weight:600;color:var(--green)">Session notes</div>';
+  h+='<button class="btn bp" style="font-size:11px;padding:5px 12px" onclick="S._addNote=!S._addNote;rC()">+ Add note</button>';
+  h+='</div>';
+  if(S._addNote){
+    h+='<div style="background:var(--cream-light);border-radius:10px;padding:14px;margin-bottom:14px">';
+    h+='<div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="snd" value="'+dk(td)+'"></div>';
+    h+='<div class="fg"><label class="fl">Key themes</label><input class="fi" id="snt" placeholder="Trust breakthrough, accountability gap..."></div>';
+    h+='<div class="fg"><label class="fl">Commitments</label><input class="fi" id="snc" placeholder="Weekly 1:1 with VP..."></div>';
+    h+='<div class="fg"><label class="fl">Experiments</label><input class="fi" id="sne" placeholder="Ask before directing..."></div>';
+    h+='<div class="fg"><label class="fl">Notes</label><textarea class="ft" id="snn" placeholder="Free-form notes..."></textarea></div>';
+    h+='<button class="btn bp" onclick="asn()">Save note</button>';
+    h+='</div>';
+  }
+  if(sn.length>0){sn.forEach(function(s,i){
+    h+='<div style="border-left:3px solid var(--green);padding:10px 14px;margin-bottom:10px;border-radius:0 8px 8px 0;background:var(--cream-light);position:relative">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+    h+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--green-muted)">'+fs(s.date)+'</div>';
+    h+='<button class="abtn del" onclick="rsn('+i+')" style="opacity:1"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+    h+='</div>';
+    if(s.themes)h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:2px"><span style="font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:0.4px">Themes</span> '+e(s.themes)+'</div>';
+    if(s.commitments)h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:2px"><span style="font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:0.4px">Commitments</span> '+e(s.commitments)+'</div>';
+    if(s.experiments)h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:2px"><span style="font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:0.4px">Experiments</span> '+e(s.experiments)+'</div>';
+    if(s.notes)h+='<div style="font-size:12px;color:var(--text-muted);white-space:pre-wrap">'+e(s.notes)+'</div>';
+    h+='</div>';
+  });}
+  else{h+='<div style="font-size:13px;color:var(--text-muted);padding:12px 0">No session notes yet.</div>';}
+  h+='</div>';
+
+  // Right column
+  h+='<div style="display:flex;flex-direction:column;gap:14px">';
 
   // Goals
-  h+='<div class="card"><h3>Goals</h3>';
-  var goals=c.goals||[];
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px">';
+  h+='<div style="font-size:14px;font-weight:600;color:var(--green);margin-bottom:12px">Goals</div>';
   if(goals.length>0){goals.forEach(function(g,i){
-    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--cream-light)">';
-    h+='<div style="flex:1"><div style="font-size:13px;font-weight:600">'+e(g.title)+'</div>';
-    if(g.outcome)h+='<div style="font-size:11px;color:var(--text-muted)">Target: '+e(g.outcome)+'</div>';
-    h+='</div><select class="fs" style="width:auto;font-size:11px;padding:4px 8px" onchange="sgst('+i+',this.value)"><option value="active"'+(g.status==='active'?' selected':'')+'>Active</option><option value="completed"'+(g.status==='completed'?' selected':'')+'>Completed</option><option value="paused"'+(g.status==='paused'?' selected':'')+'>Paused</option><option value="inactive"'+(g.status==='inactive'?' selected':'')+'>Inactive</option></select>';
-    h+='<button class="abtn del" onclick="rg('+i+')" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
-  });}
-  h+='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:flex-end">';
-  h+='<div class="fg" style="margin:0;flex:2;min-width:160px"><label class="fl">Goal</label><input class="fi" id="ngt" placeholder="Build trust with VP team"></div>';
-  h+='<div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">Target Outcome</label><input class="fi" id="ngo" placeholder="Weekly 1:1s established"></div>';
-  h+='<button class="btn bp" onclick="ag()">Add</button></div></div>';
-
-  // Session Notes
-  h+='<div class="card"><h3>Session Notes</h3>';
-  var sn=(c.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
-  if(sn.length>0){sn.forEach(function(s,i){
-    h+='<div class="sn-card" style="margin:8px 0"><div style="display:flex;justify-content:space-between"><div class="sn-date">'+fs(s.date)+'</div><button class="abtn del" onclick="rsn('+i+')" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
-    if(s.themes)h+='<div style="font-size:12px;margin-top:4px"><strong>Themes:</strong> '+e(s.themes)+'</div>';
-    if(s.commitments)h+='<div style="font-size:12px"><strong>Commitments:</strong> '+e(s.commitments)+'</div>';
-    if(s.experiments)h+='<div style="font-size:12px"><strong>Experiments:</strong> '+e(s.experiments)+'</div>';
-    if(s.notes)h+='<div style="font-size:12px;white-space:pre-wrap">'+e(s.notes)+'</div>';
+    var pct=g.progress||0;
+    var idx=(c.goals||[]).indexOf(g);
+    h+='<div style="margin-bottom:10px">';
+    h+='<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text);font-weight:500">'+e(g.title)+'</span><span style="color:var(--text-muted)">'+pct+'%</span></div>';
+    h+='<div style="height:5px;background:var(--cream-light);border-radius:4px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:var(--green);border-radius:4px"></div></div>';
     h+='</div>';
   });}
-  h+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">';
-  h+='<div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Add Session Note</div>';
-  h+='<div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="snd" value="'+dk(td)+'"></div>';
-  h+='<div class="fg"><label class="fl">Key Themes</label><input class="fi" id="snt" placeholder="Trust breakthrough, accountability gap..."></div>';
-  h+='<div class="fg"><label class="fl">Commitments Made</label><input class="fi" id="snc" placeholder="Weekly 1:1 with VP, direct feedback to team"></div>';
-  h+='<div class="fg"><label class="fl">Experiments to Try</label><input class="fi" id="sne" placeholder="Ask before directing this week"></div>';
-  h+='<div class="fg"><label class="fl">Notes</label><textarea class="ft" id="snn" placeholder="Free-form session notes..."></textarea></div>';
-  h+='<button class="btn bp" onclick="asn()">Add Note</button></div></div>';
+  else{h+='<div style="font-size:12px;color:var(--text-muted)">No active goals.</div>';}
+  h+='</div>';
 
-  // Todos
-  h+='<div class="card"><h3>To-Dos</h3>';
-  var ct=c.todos||[];
-  if(ct.length>0){ct.forEach(function(t,i){
+  // To-dos
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px">';
+  h+='<div style="font-size:14px;font-weight:600;color:var(--green);margin-bottom:12px">To-dos</div>';
+  if(todos.length>0){todos.forEach(function(t,i){
     h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream-light)">';
-    h+='<div style="width:18px;height:18px;min-width:18px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+';display:flex;align-items:center;justify-content:center">';
-    if(t.done)h+='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
-    h+='</div><div style="flex:1;font-size:12px;'+(t.done?'color:var(--green-muted);text-decoration:line-through':'')+'">'+e(t.text);
-    if(t.link)h+=' <a href="'+e(t.link)+'" target="_blank" style="color:var(--green);font-size:11px">link</a>';
-    h+='</div><button class="abtn del" onclick="rtd('+i+')" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
+    h+='<div style="width:16px;height:16px;min-width:16px;border-radius:50%;border:2px solid '+(t.done?'var(--check-green)':'var(--border)')+';background:'+(t.done?'var(--check-green)':'transparent')+'"></div>';
+    h+='<div style="flex:1;font-size:12px;'+(t.done?'color:var(--text-muted);text-decoration:line-through':'')+'">'+e(t.text)+'</div>';
+    h+='<button class="abtn del" onclick="rtd('+i+')" style="opacity:1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+    h+='</div>';
   });}
-  h+='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:flex-end">';
-  h+='<div class="fg" style="margin:0;flex:2;min-width:160px"><label class="fl">To-Do</label><input class="fi" id="ntt" placeholder="Read chapter 3"></div>';
-  h+='<div class="fg" style="margin:0;flex:1;min-width:120px"><label class="fl">Link</label><input class="fi" id="ntl" type="url" placeholder="https://..."></div>';
-  h+='<button class="btn bp" onclick="atd()">Add</button></div></div>';
+  else{h+='<div style="font-size:12px;color:var(--text-muted)">No to-dos.</div>';}
+  h+='<div style="display:flex;gap:6px;margin-top:8px"><input class="fi" id="ntt" type="text" placeholder="Add a to-do..." style="font-size:12px;padding:6px 10px"><button class="btn bp" style="font-size:11px;padding:6px 12px" onclick="atd()">Add</button></div>';
+  h+='</div>';
 
-  // Docs
-  h+='<div class="card"><h3>Documents</h3>';
-  var cd=c.docs||[];
-  if(cd.length>0){cd.forEach(function(d,i){
-    h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream-light)">';
-    h+='<div style="flex:1;font-size:12px"><strong>'+e(d.title)+'</strong> <span style="color:var(--text-muted)">('+e(d.category||'General')+')</span></div>';
-    h+='<a href="'+e(d.link)+'" target="_blank" style="font-size:11px;color:var(--green)">open</a>';
-    h+='<button class="abtn del" onclick="rdc('+i+')" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
+  // Habits
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px">';
+  h+='<div style="font-size:14px;font-weight:600;color:var(--green);margin-bottom:12px">Habits</div>';
+  if(habits.length>0){habits.forEach(function(hab){
+    var r=Math.round(crate({habits:[hab],completions:c.completions,startDate:c.startDate,endDate:c.endDate}));
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--cream-light)">';
+    h+='<span style="font-size:12px;color:var(--text)">'+e(hab.name)+'</span>';
+    h+='<span style="font-size:11px;color:var(--text-muted)">'+rate+'%</span>';
+    h+='</div>';
   });}
-  h+='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:flex-end">';
-  h+='<div class="fg" style="margin:0;flex:2;min-width:120px"><label class="fl">Title</label><input class="fi" id="ndt" placeholder="Six Shifts Brief"></div>';
-  h+='<div class="fg" style="margin:0;flex:2;min-width:120px"><label class="fl">Link</label><input class="fi" id="ndl" type="url" placeholder="https://..."></div>';
-  h+='<div class="fg" style="margin:0;flex:1;min-width:100px"><label class="fl">Category</label><select class="fs" id="ndc"><option>Handouts</option><option>Assessments</option><option>Session Notes</option><option>Reading</option><option>Templates</option><option>General</option></select></div>';
-  h+='<button class="btn bp" onclick="adc()">Add</button></div></div>';
+  else{h+='<div style="font-size:12px;color:var(--text-muted)">No habits.</div>';}
+  h+='</div>';
 
-  // Session prep from client
-  if(c.sessionPrep){
-    h+='<div style="background:linear-gradient(135deg,rgba(184,134,11,0.06),rgba(184,134,11,0.02));border:1px solid rgba(184,134,11,0.3);border-radius:12px;padding:16px 20px;margin-bottom:14px">';
-    h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--gold);margin-bottom:6px">Session Prep (from client)</h3>';
-    h+='<div style="font-size:13px;line-height:1.6;white-space:pre-wrap">'+e(c.sessionPrep)+'</div></div>';
-  }
+  h+='</div>'; // end right col
+  h+='</div>'; // end main grid
 
-  // Pre-session check-ins
-  var cis=(c.checkIns||[]).slice().sort(function(a,b){return b.submittedAt.localeCompare(a.submittedAt);});
-  if(cis.length>0){
-    h+='<div style="margin-bottom:14px">';
-    h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:12px">Pre-Session Check-Ins</h3>';
-    cis.forEach(function(ci){
-      h+='<div style="background:var(--white);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:10px">';
-      h+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--gold);margin-bottom:10px">'+fs(ci.date)+(ci.session?' &middot; For '+fdt(ci.session):'')+'</div>';
-      if(ci.onMind){h+='<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:3px">On their mind</div><div style="font-size:13px;line-height:1.5">'+e(ci.onMind)+'</div></div>';}
-      if(ci.proud){h+='<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:3px">Proud of</div><div style="font-size:13px;line-height:1.5">'+e(ci.proud)+'</div></div>';}
-      if(ci.stuck){h+='<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:3px">Stuck on</div><div style="font-size:13px;line-height:1.5">'+e(ci.stuck)+'</div></div>';}
-      if(ci.wantFrom){h+='<div style="margin-bottom:4px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:3px">Wants from session</div><div style="font-size:13px;line-height:1.5">'+e(ci.wantFrom)+'</div></div>';}
+  // Collapsed details section
+  h+='<div style="border:1px solid var(--border);border-radius:12px;background:var(--white);overflow:hidden">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;cursor:pointer" onclick="S._cdExpanded=!S._cdExpanded;rC()">';
+  h+='<span style="font-size:13px;color:var(--text-muted)">Client info, engagement dates, Calendly, session prep, documents, check-ins, journal</span>';
+  h+='<span style="font-size:13px;color:var(--green);font-weight:600">'+(S._cdExpanded?'Hide &#8593;':'Show &#8595;')+'</span>';
+  h+='</div>';
+
+  if(S._cdExpanded){
+    h+='<div style="padding:0 20px 20px;border-top:1px solid var(--border)">';
+
+    // Name edit
+    h+='<div style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Client name</div>';
+    h+='<div style="display:flex;gap:8px"><input class="fi" id="cnm" type="text" value="'+e(c.displayName)+'" placeholder="Client name"><button class="btn bp" onclick="scnm()">Save</button></div>';
+    var ci=[];
+    if(c.company||c.title)ci.push((c.title||'')+(c.title&&c.company?' at ':'')+(c.company||''));
+    if(c.phone)ci.push(c.phone);
+    if(ci.length>0)h+='<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">'+ci.join(' &middot; ')+'</div>';
+    h+='<div style="margin-top:10px;display:flex;gap:8px"><button class="btn bs" style="font-size:11px;padding:6px 14px" onclick="archClient()">'+(c.archived?'Unarchive':'Archive')+'</button><button class="btn bs" style="font-size:11px;padding:6px 14px;color:#c0392b" onclick="delClient()">Delete</button></div>';
+    h+='</div>';
+
+    // Engagement dates
+    h+='<div style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Engagement</div>';
+    h+='<div style="display:flex;gap:12px;flex-wrap:wrap"><div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">Start</label><input class="fi" type="date" id="cs" value="'+(c.startDate||'')+'"></div><div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">End</label><input class="fi" type="date" id="ce2" value="'+(c.endDate||'')+'"></div><button class="btn bp" style="align-self:flex-end" onclick="scd()">Save</button></div>';
+    h+='</div>';
+
+    // Next session + Calendly
+    h+='<div style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Next session</div>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap"><input class="fi" type="datetime-local" id="cns" step="900" value="'+(c.nextSession||'')+'"><button class="btn bp" onclick="scns()">Save</button></div>';
+    h+='<div style="margin-top:8px"><label class="fl">Custom Calendly URL</label><div style="display:flex;gap:8px"><input class="fi" id="ccal" type="url" placeholder="https://calendly.com/..." value="'+e(c.calendlyUrl||'')+'"><button class="btn bp" onclick="sccal()">Save</button></div></div>';
+    h+='</div>';
+
+    // Focus this week
+    h+='<div style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Focus this week</div>';
+    h+='<textarea class="ft" id="cfw" placeholder="What should this client hold between sessions?">'+e(c.focusOfWeek||'')+'</textarea>';
+    h+='<div style="margin-top:6px;text-align:right"><button class="btn bp" onclick="scfw()">Save</button></div></div>';
+
+    // Goals editor
+    h+='<div style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Goals editor</div>';
+    var allGoals=c.goals||[];
+    if(allGoals.length>0){allGoals.forEach(function(g,i){
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream-light)">';
+      h+='<div style="flex:1;font-size:12px;font-weight:500">'+e(g.title)+'</div>';
+      h+='<select class="fs" style="width:auto;font-size:11px;padding:4px 8px" onchange="sgst('+i+',this.value)"><option value="active"'+(g.status==='active'?' selected':'')+'>Active</option><option value="completed"'+(g.status==='completed'?' selected':'')+'>Completed</option><option value="paused"'+(g.status==='paused'?' selected':'')+'>Paused</option><option value="inactive"'+(g.status==='inactive'?' selected':'')+'>Inactive</option></select>';
+      h+='<button class="abtn del" onclick="rg('+i+')" style="opacity:1"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
       h+='</div>';
-    });
+    });}
+    h+='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><input class="fi" id="ngt" placeholder="Goal title" style="flex:2;min-width:140px"><input class="fi" id="ngo" placeholder="Target outcome" style="flex:1;min-width:120px"><button class="btn bp" onclick="ag()">Add</button></div>';
     h+='</div>';
-  }
-  // Client notes
-  var nd=Object.keys(c.notes||{}).filter(function(k){return c.notes[k]&&c.notes[k].trim();}).sort(function(a,b){return b.localeCompare(a);});
-  if(nd.length>0){
-    h+='<div class="card"><h3>Client Journal</h3>';
-    nd.slice(0,8).forEach(function(k){h+='<div style="padding:8px 0;border-bottom:1px solid var(--cream-light)"><div style="font-weight:600;font-size:11px;color:var(--green)">'+fs(k)+'</div><div style="font-size:12px;line-height:1.5;white-space:pre-wrap">'+e(c.notes[k])+'</div></div>';});
+
+    // Documents
+    h+='<div style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Documents</div>';
+    var cd=c.docs||[];
+    if(cd.length>0){cd.forEach(function(d,i){
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--cream-light)">';
+      h+='<div style="flex:1;font-size:12px"><strong>'+e(d.title)+'</strong> <span style="color:var(--text-muted)">('+e(d.category||'General')+')</span></div>';
+      h+='<a href="'+e(d.link)+'" target="_blank" style="font-size:11px;color:var(--green)">open</a>';
+      h+='<button class="abtn del" onclick="rdc('+i+')" style="opacity:1"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+      h+='</div>';
+    });}
+    h+='<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><input class="fi" id="ndt" placeholder="Title" style="flex:2"><input class="fi" id="ndl" type="url" placeholder="https://..." style="flex:2"><select class="fs" id="ndc" style="flex:1"><option>Handouts</option><option>Assessments</option><option>Session Notes</option><option>Reading</option><option>Templates</option><option>General</option></select><button class="btn bp" onclick="adc()">Add</button></div>';
     h+='</div>';
+
+    // Session prep
+    if(c.sessionPrep){
+      h+='<div style="margin-top:16px;background:rgba(184,134,11,0.06);border:1px solid rgba(184,134,11,0.3);border-radius:10px;padding:14px 16px">';
+      h+='<div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:6px">Session prep (from client)</div>';
+      h+='<div style="font-size:13px;line-height:1.6;white-space:pre-wrap">'+e(c.sessionPrep)+'</div>';
+      h+='</div>';
+    }
+
+    // Check-ins
+    var cis=(c.checkIns||[]).sort(function(a,b){return b.submittedAt.localeCompare(a.submittedAt);});
+    if(cis.length>0){
+      h+='<div style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Pre-session check-ins</div>';
+      cis.slice(0,5).forEach(function(ci){
+        h+='<div style="background:var(--cream-light);border-radius:8px;padding:10px 14px;margin-bottom:8px">';
+        h+='<div style="font-size:11px;font-weight:700;color:var(--green-muted);margin-bottom:6px">'+fs(ci.date)+'</div>';
+        if(ci.energy!==undefined)h+='<div style="display:flex;gap:12px;font-size:11px;color:var(--text-muted);margin-bottom:4px"><span>Energy: <strong style="color:var(--text)">'+ci.energy+'</strong></span><span>Stress: <strong style="color:var(--text)">'+ci.stress+'</strong></span><span>Clarity: <strong style="color:var(--text)">'+ci.clarity+'</strong></span><span>Confidence: <strong style="color:var(--text)">'+ci.confidence+'</strong></span></div>';
+        if(ci.wins)h+='<div style="font-size:12px;margin-bottom:2px"><span style="font-weight:700;font-size:10px;text-transform:uppercase">Win</span> '+e(ci.wins)+'</div>';
+        if(ci.challenges)h+='<div style="font-size:12px;margin-bottom:2px"><span style="font-weight:700;font-size:10px;text-transform:uppercase">Challenge</span> '+e(ci.challenges)+'</div>';
+        if(ci.coachingFocus)h+='<div style="font-size:12px"><span style="font-weight:700;font-size:10px;text-transform:uppercase">Wants coaching on</span> '+e(ci.coachingFocus)+'</div>';
+        h+='</div>';
+      });
+      h+='</div>';
+    }
+
+    // Journal
+    var nd2=Object.keys(c.notes||{}).filter(function(k){return c.notes[k]&&c.notes[k].trim();}).sort(function(a,b){return b.localeCompare(a);});
+    if(nd2.length>0){
+      h+='<div style="margin-top:16px"><div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">Client journal</div>';
+      nd2.slice(0,8).forEach(function(k){h+='<div style="padding:8px 0;border-bottom:1px solid var(--cream-light)"><div style="font-weight:600;font-size:11px;color:var(--green)">'+fs(k)+'</div><div style="font-size:12px;line-height:1.5;white-space:pre-wrap">'+e(c.notes[k])+'</div></div>';});
+      h+='</div>';
+    }
+
+    h+='</div>'; // end expanded content
   }
+
+  h+='</div>'; // end collapsed wrapper
   return h;
 }
 
