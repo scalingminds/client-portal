@@ -323,3 +323,92 @@ exports.weeklySummary = onSchedule(
     });
   }
 );
+
+// ─── nudgeInactiveClients ─────────────────────────────────────────────────────
+// Runs daily at 8am CT. Sends a nudge email to clients who haven't logged in
+// for exactly 7, 14, or 21 days. Tracks sent nudges to avoid duplicates.
+exports.nudgeInactiveClients = onSchedule(
+  { schedule: 'every day 08:00', timeZone: 'America/Chicago', secrets: ['SENDGRID_KEY'] },
+  async () => {
+    const apiKey = process.env.SENDGRID_KEY;
+    if (!apiKey) return;
+    sgMail.setApiKey(apiKey);
+
+    const COACH_EMAILS = ['andyhitecoaching@gmail.com', 'andy@scalingminds.com'];
+    const NUDGE_DAYS = [7, 14, 21];
+
+    const snapshot = await db.collection('users').get();
+    const now = new Date();
+
+    for (const doc of snapshot.docs) {
+      const d = doc.data();
+      if (COACH_EMAILS.includes(d.email)) continue;
+      if (!d.email) continue;
+
+      // Use updatedAt as last activity — falls back to startDate
+      const lastActive = d.updatedAt ? d.updatedAt.toDate() : null;
+      if (!lastActive) continue;
+
+      const daysSince = Math.floor((now - lastActive) / (1000 * 60 * 60 * 24));
+      if (!NUDGE_DAYS.includes(daysSince)) continue;
+
+      // Check if we already sent this nudge
+      const nudgeKey = `nudge_${daysSince}`;
+      const sentNudges = d.sentNudges || {};
+      const alreadySent = sentNudges[nudgeKey];
+      if (alreadySent) continue;
+
+      const firstName = (d.displayName || d.email).split(' ')[0].split('@')[0];
+
+      // Build email based on how many days inactive
+      let subject, bodyHtml;
+
+      if (daysSince === 7) {
+        subject = `Checking in — Scaling Minds`;
+        bodyHtml = `
+          <h2 style="font-family:Georgia,serif;font-size:24px;color:#1B4332;margin:0 0 8px;">Hey ${firstName}</h2>
+          <p style="font-size:15px;color:#1a1a1a;line-height:1.7;margin:0 0 16px;">Haven't seen you in the portal this week. The portal works best when you're in it between sessions, not just during them.</p>
+          <p style="font-size:15px;color:#1a1a1a;line-height:1.7;margin:0 0 24px;">Even five minutes makes a difference.</p>
+          <a href="https://portal.scalingminds.com" style="display:inline-block;background:#1B4332;color:#F0EAD6;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Jump Back In</a>
+        `;
+      } else if (daysSince === 14) {
+        subject = `Two weeks — Scaling Minds`;
+        bodyHtml = `
+          <h2 style="font-family:Georgia,serif;font-size:24px;color:#1B4332;margin:0 0 8px;">Hey ${firstName}</h2>
+          <p style="font-size:15px;color:#1a1a1a;line-height:1.7;margin:0 0 16px;">Two weeks. I notice these things.</p>
+          <p style="font-size:15px;color:#1a1a1a;line-height:1.7;margin:0 0 8px;">"What gets measured gets managed." The portal is how we keep score. Come back and check in on what you said you'd do.</p>
+          <a href="https://portal.scalingminds.com" style="display:inline-block;background:#1B4332;color:#F0EAD6;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;margin-top:16px;">Open Your Portal</a>
+        `;
+      } else if (daysSince === 21) {
+        subject = `Three weeks — Scaling Minds`;
+        bodyHtml = `
+          <h2 style="font-family:Georgia,serif;font-size:24px;color:#1B4332;margin:0 0 8px;">Hey ${firstName}</h2>
+          <p style="font-size:15px;color:#1a1a1a;line-height:1.7;margin:0 0 16px;">Three weeks away from the portal. Sessions are great, but the real work happens in between.</p>
+          <p style="font-size:15px;color:#1a1a1a;line-height:1.7;margin:0 0 8px;">"We don't rise to the level of our goals, we fall to the level of our systems." This is your system. Let's use it.</p>
+          <p style="font-size:15px;color:#1a1a1a;line-height:1.7;margin:0 0 24px;">Reply here or reach out directly if you need anything.</p>
+          <a href="https://portal.scalingminds.com" style="display:inline-block;background:#1B4332;color:#F0EAD6;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Open Your Portal</a>
+          <p style="margin:20px 0 0;font-size:13px;color:#6b6b6b;">Andy<br><a href="mailto:andy@scalingminds.com" style="color:#2D6A4F;">andy@scalingminds.com</a></p>
+        `;
+      }
+
+      // Send the email
+      try {
+        await sgMail.send({
+          to: d.email,
+          from: { email: FROM_EMAIL, name: FROM_NAME },
+          subject,
+          html: emailWrapper(bodyHtml),
+        });
+
+        // Mark as sent so we don't fire again
+        await doc.ref.update({
+          [`sentNudges.${nudgeKey}`]: new Date().toISOString()
+        });
+
+        console.log(`Nudge sent to ${d.email} (day ${daysSince})`);
+      } catch (err) {
+        console.error(`Failed to nudge ${d.email}:`, err.message);
+      }
+    }
+  }
+);
