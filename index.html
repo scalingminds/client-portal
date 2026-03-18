@@ -1438,15 +1438,15 @@ function cmo(ev){if(ev.target.classList.contains('modal-overlay'))cm();}
 function sh(){var n=document.getElementById('hn').value.trim(),d=document.getElementById('hd').value.trim(),c=document.getElementById('hcat').value,fr=document.getElementById('hfreq').value,fpw=parseInt(document.getElementById('hfpw').value)||1;if(!n)return;if(S.eh){var hb=S.data.habits.find(function(x){return x.id===S.eh;});if(hb){hb.name=n;hb.desc=d;hb.category=c;hb.freq=fr;hb.freqDays=_fdSel.slice();hb.freqPerWeek=fpw;}}else{S.data.habits.push({id:'h'+Date.now(),name:n,desc:d,category:c,freq:fr,freqDays:_fdSel.slice(),freqPerWeek:fpw});}save();cm();}
 function dh(id){if(!confirm('Remove this habit?'))return;S.data.habits=S.data.habits.filter(function(h){return h.id!==id;});save();R();}
 function tt(i){var t=S.data.todos||[];if(t[i]){t[i].done=!t[i].done;save();R();}}
-function catd(){var el=document.getElementById('ctd');if(!el)return;var t=el.value.trim();if(!t)return;S.data.todos=S.data.todos||[];S.data.todos.push({id:'t'+Date.now(),text:t,link:'',done:false});save();R();}
+function catd(){var el=document.getElementById('ctd');if(!el)return;var t=el.value.trim();if(!t)return;S.data.todos=S.data.todos||[];S.data.todos.push({id:'t'+Date.now(),text:t,link:'',done:false});save();R();notifyCoach('client_todo',{text:t});}
 function dtd(i){if(!confirm('Remove this to-do?'))return;S.data.todos=(S.data.todos||[]).slice();S.data.todos.splice(i,1);save();R();}
 function ssp(v){S.data.sessionPrep=v;save();}
 function openCal(){var url=(S.data.calendlyUrl||CAL);if(window.Calendly){window.Calendly.initPopupWidget({url:url+'?hide_gdpr_banner=1',prefill:{name:S.user.displayName||'',email:S.user.email||''}});}else{window.open(url,'_blank');}}
 function cag(){var t=document.getElementById('cgt').value.trim();if(!t)return;var o=document.getElementById('cgo').value.trim();S.data.goals=S.data.goals||[];S.data.goals.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active',progress:0});save();R();}
-function ugp(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.progress=parseInt(val)||0;save();}}
+var _ugpTimer=null;function ugp(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.progress=parseInt(val)||0;save();clearTimeout(_ugpTimer);_ugpTimer=setTimeout(function(){notifyCoach('client_goal',{title:g.title,progress:g.progress});},2000);}}
 function gnsToggle(gid,idx,done){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g&&g.nextSteps&&g.nextSteps[idx]){g.nextSteps[idx].done=done;var total=g.nextSteps.length,completed=g.nextSteps.filter(function(s){return s.done;}).length;g.progress=Math.round((completed/total)*100);save();R();}}
-function cgst(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.status=val;save();R();}}
-function sn(k,v){if(!S.data.notes)S.data.notes={};S.data.notes[k]=v;save();}
+function cgst(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.status=val;save();R();notifyCoach('client_goal',{title:g.title,status:val});}}
+var _snTimer=null;function sn(k,v){if(!S.data.notes)S.data.notes={};S.data.notes[k]=v;save();clearTimeout(_snTimer);_snTimer=setTimeout(function(){if(v&&v.trim().length>10)notifyCoach('client_journal',{date:k,preview:v.trim().slice(0,80)+(v.trim().length>80?'...':'')});},5000);}
 function dn(k){if(!confirm('Delete?'))return;delete S.data.notes[k];save();R();}
 
 // Coach
@@ -1466,6 +1466,7 @@ function rg(i){if(!confirm('Remove?'))return;var g=(S.sc.goals||[]).slice();g.sp
 function sgst(i,v){var g=(S.sc.goals||[]).slice();if(g[i]){g[i].status=v;if(!g[i].history)g[i].history=[];g[i].history.push({status:v,date:new Date().toISOString().split('T')[0]});}scf(S.sc.uid,{goals:g});}
 var NU='https://us-central1-scaling-minds-portal.cloudfunctions.net/sendNotification';
 function notify(type,data){if(!S.sc||!S.sc.email)return;fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:S.sc.email,toName:S.sc.displayName||'',type:type,data:data})}).catch(function(err){console.error('Notify failed:',err);});}
+function notifyCoach(type,data){if(!S.user)return;var name=(S.user.displayName||S.user.email||'A client');fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:'andy@scalingminds.com',toName:'Andy',type:type,data:Object.assign({},data,{clientName:name,clientEmail:S.user.email||''})})}).catch(function(err){console.error('NotifyCoach failed:',err);});}
 function asn(){var d=document.getElementById('snd').value,t=document.getElementById('snt').value.trim(),c=document.getElementById('snc').value.trim(),ex=document.getElementById('sne').value.trim(),n=document.getElementById('snn').value.trim();if(!d)return;var sn2=(S.sc.sessionNotes||[]).slice();sn2.push({id:'sn'+Date.now(),date:d,themes:t,commitments:c,experiments:ex,notes:n});scf(S.sc.uid,{sessionNotes:sn2});notify('session_note',{date:d,themes:t,commitments:c});}
 function rsn(i){if(!confirm('Remove?'))return;var sn2=(S.sc.sessionNotes||[]).slice();sn2.splice(i,1);scf(S.sc.uid,{sessionNotes:sn2});}
 function atd(){var t=document.getElementById('ntt').value.trim();if(!t)return;var l='';var td=(S.sc.todos||[]).slice();td.push({id:'t'+Date.now(),text:t,link:l||'',done:false});scf(S.sc.uid,{todos:td});notify('todo',{text:t,link:l||''});}
@@ -1854,6 +1855,7 @@ function gbSaveGoal(){
   save();
   closeGoalBuilder();
   R();
+  notifyCoach('client_goal',{title:goal.title,status:'new',why:goal.why||''});
 }
 
 function gbE(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
