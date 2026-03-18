@@ -2,7 +2,6 @@ const functions = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
 const sgMail = require('@sendgrid/mail');
-const fetch = require('node-fetch');
 
 admin.initializeApp();
 const db = admin.firestore();
