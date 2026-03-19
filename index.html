@@ -1024,28 +1024,39 @@ function rDocs(data){
     h+='</div></div>';
   }
 
-  // 2. Coaching Tools — amber cards (lib items with category "Tools" or coach-tagged)
+  // 2. Coaching Tools — always shown, includes hardcoded Values Compass + any lib tools
   var tools=lib.filter(function(d){return (d.category||'').toLowerCase()==='tools'||(d.isTools===true);});
-  if(tools.length>0){
-    h+='<div style="margin-bottom:28px">';
-    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:4px;height:22px;background:var(--gold);border-radius:2px"></div><div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green)">Coaching Tools</div><div style="font-size:11px;color:var(--text-muted)">Interactive exercises and assessments</div></div></div>';
-    h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">';
-    tools.forEach(function(t){
-      var tid='t'+t.id;
-      h+='<div onclick="showTool(\''+tid+'\')" style="cursor:pointer;text-decoration:none;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:opacity 0.2s" onmouseover="this.style.opacity=\'0.92\'" onmouseout="this.style.opacity=\'1\'">';
-      h+='<div style="background:#3D2B00;padding:18px 16px;position:relative;overflow:hidden;flex:1">';
-      h+='<div style="position:absolute;top:-8px;right:-8px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.08)"></div>';
-      h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#B8860B" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#B8860B">Coaching Tool</div></div>';
-      h+='<div style="font-family:\'DM Serif Display\',serif;font-size:15px;color:#F5F0E8;line-height:1.3;margin-bottom:6px">'+e(t.title)+'</div>';
-      if(t.desc)h+='<div style="font-size:11px;color:rgba(212,197,169,0.7);line-height:1.4">'+e(t.desc)+'</div>';
-      h+='</div>';
-      h+='<div style="background:rgba(0,0,0,0.3);padding:8px 16px;display:flex;align-items:center;justify-content:space-between">';
-      h+='<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#D4A017">'+e(t.subcategory||'Tool')+'</span>';
-      h+='<span style="font-size:10px;color:rgba(212,197,169,0.6)">Learn more &rarr;</span>';
-      h+='</div></div>';
-    });
+  h+='<div style="margin-bottom:28px">';
+  h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:4px;height:22px;background:var(--gold);border-radius:2px"></div><div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green)">Coaching Tools</div><div style="font-size:11px;color:var(--text-muted)">Interactive exercises and assessments</div></div></div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">';
+  // Values Compass — hardcoded
+  h+='<div onclick="showValuesCompass()" style="cursor:pointer;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:opacity 0.2s" onmouseover="this.style.opacity=\'0.92\'" onmouseout="this.style.opacity=\'1\'">';
+  h+='<div style="background:#3D2B00;padding:18px 16px;position:relative;overflow:hidden;flex:1">';
+  h+='<div style="position:absolute;top:-8px;right:-8px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.08)"></div>';
+  h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#B8860B" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#B8860B">Coaching Tool</div></div>';
+  h+='<div style="font-family:\'DM Serif Display\',serif;font-size:15px;color:#F5F0E8;line-height:1.3;margin-bottom:6px">Values Compass</div>';
+  h+='<div style="font-size:11px;color:rgba(212,197,169,0.7);line-height:1.4">Clarify what matters most. An interactive tool to surface and prioritize your core values as a leader.</div>';
+  h+='</div>';
+  h+='<div style="background:rgba(0,0,0,0.3);padding:8px 16px;display:flex;align-items:center;justify-content:space-between">';
+  h+='<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#D4A017">Values Clarity</span>';
+  h+='<span style="font-size:10px;color:rgba(212,197,169,0.6)">Open &rarr;</span>';
+  h+='</div></div>';
+  // Library-sourced tools
+  tools.forEach(function(t){
+    var tid='t'+t.id;
+    h+='<div onclick="showTool(\''+tid+'\')" style="cursor:pointer;text-decoration:none;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:opacity 0.2s" onmouseover="this.style.opacity=\'0.92\'" onmouseout="this.style.opacity=\'1\'">';
+    h+='<div style="background:#3D2B00;padding:18px 16px;position:relative;overflow:hidden;flex:1">';
+    h+='<div style="position:absolute;top:-8px;right:-8px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.08)"></div>';
+    h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#B8860B" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#B8860B">Coaching Tool</div></div>';
+    h+='<div style="font-family:\'DM Serif Display\',serif;font-size:15px;color:#F5F0E8;line-height:1.3;margin-bottom:6px">'+e(t.title)+'</div>';
+    if(t.desc)h+='<div style="font-size:11px;color:rgba(212,197,169,0.7);line-height:1.4">'+e(t.desc)+'</div>';
+    h+='</div>';
+    h+='<div style="background:rgba(0,0,0,0.3);padding:8px 16px;display:flex;align-items:center;justify-content:space-between">';
+    h+='<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#D4A017">'+e(t.subcategory||'Tool')+'</span>';
+    h+='<span style="font-size:10px;color:rgba(212,197,169,0.6)">Learn more &rarr;</span>';
     h+='</div></div>';
-  }
+  });
+  h+='</div></div>';
 
   // 3. Leadership Insight Series — dark green cards
   var featured=RESOURCES.slice(0,4);
@@ -1102,6 +1113,18 @@ function rDocs(data){
     }
   }
 
+  // Values Compass iframe overlay
+  if(S._valuesCompassOpen){
+    h+='<div style="position:fixed;inset:0;background:rgba(27,67,50,0.6);backdrop-filter:blur(4px);z-index:400;display:flex;flex-direction:column" onclick="closeValuesCompass()">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#3D2B00;flex-shrink:0" onclick="event.stopPropagation()">';
+    h+='<div style="display:flex;align-items:center;gap:10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B8860B" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span style="font-family:\'DM Serif Display\',serif;font-size:16px;color:#F5F0E8">Values Compass</span><span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#B8860B;margin-left:4px">Coaching Tool</span></div>';
+    h+='<button onclick="closeValuesCompass()" style="background:rgba(255,255,255,0.12);border:none;border-radius:8px;padding:6px 14px;color:#F5F0E8;font-size:13px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif">✕ Close</button>';
+    h+='</div>';
+    h+='<div style="flex:1;overflow:hidden" onclick="event.stopPropagation()">';
+    h+='<iframe src="https://scalingminds.github.io/values-compass/" style="width:100%;height:100%;border:none" allow="storage-access"></iframe>';
+    h+='</div></div>';
+  }
+
   if(_rPreview){
     var r=RESOURCES.find(function(x){return x.id===_rPreview;});
     if(r){
@@ -1126,6 +1149,8 @@ function closeRes(){_rPreview=null;R();}
 var _toolPreview=null;
 function showTool(tid){_toolPreview=tid;R();}
 function closeTool(){_toolPreview=null;R();}
+function showValuesCompass(){S._valuesCompassOpen=true;R();}
+function closeValuesCompass(){S._valuesCompassOpen=false;R();}
 
 // MODAL
 function rModal(){
