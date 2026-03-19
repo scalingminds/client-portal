@@ -221,11 +221,13 @@ canvas#radar{max-width:520px;margin:0 auto;display:block;}
 
 <div class="header">
 <div class="header-left">
+<a href="https://portal.scalingminds.com" class="header-back">&#8592; Client Portal</a>
+<div class="header-divider"></div>
 <div class="header-brand"><span class="brand-mark">&#9672;</span> SCALING MINDS</div>
 <div class="header-divider"></div>
 <h1>Values Compass</h1>
 </div>
-<div class="header-right"><a href="https://scalingminds.com" class="header-back">scalingminds.com</a></div>
+<div class="header-right"><a href="#" onclick="showScreen('introScreen');return false;" class="header-back">&#8592; Start Over</a></div>
 </div>
 
 <div class="container">
@@ -779,7 +781,7 @@ function showResults() {
   h += '<div class="actions-bar fade-up d6">';
   h += '<button class="btn-action primary" onclick="exportPDF()">&#128438; Export PDF</button>';
   h += '<button class="btn-action primary" onclick="shareWithCoach(ranked, norm, pairGaps)">&#9993; Share with Coach</button>';
-  h += '<button class="btn-action secondary" onclick="startAssessment()">&#8635; Retake Assessment</button></div>';
+  h += '<button class="btn-action secondary" onclick="showScreen(\'introScreen\')">&#8592; Start Over</button></div>';
 
   h += '<div class="tool-footer">Based on cross-cultural values research by Schwartz (1992, 2012) and the Welch-Bristol Values Inventory.<br>';
   h += '&copy; Scaling Minds &middot; <a href="https://scalingminds.com" target="_blank">scalingminds.com</a></div>';
