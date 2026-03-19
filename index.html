@@ -1031,7 +1031,8 @@ function rDocs(data){
     h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:4px;height:22px;background:var(--gold);border-radius:2px"></div><div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green)">Coaching Tools</div><div style="font-size:11px;color:var(--text-muted)">Interactive exercises and assessments</div></div></div>';
     h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">';
     tools.forEach(function(t){
-      h+='<a href="'+e(t.link)+'" target="_blank" style="text-decoration:none;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:opacity 0.2s" onmouseover="this.style.opacity=\'0.92\'" onmouseout="this.style.opacity=\'1\'">';
+      var tid='t'+t.id;
+      h+='<div onclick="showTool(\''+tid+'\')" style="cursor:pointer;text-decoration:none;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:opacity 0.2s" onmouseover="this.style.opacity=\'0.92\'" onmouseout="this.style.opacity=\'1\'">';
       h+='<div style="background:#3D2B00;padding:18px 16px;position:relative;overflow:hidden;flex:1">';
       h+='<div style="position:absolute;top:-8px;right:-8px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,0.08)"></div>';
       h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#B8860B" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#B8860B">Coaching Tool</div></div>';
@@ -1040,8 +1041,8 @@ function rDocs(data){
       h+='</div>';
       h+='<div style="background:rgba(0,0,0,0.3);padding:8px 16px;display:flex;align-items:center;justify-content:space-between">';
       h+='<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#D4A017">'+e(t.subcategory||'Tool')+'</span>';
-      h+='<span style="font-size:10px;color:rgba(212,197,169,0.6)">Open tool &rarr;</span>';
-      h+='</div></a>';
+      h+='<span style="font-size:10px;color:rgba(212,197,169,0.6)">Learn more &rarr;</span>';
+      h+='</div></div>';
     });
     h+='</div></div>';
   }
@@ -1075,6 +1076,32 @@ function rDocs(data){
   if(docs.length===0&&tools.length===0&&RESOURCES.length===0)h+='<div class="empty"><div class="ei">📄</div><h3>No documents yet</h3><p>Your coach will share resources here.</p></div>';
 
   // Resource preview modal
+  // Tool preview modal
+  if(_toolPreview){
+    var _tlib=S.lib||[];
+    var _tid=_toolPreview.replace(/^t/,'');
+    var _t=_tlib.find(function(x){return x.id===_tid;});
+    if(_t){
+      h+='<div style="position:fixed;inset:0;background:rgba(27,67,50,0.5);backdrop-filter:blur(4px);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px" onclick="closeTool()">';
+      h+='<div style="background:var(--white);border-radius:16px;max-width:480px;width:100%;box-shadow:0 12px 40px rgba(27,67,50,0.2);overflow:hidden" onclick="event.stopPropagation()">';
+      h+='<div style="background:#3D2B00;padding:28px 24px;position:relative;overflow:hidden">';
+      h+='<div style="position:absolute;top:-15px;right:-15px;width:80px;height:80px;border-radius:50%;background:rgba(184,134,11,0.15)"></div>';
+      h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B8860B" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#B8860B">Coaching Tool</div></div>';
+      h+='<div style="font-family:\'DM Serif Display\',serif;font-size:22px;color:#F5F0E8;line-height:1.3;margin-bottom:6px">'+e(_t.title)+'</div>';
+      if(_t.subcategory)h+='<div style="display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.12);color:#D4C5A9">'+e(_t.subcategory)+'</div>';
+      h+='</div>';
+      h+='<div style="padding:24px">';
+      if(_t.desc)h+='<div style="font-size:14px;line-height:1.7;color:var(--text);margin-bottom:16px">'+e(_t.desc)+'</div>';
+      h+='<div style="background:var(--cream-pale);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;font-size:13px;color:var(--text-muted);line-height:1.6">';
+      h+='This tool requires a free account to save your data. You can sign in with Google or create one with your email and password in about 30 seconds. Use the same credentials each time to keep your data.';
+      h+='</div>';
+      h+='<div style="display:flex;gap:10px">';
+      h+='<a href="'+e(_t.link)+'" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:var(--green);color:var(--cream-light);border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;font-family:\'DM Sans\',sans-serif"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Open Tool</a>';
+      h+='<button onclick="closeTool()" style="padding:14px 20px;background:var(--cream-light);border:none;border-radius:10px;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:14px;font-weight:600;color:var(--text)">Close</button>';
+      h+='</div></div></div></div>';
+    }
+  }
+
   if(_rPreview){
     var r=RESOURCES.find(function(x){return x.id===_rPreview;});
     if(r){
@@ -1096,6 +1123,9 @@ function rDocs(data){
 }
 function showRes(id){_rPreview=id;R();}
 function closeRes(){_rPreview=null;R();}
+var _toolPreview=null;
+function showTool(tid){_toolPreview=tid;R();}
+function closeTool(){_toolPreview=null;R();}
 
 // MODAL
 function rModal(){
