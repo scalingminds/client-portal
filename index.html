@@ -1731,6 +1731,44 @@ function gbE(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 </script>
 <!-- ═══════════════════════════════════════════════════════════ END GOAL BUILDER -->
 
+<!-- Ask Andy chat bubble -->
+<div id="ask-andy-btn" onclick="toggleAskAndy()" style="position:fixed;bottom:24px;left:24px;z-index:999;display:flex;align-items:center;gap:10px;background:var(--green);color:var(--cream-light);border:none;border-radius:28px;padding:13px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(27,67,50,0.25);transition:all 0.2s;" onmouseover="this.style.background='var(--green-light)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='var(--green)';this.style.transform='translateY(0)'">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  Ask Andy
+  <div id="ask-andy-dot" style="width:8px;height:8px;background:var(--gold-light);border-radius:50%;"></div>
+</div>
+
+<!-- Ask Andy panel -->
+<div id="ask-andy-panel" style="display:none;position:fixed;bottom:84px;left:24px;z-index:998;width:340px;max-width:calc(100vw - 48px);background:var(--white);border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(27,67,50,0.18);border:1px solid var(--border);">
+  <!-- Header -->
+  <div style="background:var(--green);padding:18px 20px;display:flex;align-items:center;gap:12px;">
+    <div style="width:40px;height:40px;min-width:40px;border-radius:50%;background:var(--green-light);border:2px solid rgba(212,160,23,0.4);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:14px;color:var(--cream-light);">AH</div>
+    <div>
+      <div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--cream-light);font-weight:400;">Andy Hite</div>
+      <div style="font-size:11px;color:rgba(212,197,169,0.7);margin-top:1px;display:flex;align-items:center;gap:5px;"><div style="width:6px;height:6px;background:#4ade80;border-radius:50%;"></div>Replies within a few hours</div>
+    </div>
+    <button onclick="toggleAskAndy()" style="margin-left:auto;width:28px;height:28px;background:rgba(255,255,255,0.1);border:none;border-radius:50%;cursor:pointer;color:var(--cream-light);font-size:16px;display:flex;align-items:center;justify-content:center;line-height:1;">&#215;</button>
+  </div>
+  <!-- Messages -->
+  <div id="ask-andy-messages" style="padding:16px;background:var(--cream-bg);min-height:120px;max-height:260px;overflow-y:auto;">
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:10px;color:var(--cream-light);margin-top:2px;">AH</div>
+      <div>
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:240px;">Hey! What&rsquo;s on your mind? Ask me anything between sessions.</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Andy &middot; just now</div>
+      </div>
+    </div>
+  </div>
+  <!-- Input -->
+  <div style="padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;align-items:flex-end;gap:8px;">
+    <textarea id="ask-andy-input" placeholder="Type a message..." rows="1" style="flex:1;border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:none;outline:none;background:var(--cream-bg);line-height:1.4;min-height:38px;max-height:100px;" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAskAndy();}"></textarea>
+    <button onclick="sendAskAndy()" style="width:36px;height:36px;min-width:36px;background:var(--green);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;" onmouseover="this.style.background='var(--green-light)'" onmouseout="this.style.background='var(--green)'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+  <div style="padding:8px 16px 12px;background:var(--white);text-align:center;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">andy@scalingminds.com &middot; Scaling Minds</div>
+</div>
+
 <!-- Floating bug report button -->
 <div onclick="openBugReport()" style="position:fixed;bottom:24px;right:24px;z-index:999;display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--border);border-radius:24px;padding:10px 16px;box-shadow:0 2px 12px rgba(27,67,50,0.12);cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--green-muted);" onmouseover="this.style.boxShadow='0 4px 20px rgba(27,67,50,0.18)';this.style.color='var(--green)'" onmouseout="this.style.boxShadow='0 2px 12px rgba(27,67,50,0.12)';this.style.color='var(--green-muted)'">
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -1776,6 +1814,51 @@ function submitBugReport(){
   var body=encodeURIComponent('Reported by: '+user+'\nPage: '+(page||'Not specified')+'\n\nDescription:\n'+desc);
   window.open('mailto:andy@scalingminds.com?subject='+subject+'&body='+body);
   closeBugReport();
+}
+
+function toggleAskAndy(){
+  var panel=document.getElementById('ask-andy-panel');
+  var isOpen=panel.style.display!=='none';
+  panel.style.display=isOpen?'none':'block';
+  if(!isOpen){
+    setTimeout(function(){
+      var inp=document.getElementById('ask-andy-input');
+      if(inp)inp.focus();
+    },100);
+  }
+}
+
+function sendAskAndy(){
+  var inp=document.getElementById('ask-andy-input');
+  var msg=inp?inp.value.trim():'';
+  if(!msg)return;
+  var user=(window.S&&S.user)?S.user:'';
+  var name=user?(user.displayName||user.email||'A client'):'A client';
+  var email=user?user.email:'';
+
+  // Add client message to thread
+  var msgs=document.getElementById('ask-andy-messages');
+  var clientBubble=document.createElement('div');
+  clientBubble.style.cssText='display:flex;justify-content:flex-end;margin-bottom:8px;';
+  clientBubble.innerHTML='<div style="background:var(--green);color:var(--cream-light);border-radius:14px 4px 14px 14px;padding:10px 14px;font-size:13px;line-height:1.5;max-width:240px;">'+msg.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>';
+  msgs.appendChild(clientBubble);
+  msgs.scrollTop=msgs.scrollHeight;
+  inp.value='';
+  inp.style.height='38px';
+
+  // Send email to Andy
+  var subject=encodeURIComponent('Message from '+name+' — Scaling Minds Portal');
+  var body=encodeURIComponent('From: '+name+(email?' ('+email+')':'')+'\n\n'+msg+'\n\n---\nSent via the Scaling Minds Client Portal');
+  window.open('mailto:andy@scalingminds.com?subject='+subject+'&body='+body);
+
+  // Show confirmation bubble
+  setTimeout(function(){
+    var confirm=document.createElement('div');
+    confirm.style.cssText='display:flex;gap:8px;margin-bottom:8px;';
+    confirm.innerHTML='<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:10px;color:var(--cream-light);margin-top:2px;">AH</div><div><div style="background:var(--white);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:240px;">Got it — I\'ll get back to you soon.</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Andy &middot; just now</div></div>';
+    msgs.appendChild(confirm);
+    msgs.scrollTop=msgs.scrollHeight;
+  },600);
 }
 
 function downloadICS(dateStr){
