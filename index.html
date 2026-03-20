@@ -290,7 +290,7 @@ var CV={
   journal:'You don\'t need to write a lot. You just need to write something true. This space is yours. No filters, no performance. The act of putting it into words is often where the shift happens.',
   progress:'Numbers don\'t tell the whole story, but they tell part of it. This is your proof of work. On the hard days, come here. You\'ve already done more than you think.'
 };
-function cv(page){return '<div style="border-left:4px solid var(--gold);padding:22px 26px;margin-bottom:32px;background:#EEF5F1;border-radius:0 12px 12px 0;"><div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);line-height:1.8">'+CV[page]+'</div><div style="font-size:12px;color:var(--green-muted);margin-top:12px;font-weight:600">&mdash; Andy</div></div>';}
+function cv(page){return '<div style="border-left:4px solid var(--gold);padding:22px 26px;margin-bottom:32px;background:#EEF5F1;border-radius:0 12px 12px 0;"><div style="font-family:\'DM Serif Display\',serif;font-size:16px;color:var(--green);line-height:1.8;font-weight:400;">'+CV[page]+'</div><div style="font-size:11px;color:var(--green-muted);margin-top:12px;letter-spacing:0.03em">&mdash; Andy</div></div>';}
 var CAL='https://calendly.com/scalingminds/60-minute-coaching-session';
 var ZM='https://us02web.zoom.us/s/3810541297';
 var FC={apiKey:"AIzaSyD9LOsaX3mDEH50osEmycD-10qUVap6nGU",authDomain:"scaling-minds-portal.firebaseapp.com",projectId:"scaling-minds-portal",storageBucket:"scaling-minds-portal.firebasestorage.app",messagingSenderId:"340348098507",appId:"1:340348098507:web:18072c671091879534884e"};
@@ -602,11 +602,6 @@ function rHome(td,ts,comp,sk,q){
     h+='</div>';
   }
 
-  // Message coach
-  h+='<a href="mailto:andy@scalingminds.com?subject=Message from '+encodeURIComponent(S.data.displayName||S.user.displayName||'your client')+'" style="display:flex;align-items:center;gap:10px;background:var(--green);border-radius:12px;padding:14px 18px;margin-bottom:14px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.opacity=\'0.9\'" onmouseout="this.style.opacity=\'1\'">';
-  h+='<div style="width:34px;height:34px;min-width:34px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cream-light)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>';
-  h+='<div style="font-size:14px;font-weight:600;color:var(--cream-light)">Message Your Coach</div></a>';
-
   // Quick note
   h+='<div style="display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:36px;cursor:pointer" onclick="sv(\'journal\')">';
   h+='<div style="width:34px;height:34px;min-width:34px;background:var(--cream-light);border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>';
@@ -711,7 +706,7 @@ function startCountdown(nextSession){
 // GOALS
 function rGoals(data){
   var goals=data.goals||[];
-  var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:16px">Goals</h2>';
+  var h='';
   h+=cv('goals');
   if(goals.length>0){
     var active=goals.filter(function(g){return g.status==='active';}),completed=goals.filter(function(g){return g.status==='completed';}),paused=goals.filter(function(g){return g.status==='paused';}),inactive=goals.filter(function(g){return g.status==='inactive';});
@@ -784,7 +779,7 @@ function gCard(g,isInactive){
 // SESSIONS
 function rSessions(data){
   var calUrl=data.calendlyUrl||CAL;
-  var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:6px">Sessions</h2>';
+  var h='';
   h+=cv('sessions');
   // Email reminder for Calendly matching
   h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;background:rgba(184,134,11,0.08);border:1px solid rgba(184,134,11,0.25);border-radius:8px;padding:10px 14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="min-width:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Book with <span style="position:relative;display:inline-block;font-weight:700;color:var(--green);margin:0 2px;padding:0 3px;"><span style="position:relative;z-index:2;">'+e(S.user.email)+'</span><span id="hlbar" style="position:absolute;left:0;top:0;height:100%;width:0;background:#fff176;border-radius:2px;z-index:1;display:block;"></span></span> so your session syncs automatically</div>';
@@ -867,7 +862,7 @@ function rJournal(ts){
   if(!S.data.notes)S.data.notes={};var tn=S.data.notes[ts]||'';
   var nd=Object.keys(S.data.notes).filter(function(k){return S.data.notes[k]&&S.data.notes[k].trim();}).sort(function(a,b){return b.localeCompare(a);});
   var past=nd.filter(function(k){return k!==ts;});
-  var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:4px">Journal</h2><div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Reflections, observations, things to bring to your next session.</div>';
+  var h='';
   h+=cv('journal');
   h+='<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="fl" style="margin:0">Today</span><span style="font-size:11px;color:var(--text-muted)">'+fs(ts)+'</span></div>';
   h+='<textarea class="ft" style="min-height:120px;font-size:13px;line-height:1.7" placeholder="What came up today? What did you notice?" oninput="sn(\''+ts+'\',this.value)">'+e(tn)+'</textarea></div>';
@@ -880,14 +875,15 @@ function rJournal(ts){
 // PROGRESS
 function rProgress(td,data){
   var habits=data.habits;if(habits.length===0)return '<div class="empty"><div class="ei">📊</div><h3>No data yet</h3></div>';
-  var ad=Math.min(90,adays(data)),days=[];for(var i=ad-1;i>=0;i--){var d=new Date(td);d.setDate(d.getDate()-i);days.push(dk(d));}
+  var ad=14,days=[];for(var i=ad-1;i>=0;i--){var d=new Date(td);d.setDate(td.getDate()-i);days.push(dk(d));}
   var totalDue=0,totalDone=0,pd=0;
   days.forEach(function(k){var c=data.completions[k]||[];var dueH=habits.filter(function(h){return hdueDk(h,k);});var doneH=dueH.filter(function(h){return c.indexOf(h.id)!==-1;});if(dueH.length>0&&doneH.length===dueH.length)pd++;});
   habits.forEach(function(h){var due=hdueCount(h,days);totalDue+=due;var done=0;days.forEach(function(k){var c=data.completions[k]||[];if(c.indexOf(h.id)!==-1)done++;});totalDone+=Math.min(done,due);});
   var ar=totalDue>0?Math.round((totalDone/totalDue)*100):0,sk=streak(data);
   var hr=habits.map(function(hb){var due=hdueCount(hb,days);var c=0;days.forEach(function(k){var co=data.completions[k]||[];if(co.indexOf(hb.id)!==-1)c++;});var freq=!hb.freq||hb.freq==='daily'?'Daily':hb.freq==='days'?(hb.freqDays||[]).length+'x/wk':hb.freq==='weekly'?(hb.freqPerWeek||1)+'x/wk':'Daily';return{name:hb.name,category:hb.category,rate:due>0?Math.round((Math.min(c,due)/due)*100):0,freq:freq};}).sort(function(a,b){return b.rate-a.rate;});
-  var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:4px">Progress</h2><div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Last '+ad+' day'+(ad!==1?'s':'')+'</div>';
+  var h='';
   h+=cv('progress');
+  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Last 14 days</div>';
   // Engagement bar
   if(data.startDate){var epv=ep(data);
     h+='<div style="display:flex;align-items:center;gap:14px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:14px;font-size:11px;color:var(--text-muted)">';
