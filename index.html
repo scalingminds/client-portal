@@ -290,7 +290,34 @@ var CV={
   journal:'You don\'t need to write a lot. You just need to write something true. This space is yours. No filters, no performance. The act of putting it into words is often where the shift happens.',
   progress:'Numbers don\'t tell the whole story, but they tell part of it. This is your proof of work. On the hard days, come here. You\'ve already done more than you think.'
 };
-function cv(page){return '<div style="border-left:4px solid var(--gold);padding:20px 24px;margin-bottom:32px;background:#D4EDE4;border-radius:0 12px 12px 0;"><div style="font-family:\'DM Sans\',sans-serif;font-size:14px;color:var(--green);line-height:1.6;">'+CV[page]+'</div><div style="font-size:11px;color:var(--green-muted);margin-top:10px;letter-spacing:0.03em">&mdash; Andy</div></div>';}
+function cv(page){
+  var storageKey='cv_dismissed_'+page;
+  var dismissed=false;
+  try{dismissed=localStorage.getItem(storageKey)==='1';}catch(e){}
+  var id='cv-'+page;
+  var html='';
+  if(dismissed){
+    html='<div id="'+id+'-collapsed" style="display:flex;align-items:center;gap:10px;margin-bottom:28px;cursor:pointer;padding:6px 0;" onclick="cvExpand(\''+page+'\')">';
+    html+='<div style="width:3px;height:18px;background:var(--gold);border-radius:2px;flex-shrink:0;"></div>';
+    html+='<div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.03em">&mdash; Andy</div>';
+    html+='<div style="font-size:11px;color:var(--text-muted)">· tap to read</div>';
+    html+='</div>';
+  } else {
+    html='<div id="'+id+'" style="background:var(--green);border-left:3px solid var(--gold);border-radius:12px;padding:24px 28px;margin-bottom:28px;position:relative;overflow:hidden;transition:all 0.5s ease;">';
+    html+='<div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(184,134,11,0.12);"></div>';
+    html+='<div style="font-size:14px;color:var(--cream-light);line-height:1.7;opacity:0.92;position:relative;">'+CV[page]+'</div>';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;position:relative;">';
+    html+='<div style="font-size:11px;color:var(--gold-light)">&mdash; Andy</div>';
+    html+='<button onclick="cvDismiss(\''+page+'\')" style="font-size:11px;color:rgba(212,197,169,0.5);cursor:pointer;border:none;background:none;padding:0;font-family:\'DM Sans\',sans-serif;" onmouseover="this.style.color=\'rgba(212,197,169,0.9)\'" onmouseout="this.style.color=\'rgba(212,197,169,0.5)\'">Dismiss &#8593;</button>';
+    html+='</div></div>';
+    html+='<div id="'+id+'-collapsed" style="display:none;align-items:center;gap:10px;margin-bottom:28px;cursor:pointer;padding:6px 0;" onclick="cvExpand(\''+page+'\')">';
+    html+='<div style="width:3px;height:18px;background:var(--gold);border-radius:2px;flex-shrink:0;"></div>';
+    html+='<div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.03em">&mdash; Andy</div>';
+    html+='<div style="font-size:11px;color:var(--text-muted)">· tap to read</div>';
+    html+='</div>';
+  }
+  return html;
+}
 var CAL='https://calendly.com/scalingminds/60-minute-coaching-session';
 var ZM='https://us02web.zoom.us/s/3810541297';
 var FC={apiKey:"AIzaSyD9LOsaX3mDEH50osEmycD-10qUVap6nGU",authDomain:"scaling-minds-portal.firebaseapp.com",projectId:"scaling-minds-portal",storageBucket:"scaling-minds-portal.firebasestorage.app",messagingSenderId:"340348098507",appId:"1:340348098507:web:18072c671091879534884e"};
@@ -2185,9 +2212,64 @@ function runHL(){
     },50);
   }
 }
+
+function cvDismiss(page){
+  var card=document.getElementById('cv-'+page);
+  var collapsed=document.getElementById('cv-'+page+'-collapsed');
+  if(!card||!collapsed)return;
+  card.style.maxHeight=card.scrollHeight+'px';
+  card.style.overflow='hidden';
+  card.style.opacity='1';
+  card.style.transition='max-height 0.5s ease, opacity 0.4s ease, margin-bottom 0.5s ease, padding 0.5s ease';
+  requestAnimationFrame(function(){
+    card.style.maxHeight='0';
+    card.style.opacity='0';
+    card.style.marginBottom='0';
+    card.style.padding='0';
+  });
+  setTimeout(function(){
+    card.style.display='none';
+    collapsed.style.display='flex';
+    try{localStorage.setItem('cv_dismissed_'+page,'1');}catch(e){}
+  },500);
+}
+
+function cvExpand(page){
+  var card=document.getElementById('cv-'+page);
+  var collapsed=document.getElementById('cv-'+page+'-collapsed');
+  if(!card||!collapsed)return;
+  collapsed.style.display='none';
+  card.style.display='block';
+  card.style.maxHeight='0';
+  card.style.opacity='0';
+  card.style.padding='0';
+  card.style.marginBottom='0';
+  card.style.transition='max-height 0.5s ease, opacity 0.4s ease, margin-bottom 0.5s ease, padding 0.5s ease';
+  requestAnimationFrame(function(){
+    card.style.maxHeight='300px';
+    card.style.opacity='1';
+    card.style.padding='24px 28px';
+    card.style.marginBottom='28px';
+  });
+  try{localStorage.removeItem('cv_dismissed_'+page);}catch(e){}
+  // Re-start auto-dismiss timer
+  setTimeout(function(){cvDismiss(page);},20000);
+}
+
+// Auto-dismiss coaching voice after 20 seconds
 var _hlObserver=new MutationObserver(function(){
   var b=document.getElementById('hlbar');
   if(b&&b.style.width!=='100%') setTimeout(runHL,600);
+  // Check for any visible cv cards and set auto-dismiss
+  ['goals','sessions','habits','journal','progress'].forEach(function(page){
+    var card=document.getElementById('cv-'+page);
+    if(card&&card.style.display!=='none'){
+      if(!card._autoTimer){
+        card._autoTimer=true;
+        setTimeout(function(){cvDismiss(page);},20000);
+      }
+    }
+  });
 });
 _hlObserver.observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
 </script>
