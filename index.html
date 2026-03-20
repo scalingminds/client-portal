@@ -1494,6 +1494,10 @@ function sendNewMessage(){
     sentAt:new Date().toISOString(),
     read:false
   });
+  // Email the client
+  if(client.email){
+    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:client.email,toName:client.displayName||'',type:'coach_message',data:{text:text}})});
+  }
   document.getElementById('new-msg-overlay').remove();
   // Switch to that thread
   S._selThread=uid;
@@ -1506,6 +1510,9 @@ function sendCoachReply(uid){
   var text=inp?inp.value.trim():'';
   if(!text)return;
   inp.value='';inp.style.height='38px';
+  var client=S.cls.find(function(c){return c.uid===uid;})||{};
+  var clientEmail=client.email||'';
+  var clientName=client.displayName||S._threadClientName||'';
   var parentRef=db.collection('messages').doc(uid);
   parentRef.set({
     lastMessage:'Andy: '+text,
@@ -1519,6 +1526,10 @@ function sendCoachReply(uid){
     sentAt:new Date().toISOString(),
     read:false
   });
+  // Email the client
+  if(clientEmail){
+    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:clientEmail,toName:clientName,type:'coach_message',data:{text:text}})});
+  }
 }
 
 function scv(v){S.cv=v;R();}
