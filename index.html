@@ -1386,6 +1386,11 @@ function loadCoachInbox(){
 
 function selectThread(uid){
   S._selThread=uid;
+  S._threadClientName='';
+  // Get client name from Firestore messages doc
+  db.collection('messages').doc(uid).get().then(function(doc){
+    if(doc.exists)S._threadClientName=doc.data().clientName||'';
+  });
   // Mark as read
   db.collection('messages').doc(uid).set({unreadByCoach:false},{merge:true});
   S._unreadCount=Math.max(0,(S._unreadCount||1)-1);
@@ -1409,7 +1414,8 @@ function selectThread(uid){
         if(isCoach){
           bubble.innerHTML='<div style="background:var(--green);color:var(--cream-light);border-radius:14px 4px 14px 14px;padding:10px 14px;font-size:13px;line-height:1.5;max-width:300px;">'+e(m.text||'')+'</div>';
         } else {
-          bubble.innerHTML='<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--cream-light);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);margin-top:2px;">C</div><div><div style="background:var(--cream-light);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:300px;">'+e(m.text||'')+'</div></div>';
+          var initials=S._threadClientName?(S._threadClientName.split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase()):'?';
+          bubble.innerHTML='<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--cream-light);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);margin-top:2px;">'+initials+'</div><div><div style="background:var(--cream-light);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:300px;">'+e(m.text||'')+'</div></div>';
         }
         msgs.appendChild(bubble);
       });
@@ -1419,9 +1425,10 @@ function selectThread(uid){
 
 function rThreadView(uid){
   var client=S.cls.find(function(c){return c.uid===uid;})||{};
-  var name=client.displayName||'Client';
+  var name=client.displayName||S._threadClientName||'Client';
+  var initials=name.split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase()||'?';
   var h='<div style="background:var(--green);padding:14px 18px;display:flex;align-items:center;gap:10px;">';
-  h+='<div style="width:32px;height:32px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:12px;color:var(--cream-light);">'+e(name.charAt(0))+'</div>';
+  h+='<div style="width:32px;height:32px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:12px;color:var(--cream-light);">'+initials+'</div>';
   h+='<div style="font-family:\'DM Serif Display\',serif;font-size:15px;color:var(--cream-light);">'+e(name)+'</div></div>';
   h+='<div id="coach-thread-msgs" style="padding:16px;background:var(--cream-bg);height:280px;overflow-y:auto;"></div>';
   h+='<div style="padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;">';
