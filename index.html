@@ -1318,7 +1318,8 @@ function rLib(){
         h+='<div style="flex:1"><div style="font-size:13px;font-weight:600">'+e(d.title)+'</div>';
         if(d.desc)h+='<div style="font-size:11px;color:var(--text-muted)">'+e(d.desc)+'</div>';
         h+='</div><a href="'+e(d.link)+'" target="_blank" style="font-size:11px;color:var(--green)">open</a>';
-        h+='<button class="abtn del" onclick="rlb('+gi+')" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
+        h+='<button class="abtn" onclick="openEditLib('+gi+')" title="Edit" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+        h+='<button class="abtn del" onclick="rlb('+gi+')" title="Delete" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
       });h+='</div>';
     });
   }
@@ -1329,6 +1330,25 @@ function rLib(){
   h+='<div class="fg" style="margin:0;flex:1;min-width:100px"><label class="fl">Category</label><select class="fs" id="lbc"><option>Tools</option><option>Six Shifts</option><option>Handouts</option><option>Assessments</option><option>Reading</option><option>Templates</option><option>General</option></select></div>';
   h+='<button class="btn bp" onclick="alb()">Add</button></div>';
   h+='<div class="fg" style="margin-top:8px;margin-bottom:0"><label class="fl">Description (optional)</label><input class="fi" id="lbd" placeholder="Brief description..."></div></div>';
+
+  // Edit modal
+  if(S._editLibIdx!==null&&S._editLibIdx!==undefined){
+    var ed=lib[S._editLibIdx];
+    if(ed){
+      var cats2=['Tools','Six Shifts','Handouts','Assessments','Reading','Templates','General'];
+      var catOpts=cats2.map(function(c){return '<option'+(ed.category===c?' selected':'')+'>'+c+'</option>';}).join('');
+      h+='<div style="position:fixed;inset:0;background:rgba(27,67,50,0.4);backdrop-filter:blur(4px);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px" onclick="closeEditLib()">';
+      h+='<div style="background:var(--white);border-radius:16px;width:480px;max-width:92vw;box-shadow:0 8px 32px rgba(27,67,50,0.15);overflow:hidden" onclick="event.stopPropagation()">';
+      h+='<div style="padding:20px 22px 0;display:flex;align-items:center;justify-content:space-between"><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green)">Edit Resource</div><button onclick="closeEditLib()" style="width:32px;height:32px;border:none;background:var(--cream-light);border-radius:50%;cursor:pointer;font-size:16px;color:var(--text-muted)">&#215;</button></div>';
+      h+='<div style="padding:18px 22px 22px">';
+      h+='<div class="fg"><label class="fl">Title</label><input class="fi" id="elib-title" value="'+e(ed.title||'')+'"></div>';
+      h+='<div class="fg"><label class="fl">Link</label><input class="fi" id="elib-link" type="url" value="'+e(ed.link||'')+'"></div>';
+      h+='<div class="fg"><label class="fl">Category</label><select class="fs" id="elib-cat">'+catOpts+'</select></div>';
+      h+='<div class="fg"><label class="fl">Description (optional)</label><input class="fi" id="elib-desc" value="'+e(ed.desc||'')+'"></div>';
+      h+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button onclick="closeEditLib()" class="btn bs">Cancel</button><button onclick="saveEditLib('+S._editLibIdx+')" class="btn bp">Save</button></div>';
+      h+='</div></div></div>';
+    }
+  }
   return h;
 }
 
@@ -1626,6 +1646,19 @@ function adc(){var t=document.getElementById('ndt').value.trim();if(!t)return;va
 function rdc(i){if(!confirm('Remove?'))return;var d=(S.sc.docs||[]).slice();d.splice(i,1);scf(S.sc.uid,{docs:d});}
 function alb(){var t=document.getElementById('lbt').value.trim();if(!t)return;var l=document.getElementById('lbl').value.trim();if(!l)return;var c=document.getElementById('lbc').value;var d=document.getElementById('lbd').value.trim();var lib=(S.lib||[]).slice();lib.push({id:'lb'+Date.now(),title:t,link:l,category:c||'General',desc:d||''});saveLib(lib);}
 function rlb(i){if(!confirm('Remove?'))return;var lib=(S.lib||[]).slice();lib.splice(i,1);saveLib(lib);}
+function openEditLib(i){S._editLibIdx=i;R();}
+function closeEditLib(){S._editLibIdx=null;R();}
+function saveEditLib(i){
+  var t=document.getElementById('elib-title').value.trim();
+  var l=document.getElementById('elib-link').value.trim();
+  var c=document.getElementById('elib-cat').value;
+  var d=document.getElementById('elib-desc').value.trim();
+  if(!t||!l)return;
+  var lib=(S.lib||[]).slice();
+  lib[i]={id:lib[i].id||'lb'+Date.now(),title:t,link:l,category:c,desc:d};
+  saveLib(lib);
+  S._editLibIdx=null;
+}
 
 function eacsv(){var rows=[['Name','Email','Habits','Rate','Streak','Start','End','Last Active']];S.cls.forEach(function(c){rows.push([c.displayName,c.email,c.habits.length,crate(c)+'%',streak(c),c.startDate||'',c.endDate||'',la(c)||'Never']);});dlc(rows,'scaling-minds-all-clients.csv');}
 function eccsv(){var c=S.sc;if(!c)return;var td=new Date(),ad=Math.min(90,adays(c)),days=[];for(var i=ad-1;i>=0;i--){var d=new Date(td);d.setDate(d.getDate()-i);days.push(dk(d));}var hdr=['Date'];c.habits.forEach(function(h){hdr.push(h.name);});var rows=[hdr];days.forEach(function(k){var r=[k];c.habits.forEach(function(h){var co=c.completions[k]||[];r.push(co.indexOf(h.id)!==-1?'Yes':'');});rows.push(r);});dlc(rows,'scaling-minds-'+c.displayName.replace(/\s+/g,'-').toLowerCase()+'.csv');}
