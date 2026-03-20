@@ -291,7 +291,7 @@ var ID=7;
 
 // Default data shape
 function dd(){return{habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:'',docs:[],goals:[],sessionNotes:[],checkIns:[]};}
-var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,cv:'clients',lib:[]};
+var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,cv:'clients',lib:[],_unreadCount:0,_msgs:{},_selThread:null,_msgUnsub:null,_coachMsgUnsub:null};
 
 // Helpers
 function dq(){var t=new Date();return QT[(t.getFullYear()*10000+(t.getMonth()+1)*100+t.getDate())%QT.length];}
@@ -347,7 +347,7 @@ function siep(){
   });
 }
 function so(){auth.signOut();}
-auth.onAuthStateChanged(function(u){if(u){S.user=u;S.ic=ic();if(S.ic){S.view='clients';S.cv='clients';db.collection('users').doc(u.uid).set({displayName:u.displayName||'',email:u.email||'',photoURL:u.photoURL||''},{merge:true});loadAll(function(){loadLib(function(){R();});});}else{var sv2='home';try{sv2=localStorage.getItem('sm_view')||'home';}catch(e){}var validViews=['home','goals','sessions','habits','journal','progress','docs','profile'];S.view=validViews.indexOf(sv2)!==-1?sv2:'home';load(function(){loadLib(function(){save();R();if(!tourSeen())setTimeout(startTour,600);});});}}else{S.user=null;S.ic=false;S.data=dd();S.cls=[];S.lib=[];rl();}});
+auth.onAuthStateChanged(function(u){if(u){S.user=u;S.ic=ic();if(S.ic){S.view='clients';S.cv='clients';db.collection('users').doc(u.uid).set({displayName:u.displayName||'',email:u.email||'',photoURL:u.photoURL||''},{merge:true});loadAll(function(){loadLib(function(){loadCoachUnread(function(){R();});});});}else{var sv2='home';try{sv2=localStorage.getItem('sm_view')||'home';}catch(e){}var validViews=['home','goals','sessions','habits','journal','progress','docs','profile'];S.view=validViews.indexOf(sv2)!==-1?sv2:'home';load(function(){loadLib(function(){save();R();watchUnread();if(!tourSeen())setTimeout(startTour,600);});});}}else{S.user=null;S.ic=false;S.data=dd();S.cls=[];S.lib=[];rl();}});
 
 function rl(){document.getElementById('app').innerHTML='<div class="login-screen"><div class="login-card"><img class="login-logo" src="'+L+'" alt="Scaling Minds"><h1>Client Portal</h1><p>Track habits, reflect, and grow. Sign in to sync across all your devices.</p><div id="login-err" class="login-error"></div><input class="login-input" id="login-email" type="email" placeholder="Email address"><div style="font-size:11px;color:var(--text-muted);margin:-8px 0 10px 4px">Use this same email when booking on Calendly</div><div style="position:relative"><input class="login-input" id="login-pw" type="password" placeholder="Password" style="padding-right:44px"><button onclick="var p=document.getElementById(\'login-pw\');p.type=p.type===\'password\'?\'text\':\'password\';this.innerHTML=p.type===\'password\'?\'Show\':\'Hide\'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:12px;color:var(--green-muted);cursor:pointer;font-family:\'DM Sans\',sans-serif;font-weight:600">Show</button></div><button class="login-btn" onclick="siep()">Sign In</button><div class="login-divider">or</div><button class="google-btn" onclick="si()"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Sign in with Google</button><div class="login-footer">&copy; Scaling Minds</div></div></div>';}
 
@@ -1049,10 +1049,12 @@ function rCA(){
   h+='<div class="header-right"><button class="signout-btn" onclick="so()">Sign out</button></div></div>';
   h+='<div class="nav-bar"><div class="nav-tab'+(S.cv==='clients'?' active':'')+'" onclick="scv(\'clients\')">All Clients</div>';
   h+='<div class="nav-tab'+(S.cv==='library'?' active':'')+'" onclick="scv(\'library\')">Resource Library</div>';
+  h+='<div class="nav-tab'+(S.cv==='messages'?' active':'')+'" onclick="scv(\'messages\')" style="display:flex;align-items:center;gap:6px;">Messages'+(S._unreadCount>0?'<span style="background:var(--gold);color:white;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">'+S._unreadCount+'</span>':'')+'</div>';
   if(S.sc)h+='<div class="nav-tab'+(S.cv==='detail'?' active':'')+'" onclick="scv(\'detail\')">'+e(S.sc.displayName)+'</div>';
   h+='</div><div class="main">';
   if(S.cv==='clients')h+=rCL();
   else if(S.cv==='library')h+=rLib();
+  else if(S.cv==='messages')h+=rMessages();
   else if(S.cv==='detail'&&S.sc)h+=rCD();
   h+='</div><div class="footer">&copy; Scaling Minds &middot; Coach Dashboard</div>';
   app.innerHTML=h;
@@ -1323,6 +1325,133 @@ function sn(k,v){if(!S.data.notes)S.data.notes={};S.data.notes[k]=v;save();}
 function dn(k){if(!confirm('Delete?'))return;delete S.data.notes[k];save();R();}
 
 // Coach
+// ─── MESSAGES (coach) ─────────────────────────────────────────────────────────
+function loadCoachUnread(cb){
+  db.collection('messages').where('unreadByCoach','==',true).get().then(function(snap){
+    S._unreadCount=snap.size;
+    if(cb)cb();
+  }).catch(function(){if(cb)cb();});
+}
+
+function rMessages(){
+  var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:4px">Messages</h2>';
+  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">Client messages. Click a thread to reply.</div>';
+  h+='<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">';
+
+  // Left: inbox list
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden">';
+  h+='<div id="coach-inbox" style="min-height:200px"><div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Loading...</div></div>';
+  h+='</div>';
+
+  // Right: thread view
+  h+='<div style="background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;min-height:400px" id="coach-thread-panel">';
+  if(S._selThread){
+    h+=rThreadView(S._selThread);
+  } else {
+    h+='<div style="display:flex;align-items:center;justify-content:center;height:400px;color:var(--text-muted);font-size:13px;">Select a conversation</div>';
+  }
+  h+='</div>';
+  h+='</div>';
+
+  // Load inbox async after render
+  setTimeout(loadCoachInbox,50);
+  return h;
+}
+
+function loadCoachInbox(){
+  var inbox=document.getElementById('coach-inbox');
+  if(!inbox)return;
+  db.collection('messages').orderBy('lastMessageAt','desc').get().then(function(snap){
+    if(!inbox)return;
+    if(snap.empty){inbox.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">No messages yet</div>';return;}
+    var html='';
+    snap.forEach(function(doc){
+      var d=doc.data();
+      var uid=doc.id;
+      var isSelected=S._selThread===uid;
+      var isUnread=d.unreadByCoach;
+      html+='<div onclick="selectThread(\''+uid+'\')" style="padding:14px 16px;border-bottom:1px solid var(--cream-light);cursor:pointer;background:'+(isSelected?'var(--cream-light)':'var(--white)')+';transition:background 0.15s" onmouseover="this.style.background=\'var(--cream-light)\'" onmouseout="this.style.background=\''+(isSelected?'var(--cream-light)':'var(--white)')+'\'">';
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">';
+      html+='<div style="font-size:13px;font-weight:'+(isUnread?'700':'600')+';color:var(--green)">'+e(d.clientName||'Unknown')+'</div>';
+      if(isUnread)html+='<div style="width:8px;height:8px;background:var(--gold);border-radius:50%;"></div>';
+      html+='</div>';
+      html+='<div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;">'+e(d.lastMessage||'')+'</div>';
+      html+='</div>';
+    });
+    inbox.innerHTML=html;
+  }).catch(function(err){
+    if(inbox)inbox.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Error loading messages</div>';
+  });
+}
+
+function selectThread(uid){
+  S._selThread=uid;
+  // Mark as read
+  db.collection('messages').doc(uid).set({unreadByCoach:false},{merge:true});
+  S._unreadCount=Math.max(0,(S._unreadCount||1)-1);
+  var panel=document.getElementById('coach-thread-panel');
+  if(panel)panel.innerHTML=rThreadView(uid);
+  // Reload inbox to clear unread dot
+  loadCoachInbox();
+  // Start real-time listener for thread
+  if(S._coachMsgUnsub)S._coachMsgUnsub();
+  S._coachMsgUnsub=db.collection('messages').doc(uid).collection('thread')
+    .orderBy('sentAt','asc')
+    .onSnapshot(function(snap){
+      var msgs=document.getElementById('coach-thread-msgs');
+      if(!msgs)return;
+      msgs.innerHTML='';
+      snap.forEach(function(doc){
+        var m=doc.data();
+        var isCoach=m.from==='coach';
+        var bubble=document.createElement('div');
+        bubble.style.cssText='display:flex;'+(isCoach?'justify-content:flex-end;':'gap:8px;')+'margin-bottom:8px;';
+        if(isCoach){
+          bubble.innerHTML='<div style="background:var(--green);color:var(--cream-light);border-radius:14px 4px 14px 14px;padding:10px 14px;font-size:13px;line-height:1.5;max-width:300px;">'+e(m.text||'')+'</div>';
+        } else {
+          bubble.innerHTML='<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--cream-light);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);margin-top:2px;">C</div><div><div style="background:var(--cream-light);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:300px;">'+e(m.text||'')+'</div></div>';
+        }
+        msgs.appendChild(bubble);
+      });
+      msgs.scrollTop=msgs.scrollHeight;
+    });
+}
+
+function rThreadView(uid){
+  var client=S.cls.find(function(c){return c.uid===uid;})||{};
+  var name=client.displayName||'Client';
+  var h='<div style="background:var(--green);padding:14px 18px;display:flex;align-items:center;gap:10px;">';
+  h+='<div style="width:32px;height:32px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:12px;color:var(--cream-light);">'+e(name.charAt(0))+'</div>';
+  h+='<div style="font-family:\'DM Serif Display\',serif;font-size:15px;color:var(--cream-light);">'+e(name)+'</div></div>';
+  h+='<div id="coach-thread-msgs" style="padding:16px;background:var(--cream-bg);height:280px;overflow-y:auto;"></div>';
+  h+='<div style="padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;">';
+  h+='<textarea id="coach-reply-input" placeholder="Reply to '+e(name)+'..." rows="1" style="flex:1;border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-family:\'DM Sans\',sans-serif;font-size:13px;color:var(--text);resize:none;outline:none;background:var(--cream-bg);line-height:1.4;min-height:38px;max-height:100px;" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,100)+\'px\'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendCoachReply(\''+uid+'\');}"></textarea>';
+  h+='<button onclick="sendCoachReply(\''+uid+'\')" style="width:36px;height:36px;min-width:36px;background:var(--green);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background=\'var(--green-light)\'" onmouseout="this.style.background=\'var(--green)\'">';
+  h+='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>';
+  h+='</div>';
+  return h;
+}
+
+function sendCoachReply(uid){
+  var inp=document.getElementById('coach-reply-input');
+  var text=inp?inp.value.trim():'';
+  if(!text)return;
+  inp.value='';inp.style.height='38px';
+  var parentRef=db.collection('messages').doc(uid);
+  parentRef.set({
+    lastMessage:'Andy: '+text,
+    lastMessageAt:firebase.firestore.FieldValue.serverTimestamp(),
+    unreadByClient:true,
+    unreadByCoach:false
+  },{merge:true});
+  parentRef.collection('thread').add({
+    from:'coach',
+    text:text,
+    sentAt:new Date().toISOString(),
+    read:false
+  });
+}
+
 function scv(v){S.cv=v;R();}
 function sel(i){var sorted=S.cls.slice().sort(function(a,b){var ai=ds(la(a))>=ID?0:1,bi=ds(la(b))>=ID?0:1;if(ai!==bi)return ai-bi;return(a.displayName||'').localeCompare(b.displayName||'');});S.sc=sorted[i];S.cv='detail';R();}
 function selByUid(uid){var c=S.cls.find(function(x){return x.uid===uid;});if(c){S.sc=c;S.cv='detail';R();}}
@@ -1819,46 +1948,81 @@ function submitBugReport(){
 function toggleAskAndy(){
   var panel=document.getElementById('ask-andy-panel');
   var isOpen=panel.style.display!=='none';
-  panel.style.display=isOpen?'none':'block';
-  if(!isOpen){
-    setTimeout(function(){
-      var inp=document.getElementById('ask-andy-input');
-      if(inp)inp.focus();
-    },100);
+  if(isOpen){panel.style.display='none';return;}
+  panel.style.display='block';
+  // Mark as read
+  if(S.user){
+    db.collection('messages').doc(S.user.uid).set({unreadByClient:false},{merge:true});
+    var dot=document.getElementById('ask-andy-dot');
+    if(dot)dot.style.background='var(--gold-light)';
   }
+  loadClientThread();
+  setTimeout(function(){var inp=document.getElementById('ask-andy-input');if(inp)inp.focus();},100);
+}
+
+function loadClientThread(){
+  if(!S.user)return;
+  if(S._msgUnsub)S._msgUnsub();
+  var msgs=document.getElementById('ask-andy-messages');
+  if(!msgs)return;
+  S._msgUnsub=db.collection('messages').doc(S.user.uid).collection('thread')
+    .orderBy('sentAt','asc')
+    .onSnapshot(function(snap){
+      var msgs2=document.getElementById('ask-andy-messages');
+      if(!msgs2)return;
+      // Keep welcome message, rebuild thread
+      msgs2.innerHTML='<div style="display:flex;gap:8px;margin-bottom:12px;"><div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:10px;color:var(--cream-light);margin-top:2px;">AH</div><div><div style="background:var(--white);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:240px;">Hey! What&rsquo;s on your mind? Ask me anything between sessions.</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Andy</div></div></div>';
+      snap.forEach(function(doc){
+        var m=doc.data();
+        var isClient=m.from==='client';
+        var bubble=document.createElement('div');
+        bubble.style.cssText='display:flex;'+(isClient?'justify-content:flex-end;':'gap:8px;')+'margin-bottom:8px;';
+        if(isClient){
+          bubble.innerHTML='<div style="background:var(--green);color:var(--cream-light);border-radius:14px 4px 14px 14px;padding:10px 14px;font-size:13px;line-height:1.5;max-width:240px;">'+e(m.text||'')+'</div>';
+        } else {
+          bubble.innerHTML='<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:10px;color:var(--cream-light);margin-top:2px;">AH</div><div><div style="background:var(--white);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:240px;">'+e(m.text||'')+'</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Andy</div></div>';
+        }
+        msgs2.appendChild(bubble);
+      });
+      msgs2.scrollTop=msgs2.scrollHeight;
+      // Mark as read
+      db.collection('messages').doc(S.user.uid).set({unreadByClient:false},{merge:true});
+    });
 }
 
 function sendAskAndy(){
   var inp=document.getElementById('ask-andy-input');
-  var msg=inp?inp.value.trim():'';
-  if(!msg)return;
-  var user=(window.S&&S.user)?S.user:'';
-  var name=user?(user.displayName||user.email||'A client'):'A client';
-  var email=user?user.email:'';
+  var text=inp?inp.value.trim():'';
+  if(!text||!S.user)return;
+  var name=S.user.displayName||S.user.email||'Client';
+  var email=S.user.email||'';
+  inp.value='';inp.style.height='38px';
+  // Save to Firestore
+  var parentRef=db.collection('messages').doc(S.user.uid);
+  parentRef.set({
+    clientName:name,
+    clientEmail:email,
+    lastMessage:text,
+    lastMessageAt:firebase.firestore.FieldValue.serverTimestamp(),
+    unreadByCoach:true,
+    unreadByClient:false
+  },{merge:true});
+  parentRef.collection('thread').add({
+    from:'client',
+    text:text,
+    sentAt:new Date().toISOString(),
+    read:false
+  });
+}
 
-  // Add client message to thread
-  var msgs=document.getElementById('ask-andy-messages');
-  var clientBubble=document.createElement('div');
-  clientBubble.style.cssText='display:flex;justify-content:flex-end;margin-bottom:8px;';
-  clientBubble.innerHTML='<div style="background:var(--green);color:var(--cream-light);border-radius:14px 4px 14px 14px;padding:10px 14px;font-size:13px;line-height:1.5;max-width:240px;">'+msg.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>';
-  msgs.appendChild(clientBubble);
-  msgs.scrollTop=msgs.scrollHeight;
-  inp.value='';
-  inp.style.height='38px';
-
-  // Send email to Andy
-  var subject=encodeURIComponent('Message from '+name+' — Scaling Minds Portal');
-  var body=encodeURIComponent('From: '+name+(email?' ('+email+')':'')+'\n\n'+msg+'\n\n---\nSent via the Scaling Minds Client Portal');
-  window.open('mailto:andy@scalingminds.com?subject='+subject+'&body='+body);
-
-  // Show confirmation bubble
-  setTimeout(function(){
-    var confirm=document.createElement('div');
-    confirm.style.cssText='display:flex;gap:8px;margin-bottom:8px;';
-    confirm.innerHTML='<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:10px;color:var(--cream-light);margin-top:2px;">AH</div><div><div style="background:var(--white);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:240px;">Got it — I\'ll get back to you soon.</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Andy &middot; just now</div></div>';
-    msgs.appendChild(confirm);
-    msgs.scrollTop=msgs.scrollHeight;
-  },600);
+function watchUnread(){
+  if(!S.user||S.ic)return;
+  db.collection('messages').doc(S.user.uid).onSnapshot(function(doc){
+    if(doc.exists&&doc.data().unreadByClient){
+      var dot=document.getElementById('ask-andy-dot');
+      if(dot)dot.style.background='#ef4444';
+    }
+  });
 }
 
 function downloadICS(dateStr){
