@@ -727,9 +727,7 @@ function cancelSession(){
   var body='Hi,\n\nI need to cancel my upcoming session.\n\nThanks,\n'+name;
   var coachEmail=S.data.coachEmail||'andy@scalingminds.com';
   var mailto='mailto:'+coachEmail+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
-  var a=document.createElement('a');
-  a.href=mailto;
-  a.click();
+  window.location.href=mailto;
 }
 
 function startCountdown(nextSession){
