@@ -94,7 +94,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream-bg);color:var(--tex
 .modal-overlay{position:fixed;inset:0;background:rgba(27,67,50,0.4);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
 .modal-overlay.open{opacity:1;pointer-events:all;}
 .modal{background:var(--white);border-radius:16px;width:480px;max-width:92vw;box-shadow:var(--shadow-lg);transform:translateY(20px);transition:transform 0.25s;max-height:90vh;overflow-y:auto;}
-.modal-overlay.open 
+.modal-overlay.open .modal{transform:translateY(0);}
 .mh{padding:20px 22px 0;display:flex;align-items:center;justify-content:space-between;}
 .mh h3{font-family:'DM Serif Display',serif;font-size:18px;color:var(--green);}
 .mx{width:32px;height:32px;border:none;background:var(--cream-light);border-radius:50%;cursor:pointer;font-size:16px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;}
@@ -330,7 +330,7 @@ var ID=7;
 
 // Default data shape
 function dd(){return{habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:'',docs:[],goals:[],sessionNotes:[],checkIns:[]};}
-var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,cv:'clients',lib:[],_unreadCount:0,_msgs:{},_selThread:null,_msgUnsub:null,_coachMsgUnsub:null};
+var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,cv:'clients',lib:[],_unreadCount:0,_msgs:{},_selThread:null,_msgUnsub:null,_coachMsgUnsub:null,_inboxUnsub:null,_coachName:'Andy Hite',_coachInitials:'AH'};
 
 // Helpers
 function dq(){var t=new Date();return QT[(t.getFullYear()*10000+(t.getMonth()+1)*100+t.getDate())%QT.length];}
@@ -705,8 +705,9 @@ function submitCheckin(){
 function cancelSession(){
   var name=S.user.displayName||S.user.email||'';
   var subject='Session Cancellation Request';
-  var body='Hi Andy,\n\nI need to cancel my upcoming session.\n\nThanks,\n'+name;
-  var mailto='mailto:andy@scalingminds.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  var body='Hi,\n\nI need to cancel my upcoming session.\n\nThanks,\n'+name;
+  var coachEmail=S.data.coachEmail||'andy@scalingminds.com';
+  var mailto='mailto:'+coachEmail+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
   var a=document.createElement('a');
   a.href=mailto;
   a.click();
@@ -1278,7 +1279,7 @@ function rCD(){
   }
 
   // Pre-session check-ins
-  var cis=(c.checkIns||[]).slice().sort(function(a,b){return b.submittedAt.localeCompare(a.submittedAt);});
+  var cis=(c.checkIns||[]).slice().sort(function(a,b){return (b.submittedAt||'').localeCompare(a.submittedAt||'');});
   if(cis.length>0){
     h+='<div style="margin-bottom:14px">';
     h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--green);margin-bottom:12px">Pre-Session Check-Ins</h3>';
@@ -1464,9 +1465,11 @@ function rMessages(){
 function loadCoachInbox(){
   var inbox=document.getElementById('coach-inbox');
   if(!inbox)return;
-  db.collection('messages').orderBy('lastMessageAt','desc').get().then(function(snap){
-    if(!inbox)return;
-    if(snap.empty){inbox.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">No messages yet</div>';return;}
+  if(S._inboxUnsub)S._inboxUnsub();
+  S._inboxUnsub=db.collection('messages').orderBy('lastMessageAt','desc').onSnapshot(function(snap){
+    var inbox2=document.getElementById('coach-inbox');
+    if(!inbox2)return;
+    if(snap.empty){inbox2.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">No messages yet</div>';return;}
     var html='';
     snap.forEach(function(doc){
       var d=doc.data();
@@ -1481,9 +1484,11 @@ function loadCoachInbox(){
       html+='<div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;">'+e(d.lastMessage||'')+'</div>';
       html+='</div>';
     });
-    inbox.innerHTML=html;
-  }).catch(function(err){
-    if(inbox)inbox.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Error loading messages</div>';
+    inbox2.innerHTML=html;
+  },function(err){
+    console.error('Inbox error:',err);
+    var inbox2=document.getElementById('coach-inbox');
+    if(inbox2)inbox2.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Error loading messages</div>';
   });
 }
 
@@ -1494,13 +1499,11 @@ function selectThread(uid){
   db.collection('messages').doc(uid).get().then(function(doc){
     if(doc.exists)S._threadClientName=doc.data().clientName||'';
   });
-  // Mark as read
+  // Mark as read — onSnapshot on the inbox will re-render once this write lands
   db.collection('messages').doc(uid).set({unreadByCoach:false},{merge:true});
   S._unreadCount=Math.max(0,(S._unreadCount||1)-1);
   var panel=document.getElementById('coach-thread-panel');
   if(panel)panel.innerHTML=rThreadView(uid);
-  // Reload inbox to clear unread dot
-  loadCoachInbox();
   // Start real-time listener for thread
   if(S._coachMsgUnsub)S._coachMsgUnsub();
   S._coachMsgUnsub=db.collection('messages').doc(uid).collection('thread')
@@ -1568,24 +1571,31 @@ function sendNewMessage(){
   if(!uid){alert('Please select a client.');return;}
   if(!text){alert('Please write a message.');return;}
   var client=S.cls.find(function(c){return c.uid===uid;})||{};
+  var coachName=S.user.displayName||'Andy Hite';
+  var coachInitials=coachName.split(' ').map(function(n){return n[0];}).join('').toUpperCase().slice(0,2);
+  var coachFirst=coachName.split(' ')[0];
   var parentRef=db.collection('messages').doc(uid);
   parentRef.set({
     clientName:client.displayName||client.email||'Client',
     clientEmail:client.email||'',
-    lastMessage:'Andy: '+text,
+    coachName:coachName,
+    coachInitials:coachInitials,
+    lastMessage:coachFirst+': '+text,
     lastMessageAt:firebase.firestore.FieldValue.serverTimestamp(),
     unreadByClient:true,
     unreadByCoach:false
   },{merge:true});
   parentRef.collection('thread').add({
     from:'coach',
+    coachName:coachName,
+    coachInitials:coachInitials,
     text:text,
-    sentAt:new Date().toISOString(),
+    sentAt:firebase.firestore.FieldValue.serverTimestamp(),
     read:false
   });
   // Email the client
   if(client.email){
-    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:client.email,toName:client.displayName||'',type:'coach_message',data:{text:text}})});
+    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:client.email,toName:client.displayName||'',type:'coach_message',data:{text:text}})}).catch(function(err){console.error('Notify failed:',err);});
   }
   document.getElementById('new-msg-overlay').remove();
   // Switch to that thread
@@ -1602,22 +1612,29 @@ function sendCoachReply(uid){
   var client=S.cls.find(function(c){return c.uid===uid;})||{};
   var clientEmail=client.email||'';
   var clientName=client.displayName||S._threadClientName||'';
+  var coachName=S.user.displayName||'Andy Hite';
+  var coachInitials=coachName.split(' ').map(function(n){return n[0];}).join('').toUpperCase().slice(0,2);
+  var coachFirst=coachName.split(' ')[0];
   var parentRef=db.collection('messages').doc(uid);
   parentRef.set({
-    lastMessage:'Andy: '+text,
+    coachName:coachName,
+    coachInitials:coachInitials,
+    lastMessage:coachFirst+': '+text,
     lastMessageAt:firebase.firestore.FieldValue.serverTimestamp(),
     unreadByClient:true,
     unreadByCoach:false
   },{merge:true});
   parentRef.collection('thread').add({
     from:'coach',
+    coachName:coachName,
+    coachInitials:coachInitials,
     text:text,
-    sentAt:new Date().toISOString(),
+    sentAt:firebase.firestore.FieldValue.serverTimestamp(),
     read:false
   });
   // Email the client
   if(clientEmail){
-    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:clientEmail,toName:clientName,type:'coach_message',data:{text:text}})});
+    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:clientEmail,toName:clientName,type:'coach_message',data:{text:text}})}).catch(function(err){console.error('Notify failed:',err);});
   }
 }
 
@@ -1626,7 +1643,7 @@ function sel(i){var sorted=S.cls.slice().sort(function(a,b){var ai=ds(la(a))>=ID
 function selByUid(uid){var c=S.cls.find(function(x){return x.uid===uid;});if(c){S.sc=c;S.cv='detail';R();}}
 function archClient(){if(!S.sc)return;var newVal=!S.sc.archived;if(!confirm(newVal?'Archive this client? They\'ll be hidden from the main list.':'Unarchive this client?'))return;scf(S.sc.uid,{archived:newVal});}
 function delClient(){if(!S.sc)return;if(!confirm('Permanently delete '+S.sc.displayName+'? This cannot be undone.'))return;if(!confirm('Are you sure? All data will be lost.'))return;db.collection('users').doc(S.sc.uid).delete().then(function(){S.cls=S.cls.filter(function(c){return c.uid!==S.sc.uid;});S.sc=null;S.cv='clients';R();});}
-function ref(){loadAll(function(){R();});}
+function ref(){loadAll(function(){loadLib(function(){R();});});}
 function scd(){scf(S.sc.uid,{startDate:document.getElementById('cs').value||null,endDate:document.getElementById('ce2').value||null});}
 function scnm(){var n=document.getElementById('cnm').value.trim();if(!n)return;scf(S.sc.uid,{displayName:n});}
 function scns(){scf(S.sc.uid,{nextSession:document.getElementById('cns').value||null});}
@@ -2045,7 +2062,7 @@ function gbE(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 <!-- Message Andy chat bubble -->
 <div id="ask-andy-btn" onclick="toggleAskAndy()" style="position:fixed;bottom:24px;left:24px;z-index:999;display:none;align-items:center;gap:10px;background:var(--green);color:var(--cream-light);border:none;border-radius:28px;padding:13px 20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(27,67,50,0.25);transition:all 0.2s;" onmouseover="this.style.background='var(--green-light)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='var(--green)';this.style.transform='translateY(0)'">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-  Message Andy
+  <span id="ask-andy-btn-label">Message Andy</span>
   <div id="ask-andy-dot" style="width:8px;height:8px;background:var(--gold-light);border-radius:50%;"></div>
 </div>
 
@@ -2053,9 +2070,9 @@ function gbE(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 <div id="ask-andy-panel" style="display:none;position:fixed;bottom:84px;left:24px;z-index:998;width:340px;max-width:calc(100vw - 48px);background:var(--white);border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(27,67,50,0.18);border:1px solid var(--border);">
   <!-- Header -->
   <div style="background:var(--green);padding:18px 20px;display:flex;align-items:center;gap:12px;">
-    <div style="width:40px;height:40px;min-width:40px;border-radius:50%;background:var(--green-light);border:2px solid rgba(212,160,23,0.4);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:14px;color:var(--cream-light);">AH</div>
+    <div id="ask-andy-avatar" style="width:40px;height:40px;min-width:40px;border-radius:50%;background:var(--green-light);border:2px solid rgba(212,160,23,0.4);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:14px;color:var(--cream-light);">AH</div>
     <div>
-      <div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--cream-light);font-weight:400;">Andy Hite</div>
+      <div id="ask-andy-coach-name" style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--cream-light);font-weight:400;">Andy Hite</div>
       <div style="font-size:11px;color:rgba(212,197,169,0.7);margin-top:1px;display:flex;align-items:center;gap:5px;"><div style="width:6px;height:6px;background:#4ade80;border-radius:50%;"></div>Replies within a few hours</div>
     </div>
     <button onclick="toggleAskAndy()" style="margin-left:auto;width:28px;height:28px;background:rgba(255,255,255,0.1);border:none;border-radius:50%;cursor:pointer;color:var(--cream-light);font-size:16px;display:flex;align-items:center;justify-content:center;line-height:1;">&#215;</button>
@@ -2142,27 +2159,48 @@ function toggleAskAndy(){
   setTimeout(function(){var inp=document.getElementById('ask-andy-input');if(inp)inp.focus();},100);
 }
 
+function updateCoachPanelIdentity(cn,ci){
+  S._coachName=cn;S._coachInitials=ci;
+  var nameEl=document.getElementById('ask-andy-coach-name');
+  var avatarEl=document.getElementById('ask-andy-avatar');
+  var btnLabel=document.getElementById('ask-andy-btn-label');
+  if(nameEl)nameEl.textContent=cn;
+  if(avatarEl)avatarEl.textContent=ci;
+  if(btnLabel)btnLabel.textContent='Message '+cn.split(' ')[0];
+}
+
 function loadClientThread(){
   if(!S.user)return;
   if(S._msgUnsub)S._msgUnsub();
   var msgs=document.getElementById('ask-andy-messages');
   if(!msgs)return;
+  // Pull coach identity from messages doc if available
+  db.collection('messages').doc(S.user.uid).get().then(function(doc){
+    if(doc.exists&&doc.data().coachName){
+      var cn=doc.data().coachName;
+      var ci=doc.data().coachInitials||(cn.split(' ').map(function(n){return n[0];}).join('').toUpperCase().slice(0,2));
+      updateCoachPanelIdentity(cn,ci);
+    }
+  });
   S._msgUnsub=db.collection('messages').doc(S.user.uid).collection('thread')
     .orderBy('sentAt','asc')
     .onSnapshot(function(snap){
       var msgs2=document.getElementById('ask-andy-messages');
       if(!msgs2)return;
-      // Keep welcome message, rebuild thread
-      msgs2.innerHTML='<div style="display:flex;gap:8px;margin-bottom:12px;"><div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:10px;color:var(--cream-light);margin-top:2px;">AH</div><div><div style="background:var(--white);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:240px;">Hey! What&rsquo;s on your mind? Ask me anything between sessions.</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Andy</div></div></div>';
+      var ci=S._coachInitials||'AH';
+      var cf=(S._coachName||'Andy').split(' ')[0];
+      msgs2.innerHTML='<div style="display:flex;gap:8px;margin-bottom:12px;"><div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:10px;color:var(--cream-light);margin-top:2px;">'+e(ci)+'</div><div><div style="background:var(--white);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:240px;">Hey! What&rsquo;s on your mind? Ask me anything between sessions.</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">'+e(cf)+'</div></div></div>';
       snap.forEach(function(doc){
         var m=doc.data();
         var isClient=m.from==='client';
+        var mci=m.coachInitials||ci;
+        var mcf=(m.coachName||S._coachName||'Andy').split(' ')[0];
         var bubble=document.createElement('div');
         bubble.style.cssText='display:flex;'+(isClient?'justify-content:flex-end;':'gap:8px;')+'margin-bottom:8px;';
         if(isClient){
           bubble.innerHTML='<div style="background:var(--green);color:var(--cream-light);border-radius:14px 4px 14px 14px;padding:10px 14px;font-size:13px;line-height:1.5;max-width:240px;">'+e(m.text||'')+'</div>';
         } else {
-          bubble.innerHTML='<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:10px;color:var(--cream-light);margin-top:2px;">AH</div><div><div style="background:var(--white);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:240px;">'+e(m.text||'')+'</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Andy</div></div>';
+          bubble.innerHTML='<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:10px;color:var(--cream-light);margin-top:2px;">'+e(mci)+'</div><div><div style="background:var(--white);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:240px;">'+e(m.text||'')+'</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">'+e(mcf)+'</div></div>';
         }
         msgs2.appendChild(bubble);
       });
@@ -2192,7 +2230,7 @@ function sendAskAndy(){
   parentRef.collection('thread').add({
     from:'client',
     text:text,
-    sentAt:new Date().toISOString(),
+    sentAt:firebase.firestore.FieldValue.serverTimestamp(),
     read:false
   });
 }
