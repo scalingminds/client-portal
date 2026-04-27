@@ -1605,8 +1605,10 @@ function sendNewMessage(){
     read:false
   });
   // Email the client
-  if(client.email){
-    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:client.email,toName:client.displayName||'',type:'coach_message',data:{text:text}})}).catch(function(err){console.error('Notify failed:',err);});
+  if(client.email&&S.user){
+    S.user.getIdToken().then(function(token){
+      fetch(NU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({to:client.email,toName:client.displayName||'',type:'coach_message',data:{text:text}})}).catch(function(err){console.error('Notify failed:',err);});
+    }).catch(function(err){console.error('Token failed:',err);});
   }
   document.getElementById('new-msg-overlay').remove();
   // Switch to that thread
@@ -1646,8 +1648,10 @@ function sendCoachReply(uid){
     });
   }).then(function(){
     // Email the client
-    if(clientEmail){
-      fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:clientEmail,toName:clientName,type:'coach_message',data:{text:text}})}).catch(function(err){console.error('Notify failed:',err);});
+    if(clientEmail&&S.user){
+      S.user.getIdToken().then(function(token){
+        fetch(NU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({to:clientEmail,toName:clientName,type:'coach_message',data:{text:text}})}).catch(function(err){console.error('Notify failed:',err);});
+      }).catch(function(err){console.error('Token failed:',err);});
     }
   }).catch(function(err){
     if(inp){inp.value=text;}
@@ -1670,7 +1674,12 @@ function ag(){var t=document.getElementById('ngt').value.trim();if(!t)return;var
 function rg(i){if(!confirm('Remove?'))return;var g=(S.sc.goals||[]).slice();g.splice(i,1);scf(S.sc.uid,{goals:g});}
 function sgst(i,v){var g=(S.sc.goals||[]).slice();if(g[i]){g[i].status=v;if(!g[i].history)g[i].history=[];g[i].history.push({status:v,date:new Date().toISOString().split('T')[0]});}scf(S.sc.uid,{goals:g});}
 var NU='https://us-central1-scaling-minds-portal.cloudfunctions.net/sendNotification';
-function notify(type,data){if(!S.sc||!S.sc.email)return;fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:S.sc.email,toName:S.sc.displayName||'',type:type,data:data})}).catch(function(err){console.error('Notify failed:',err);});}
+function notify(type,data){
+  if(!S.sc||!S.sc.email||!S.user)return;
+  S.user.getIdToken().then(function(token){
+    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({to:S.sc.email,toName:S.sc.displayName||'',type:type,data:data})}).catch(function(err){console.error('Notify failed:',err);});
+  }).catch(function(err){console.error('Token failed:',err);});
+}
 function asn(){var d=document.getElementById('snd').value,t=document.getElementById('snt').value.trim(),c=document.getElementById('snc').value.trim(),ex=document.getElementById('sne').value.trim(),n=document.getElementById('snn').value.trim();if(!d)return;var sn2=(S.sc.sessionNotes||[]).slice();sn2.push({id:'sn'+Date.now(),date:d,themes:t,commitments:c,experiments:ex,notes:n});scf(S.sc.uid,{sessionNotes:sn2});notify('session_note',{date:d,themes:t,commitments:c});}
 function rsn(i){if(!confirm('Remove?'))return;var sn2=(S.sc.sessionNotes||[]).slice();sn2.splice(i,1);scf(S.sc.uid,{sessionNotes:sn2});}
 function atd(){var t=document.getElementById('ntt').value.trim();if(!t)return;var l=document.getElementById('ntl').value.trim();var td=(S.sc.todos||[]).slice();td.push({id:'t'+Date.now(),text:t,link:l||'',done:false});scf(S.sc.uid,{todos:td});notify('todo',{text:t,link:l||''});}
