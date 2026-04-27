@@ -457,7 +457,7 @@ function rC(){
   var app=document.getElementById('app'),td=new Date(),ts=dk(td),comp=S.data.completions[ts]||[],sk=streak(S.data),q=dq();
   var h='<div class="sticky-top"><div class="header"><div class="header-left"><img class="header-logo" src="'+L+'" alt="SM"><div><h1>Client Portal</h1><div class="header-subtitle">'+e(S.user.displayName||'')+' &middot; Scaling Minds</div></div></div><div class="header-right">';
   if(sk>0)h+='<div class="streak-badge">🔥 '+sk+' day streak</div>';
-  if(S.user.photoURL)h+='<img class="user-avatar" src="'+S.user.photoURL+'" alt="">';
+  if(S.user.photoURL)h+='<img class="user-avatar" src="'+e(S.user.photoURL)+'" alt="">';
   h+='<button class="signout-btn" onclick="so()">Sign out</button></div></div>';
   // NAV: Home Goals Sessions Habits Journal Progress Documents
   var navItems=[{v:'home',l:'Home'},{v:'sessions',l:'Sessions'},{v:'goals',l:'Goals'},{v:'habits',l:'Habits'},{v:'journal',l:'Journal'},{v:'progress',l:'Progress'},{v:'docs',l:'Documents'},{v:'profile',l:'Profile'}];
@@ -1159,7 +1159,7 @@ function rCL(){
       h+='<div class="client-grid">';
       groups[co].forEach(function(c){var r=crate(c),sk=streak(c),lv=la(c),ina=ds(lv)>=ID;
         h+='<div class="cc'+(ina&&!c.archived?' inactive':'')+(c.archived?' inactive':'')+'" onclick="selByUid(\''+c.uid+'\')" style="'+(c.archived?'opacity:0.6':'')+'">';
-        h+='<div class="ct">';if(c.photoURL)h+='<img class="ca" src="'+c.photoURL+'" alt="">';
+        h+='<div class="ct">';if(c.photoURL)h+='<img class="ca" src="'+e(c.photoURL)+'" alt="">';
         h+='<div><div class="cn">'+e(c.displayName)+(c.archived?'<span class="itag" style="background:var(--cream-light);color:var(--text-muted)">Archived</span>':ina?'<span class="itag">'+ds(lv)+'d inactive</span>':'')+'</div>';
         h+='<div class="ce">'+e(c.email)+(c.title?' &middot; '+e(c.title):'')+'</div></div></div>';
         h+='<div class="cstats"><div><span class="csv">'+r+'%</span>rate</div><div><span class="csv">'+sk+'</span>streak</div><div><span class="csv">'+c.habits.length+'</span>habits</div><div><span class="csv">'+(lv||'\u2014')+'</span>last</div></div></div>';
@@ -1169,7 +1169,7 @@ function rCL(){
     h+='<div class="client-grid">';
     sorted.forEach(function(c,i){var r=crate(c),sk=streak(c),lv=la(c),ina=ds(lv)>=ID;
       h+='<div class="cc'+(ina&&!c.archived?' inactive':'')+(c.archived?' inactive':'')+'" onclick="selByUid(\''+c.uid+'\')" style="'+(c.archived?'opacity:0.6':'')+'">';
-      h+='<div class="ct">';if(c.photoURL)h+='<img class="ca" src="'+c.photoURL+'" alt="">';
+      h+='<div class="ct">';if(c.photoURL)h+='<img class="ca" src="'+e(c.photoURL)+'" alt="">';
       h+='<div><div class="cn">'+e(c.displayName)+(c.archived?'<span class="itag" style="background:var(--cream-light);color:var(--text-muted)">Archived</span>':ina?'<span class="itag">'+ds(lv)+'d inactive</span>':'')+'</div>';
       h+='<div class="ce">'+e(c.email)+(c.company?' &middot; '+e(c.company):'')+'</div></div></div>';
       h+='<div class="cstats"><div><span class="csv">'+r+'%</span>rate</div><div><span class="csv">'+sk+'</span>streak</div><div><span class="csv">'+c.habits.length+'</span>habits</div><div><span class="csv">'+(lv||'\u2014')+'</span>last</div></div></div>';
@@ -1183,7 +1183,7 @@ function rCD(){
   var c=S.sc,td=new Date();
   var h='<button class="back" onclick="scv(\'clients\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> All Clients</button>';
   h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div style="display:flex;align-items:center;gap:12px">';
-  if(c.photoURL)h+='<img style="width:48px;height:48px;border-radius:50%;border:2px solid var(--gold)" src="'+c.photoURL+'" alt="">';
+  if(c.photoURL)h+='<img style="width:48px;height:48px;border-radius:50%;border:2px solid var(--gold)" src="'+e(c.photoURL)+'" alt="">';
   h+='<div><h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green)">'+e(c.displayName)+'</h2><div style="font-size:12px;color:var(--text-muted)">'+e(c.email)+'</div></div></div>';
   h+='<button class="exp" onclick="eccsv()">Export CSV</button></div>';
 
@@ -1360,7 +1360,7 @@ function rProfile(){
   var u=S.user,d=S.data;
   var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:16px">Profile</h2>';
   h+='<div class="card">';
-  if(u.photoURL)h+='<div style="text-align:center;margin-bottom:16px"><img src="'+u.photoURL+'" style="width:64px;height:64px;border-radius:50%;border:2px solid var(--gold)"></div>';
+  if(u.photoURL)h+='<div style="text-align:center;margin-bottom:16px"><img src="'+e(u.photoURL)+'" style="width:64px;height:64px;border-radius:50%;border:2px solid var(--gold)"></div>';
   h+='<div class="fg"><label class="fl">Name</label><input class="fi" id="pname" type="text" value="'+e(d.displayName||u.displayName||'')+'"></div>';
   h+='<div class="fg"><label class="fl">Company</label><input class="fi" id="pcompany" type="text" value="'+e(d.company||'')+'"></div>';
   h+='<div class="fg"><label class="fl">Title / Role</label><input class="fi" id="ptitle" type="text" value="'+e(d.title||'')+'"></div>';
