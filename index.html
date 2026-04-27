@@ -446,7 +446,8 @@ function saveSetup(){
   var profile={displayName:name,company:company||'',title:title||'',phone:phone||'',birthday:bm&&bd?bm+'/'+bd:'',address:addr?addr+(city?', '+city:'')+(st?' '+st:'')+(zip?' '+zip:''):''};
   S.user.updateProfile({displayName:name}).then(function(){
     S._nameSet=true;
-    db.collection('users').doc(S.user.uid).set(profile,{merge:true});
+    return db.collection('users').doc(S.user.uid).set(profile,{merge:true});
+  }).then(function(){
     R();
   }).catch(function(err){document.getElementById('setup-err').textContent=err.message;});
 }
@@ -1624,26 +1625,31 @@ function sendCoachReply(uid){
     lastMessageAt:firebase.firestore.FieldValue.serverTimestamp(),
     unreadByClient:true,
     unreadByCoach:false
-  },{merge:true});
-  parentRef.collection('thread').add({
-    from:'coach',
-    coachName:coachName,
-    coachInitials:coachInitials,
-    text:text,
-    sentAt:firebase.firestore.FieldValue.serverTimestamp(),
-    read:false
+  },{merge:true}).then(function(){
+    return parentRef.collection('thread').add({
+      from:'coach',
+      coachName:coachName,
+      coachInitials:coachInitials,
+      text:text,
+      sentAt:firebase.firestore.FieldValue.serverTimestamp(),
+      read:false
+    });
+  }).then(function(){
+    // Email the client
+    if(clientEmail){
+      fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:clientEmail,toName:clientName,type:'coach_message',data:{text:text}})}).catch(function(err){console.error('Notify failed:',err);});
+    }
+  }).catch(function(err){
+    if(inp){inp.value=text;}
+    alert('Message failed to send. Please check your connection and try again.\n\n'+err.message);
   });
-  // Email the client
-  if(clientEmail){
-    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:clientEmail,toName:clientName,type:'coach_message',data:{text:text}})}).catch(function(err){console.error('Notify failed:',err);});
-  }
 }
 
 function scv(v){S.cv=v;R();}
 function sel(i){var sorted=S.cls.slice().sort(function(a,b){var ai=ds(la(a))>=ID?0:1,bi=ds(la(b))>=ID?0:1;if(ai!==bi)return ai-bi;return(a.displayName||'').localeCompare(b.displayName||'');});S.sc=sorted[i];S.cv='detail';R();}
 function selByUid(uid){var c=S.cls.find(function(x){return x.uid===uid;});if(c){S.sc=c;S.cv='detail';R();}}
 function archClient(){if(!S.sc)return;var newVal=!S.sc.archived;if(!confirm(newVal?'Archive this client? They\'ll be hidden from the main list.':'Unarchive this client?'))return;scf(S.sc.uid,{archived:newVal});}
-function delClient(){if(!S.sc)return;if(!confirm('Permanently delete '+S.sc.displayName+'? This cannot be undone.'))return;if(!confirm('Are you sure? All data will be lost.'))return;db.collection('users').doc(S.sc.uid).delete().then(function(){S.cls=S.cls.filter(function(c){return c.uid!==S.sc.uid;});S.sc=null;S.cv='clients';R();});}
+function delClient(){if(!S.sc)return;if(!confirm('Permanently delete '+S.sc.displayName+'? This cannot be undone.'))return;if(!confirm('Are you sure? All data will be lost.'))return;db.collection('users').doc(S.sc.uid).delete().then(function(){S.cls=S.cls.filter(function(c){return c.uid!==S.sc.uid;});S.sc=null;S.cv='clients';R();}).catch(function(err){alert('Delete failed. Please check your connection and try again.\n\n'+err.message);});}
 function ref(){loadAll(function(){loadLib(function(){R();});});}
 function scd(){scf(S.sc.uid,{startDate:document.getElementById('cs').value||null,endDate:document.getElementById('ce2').value||null});}
 function scnm(){var n=document.getElementById('cnm').value.trim();if(!n)return;scf(S.sc.uid,{displayName:n});}
