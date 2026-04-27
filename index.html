@@ -331,7 +331,7 @@ var ID=7;
 
 // Default data shape
 function dd(){return{habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:'',docs:[],goals:[],sessionNotes:[],checkIns:[]};}
-var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,cv:'clients',lib:[],_unreadCount:0,_msgs:{},_selThread:null,_msgUnsub:null,_coachMsgUnsub:null,_inboxUnsub:null,_unreadUnsub:null,_coachName:'Andy Hite',_coachInitials:'AH'};
+var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,cv:'clients',lib:[],_unreadCount:0,_errCount:0,_msgs:{},_selThread:null,_msgUnsub:null,_coachMsgUnsub:null,_inboxUnsub:null,_unreadUnsub:null,_coachName:'Andy Hite',_coachInitials:'AH'};
 
 // Helpers
 function dq(){var t=new Date();return QT[(t.getFullYear()*10000+(t.getMonth()+1)*100+t.getDate())%QT.length];}
@@ -398,7 +398,7 @@ function so(){
   if(brb)brb.style.display='none';
   auth.signOut();
 }
-auth.onAuthStateChanged(function(u){if(u){S.user=u;S.ic=ic();if(S.ic){S.view='clients';S.cv='clients';db.collection('users').doc(u.uid).set({displayName:u.displayName||'',email:u.email||'',photoURL:u.photoURL||''},{merge:true});loadAll(function(){loadLib(function(){loadCoachUnread(function(){R();});});});}else{var sv2='home';try{sv2=localStorage.getItem('sm_view')||'home';}catch(e){}var validViews=['home','goals','sessions','habits','journal','progress','docs','profile'];S.view=validViews.indexOf(sv2)!==-1?sv2:'home';load(function(){loadLib(function(){save();R();watchUnread();if(!tourSeen())setTimeout(startTour,600);});});}}else{if(S._msgUnsub){S._msgUnsub();S._msgUnsub=null;}if(S._coachMsgUnsub){S._coachMsgUnsub();S._coachMsgUnsub=null;}if(S._inboxUnsub){S._inboxUnsub();S._inboxUnsub=null;}if(S._unreadUnsub){S._unreadUnsub();S._unreadUnsub=null;}S.user=null;S.ic=false;S.data=dd();S.cls=[];S.lib=[];rl();}});
+auth.onAuthStateChanged(function(u){if(u){S.user=u;S.ic=ic();if(S.ic){S.view='clients';S.cv='clients';db.collection('users').doc(u.uid).set({displayName:u.displayName||'',email:u.email||'',photoURL:u.photoURL||''},{merge:true});loadAll(function(){loadLib(function(){loadCoachUnread(function(){loadErrCount();R();});});});}else{var sv2='home';try{sv2=localStorage.getItem('sm_view')||'home';}catch(e){}var validViews=['home','goals','sessions','habits','journal','progress','docs','profile'];S.view=validViews.indexOf(sv2)!==-1?sv2:'home';load(function(){loadLib(function(){save();R();watchUnread();if(!tourSeen())setTimeout(startTour,600);});});}}else{if(S._msgUnsub){S._msgUnsub();S._msgUnsub=null;}if(S._coachMsgUnsub){S._coachMsgUnsub();S._coachMsgUnsub=null;}if(S._inboxUnsub){S._inboxUnsub();S._inboxUnsub=null;}if(S._unreadUnsub){S._unreadUnsub();S._unreadUnsub=null;}S.user=null;S.ic=false;S.data=dd();S.cls=[];S.lib=[];rl();}});
 
 function rl(){document.getElementById('app').innerHTML='<div class="login-screen"><div class="login-card"><img class="login-logo" src="'+L+'" alt="Scaling Minds"><h1>Client Portal</h1><p>Track habits, reflect, and grow. Sign in to sync across all your devices.</p><div id="login-err" class="login-error"></div><input class="login-input" id="login-email" type="email" placeholder="Email address"><div style="font-size:11px;color:var(--text-muted);margin:-8px 0 10px 4px">Use this same email when booking on Calendly</div><div style="position:relative"><input class="login-input" id="login-pw" type="password" placeholder="Password" style="padding-right:44px"><button onclick="var p=document.getElementById(\'login-pw\');p.type=p.type===\'password\'?\'text\':\'password\';this.innerHTML=p.type===\'password\'?\'Show\':\'Hide\'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:12px;color:var(--green-muted);cursor:pointer;font-family:\'DM Sans\',sans-serif;font-weight:600">Show</button></div><button class="login-btn" onclick="siep()">Sign In</button><div class="login-divider">or</div><button class="google-btn" onclick="si()"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Sign in with Google</button><div class="login-footer">&copy; Scaling Minds</div></div></div>';}
 
@@ -1131,6 +1131,44 @@ function tfd(i){var ix=_fdSel.indexOf(i);if(ix===-1)_fdSel.push(i);else _fdSel.s
 // ══════════════════════════════════
 // COACH DASHBOARD
 // ══════════════════════════════════
+function loadErrCount(){
+  db.collection('_errors').orderBy('ts','desc').limit(50).get().then(function(snap){
+    S._errCount=snap.size;
+    if(S.ic)rCA();
+  }).catch(function(){});
+}
+
+function rErrors(){
+  var h='<h2 style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green);margin-bottom:16px">Client Errors</h2>';
+  h+='<div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Uncaught JS errors from client sessions. Auto-logged in real time.</div>';
+  h+='<div id="err-list"><div style="color:var(--text-muted);font-size:14px">Loading…</div></div>';
+  setTimeout(function(){
+    db.collection('_errors').orderBy('ts','desc').limit(50).get().then(function(snap){
+      var el=document.getElementById('err-list');
+      if(!el)return;
+      if(snap.empty){el.innerHTML='<div style="color:var(--text-muted);font-size:14px;padding:24px 0">No errors logged.</div>';return;}
+      var h2='';
+      snap.forEach(function(doc){
+        var d=doc.data();
+        var ts=d.ts?new Date(d.ts.toMillis()).toLocaleString():'—';
+        h2+='<div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px">';
+        h2+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:8px">';
+        h2+='<span style="font-size:12px;font-weight:700;color:#ef4444">'+e(d.msg||'')+'</span>';
+        h2+='<span style="font-size:11px;color:var(--text-muted);white-space:nowrap">'+e(ts)+'</span></div>';
+        h2+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">👤 '+e(d.email||d.uid||'')+'  ·  📍 view: '+e(d.view||'')+'</div>';
+        if(d.source)h2+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">📄 '+e(d.source)+'</div>';
+        if(d.stack)h2+='<pre style="font-size:10px;color:var(--text-muted);white-space:pre-wrap;margin:6px 0 0;background:var(--cream-light);padding:8px;border-radius:6px;overflow-x:auto">'+e(d.stack.slice(0,600))+'</pre>';
+        h2+='</div>';
+      });
+      el.innerHTML=h2;
+    }).catch(function(err){
+      var el=document.getElementById('err-list');
+      if(el)el.innerHTML='<div style="color:#ef4444;font-size:13px">Failed to load errors: '+e(err.message)+'</div>';
+    });
+  },0);
+  return h;
+}
+
 function rCA(){
   var app=document.getElementById('app'),h='';
   h+='<div class="header"><div class="header-left"><img class="header-logo" src="'+L+'" alt="SM"><div><h1>Coach Dashboard</h1><div class="header-subtitle">'+e(S.user.displayName||'')+' &middot; '+S.cls.length+' client'+(S.cls.length!==1?'s':'')+'</div></div></div>';
@@ -1138,11 +1176,13 @@ function rCA(){
   h+='<div class="nav-bar"><div class="nav-tab'+(S.cv==='clients'?' active':'')+'" onclick="scv(\'clients\')">All Clients</div>';
   h+='<div class="nav-tab'+(S.cv==='library'?' active':'')+'" onclick="scv(\'library\')">Resource Library</div>';
   h+='<div class="nav-tab'+(S.cv==='messages'?' active':'')+'" onclick="scv(\'messages\')" style="display:flex;align-items:center;gap:6px;">Messages'+(S._unreadCount>0?'<span style="background:var(--gold);color:white;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">'+S._unreadCount+'</span>':'')+'</div>';
+  h+='<div class="nav-tab'+(S.cv==='errors'?' active':'')+'" onclick="scv(\'errors\')" style="display:flex;align-items:center;gap:6px;">Errors'+(S._errCount>0?'<span style="background:#ef4444;color:white;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">'+S._errCount+'</span>':'')+'</div>';
   if(S.sc)h+='<div class="nav-tab'+(S.cv==='detail'?' active':'')+'" onclick="scv(\'detail\')">'+e(S.sc.displayName)+'</div>';
   h+='</div><div class="main">';
   if(S.cv==='clients')h+=rCL();
   else if(S.cv==='library')h+=rLib();
   else if(S.cv==='messages')h+=rMessages();
+  else if(S.cv==='errors')h+=rErrors();
   else if(S.cv==='detail'&&S.sc)h+=rCD();
   h+='</div><div class="footer">&copy; Scaling Minds &middot; Coach Dashboard</div>';
   app.innerHTML=h;
@@ -1811,6 +1851,33 @@ function endTour(){markTourSeen();removeTour();if(S.view!=='home'){S.view='home'
 function removeTour(){var el=document.getElementById('sm-tour');if(el)el.parentNode.removeChild(el);}
 
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+
+// ─── Error monitoring ─────────────────────────────────────────────────────────
+var _loggedErrs=new Set();
+function logErr(msg,stack,source){
+  if(!db)return;
+  var key=(msg||'').slice(0,120);
+  if(_loggedErrs.has(key))return;
+  _loggedErrs.add(key);
+  db.collection('_errors').add({
+    ts:firebase.firestore.FieldValue.serverTimestamp(),
+    uid:S.user?S.user.uid:'anon',
+    email:S.user?S.user.email:'anon',
+    view:S.view||'unknown',
+    msg:(msg||'').slice(0,500),
+    stack:(stack||'').slice(0,1000),
+    source:(source||'').slice(0,200),
+    ua:navigator.userAgent.slice(0,200),
+    href:window.location.href
+  }).catch(function(){});
+}
+window.onerror=function(msg,src,line,col,err){
+  logErr(String(msg),err&&err.stack?err.stack:src+':'+line+':'+col,src);
+};
+window.onunhandledrejection=function(ev){
+  var r=ev.reason;
+  logErr(r&&r.message?r.message:String(r),r&&r.stack?r.stack:'',window.location.href);
+};
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
