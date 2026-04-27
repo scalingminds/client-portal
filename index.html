@@ -523,7 +523,7 @@ function rHome(td,ts,comp,sk,q){
   h+='<div style="display:grid;grid-template-columns:1fr'+((_dr)?(' auto'):'')+';gap:16px;align-items:stretch;margin:24px 0 28px">';
   h+='<div class="quote-line" style="margin:0;font-size:18px">&ldquo;'+e(q.t)+'&rdquo;<span>&mdash; '+e(q.a)+'</span></div>';
   if(_dr){
-    h+='<div style="background:linear-gradient(135deg,#1B4332 0%,#2D6A4F 100%);border-radius:12px;padding:14px 16px;min-width:180px;max-width:220px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;position:relative;overflow:hidden;cursor:pointer" '+((_dr.link)?'onclick="window.open(\''+e(_dr.link)+'\',\'_blank\')"':'')+' >';
+    h+='<div style="background:linear-gradient(135deg,#1B4332 0%,#2D6A4F 100%);border-radius:12px;padding:14px 16px;min-width:180px;max-width:220px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;position:relative;overflow:hidden;cursor:pointer" '+((_dr.link&&su(_dr.link)!=='#')?'onclick="window.open(\''+e(su(_dr.link))+'\',\'_blank\')"':'')+' >';
     h+='<div style="position:absolute;top:-12px;right:-12px;width:56px;height:56px;border-radius:50%;background:rgba(184,134,11,0.18)"></div>';
     h+='<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold-light)">Today\'s Read</div>';
     h+='<div style="font-family:\'DM Serif Display\',serif;font-size:14px;color:var(--cream-light);line-height:1.4;flex:1;position:relative">'+e(_dr.title)+'</div>';
@@ -1418,7 +1418,7 @@ function tt(i){var t=S.data.todos||[];if(t[i]){t[i].done=!t[i].done;save();R();}
 function catd(){var el=document.getElementById('ctd');if(!el)return;var t=el.value.trim();if(!t)return;S.data.todos=S.data.todos||[];S.data.todos.push({id:'t'+Date.now(),text:t,link:'',done:false});save();R();}
 function dtd(i){if(!confirm('Remove this to-do?'))return;S.data.todos=(S.data.todos||[]).slice();S.data.todos.splice(i,1);save();R();}
 function ssp(v){S.data.sessionPrep=v;save();}
-function openCal(){var url=(S.data.calendlyUrl||CAL);if(window.Calendly){window.Calendly.initPopupWidget({url:url+'?hide_gdpr_banner=1',prefill:{name:S.user.displayName||'',email:S.user.email||''}});}else{window.open(url,'_blank');}}
+function openCal(){var url=su(S.data.calendlyUrl||CAL);if(url==='#')url=CAL;if(window.Calendly){window.Calendly.initPopupWidget({url:url+'?hide_gdpr_banner=1',prefill:{name:S.user.displayName||'',email:S.user.email||''}});}else{window.open(url,'_blank');}}
 function cag(){var t=document.getElementById('cgt').value.trim();if(!t)return;var o=document.getElementById('cgo').value.trim();S.data.goals=S.data.goals||[];S.data.goals.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active',progress:0});save();R();}
 function ugp(gid,val){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g){g.progress=parseInt(val)||0;save();}}
 function gnsToggle(gid,idx,done){S.data.goals=(S.data.goals||[]);var g=S.data.goals.find(function(x){return x.id===gid;});if(g&&g.nextSteps&&g.nextSteps[idx]){g.nextSteps[idx].done=done;var total=g.nextSteps.length,completed=g.nextSteps.filter(function(s){return s.done;}).length;g.progress=Math.round((completed/total)*100);save();R();}}
