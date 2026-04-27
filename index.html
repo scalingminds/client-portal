@@ -367,10 +367,10 @@ function load(cb){if(!S.user)return;db.collection('users').doc(S.user.uid).get()
 
 function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.forEach(function(doc){var d=doc.data();if(CE.indexOf(d.email)===-1){S.cls.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',phone:d.phone||'',birthday:d.birthday||'',address:d.address||'',company:d.company||'',title:d.title||'',archived:d.archived||false,habits:d.habits||[],completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[],checkIns:d.checkIns||[],calendlyUrl:d.calendlyUrl||null});}});if(cb)cb();}).catch(function(e2){console.error(e2);if(cb)cb();});}
 
-function scf(uid,f){db.collection('users').doc(uid).set(f,{merge:true}).then(function(){var c=S.cls.find(function(x){return x.uid===uid;});if(c)Object.keys(f).forEach(function(k){c[k]=f[k];});if(S.sc&&S.sc.uid===uid)Object.keys(f).forEach(function(k){S.sc[k]=f[k];});R();});}
+function scf(uid,f){db.collection('users').doc(uid).set(f,{merge:true}).then(function(){var c=S.cls.find(function(x){return x.uid===uid;});if(c)Object.keys(f).forEach(function(k){c[k]=f[k];});if(S.sc&&S.sc.uid===uid)Object.keys(f).forEach(function(k){S.sc[k]=f[k];});R();}).catch(function(err){alert('Save failed. Please check your connection and try again.\n\n'+err.message);});}
 
 function loadLib(cb){db.collection('library').doc('resources').get().then(function(doc){if(doc.exists){S.lib=doc.data().items||[];console.log('Library loaded:',S.lib.length,'items');}else{S.lib=[];console.log('Library doc does not exist yet');}if(cb)cb();}).catch(function(err){S.lib=[];console.error('Library load error:',err.message);if(cb)cb();});}
-function saveLib(items){db.collection('library').doc('resources').set({items:items}).then(function(){S.lib=items;R();});}
+function saveLib(items){db.collection('library').doc('resources').set({items:items}).then(function(){S.lib=items;R();}).catch(function(err){alert('Library save failed. Please check your connection and try again.\n\n'+err.message);});}
 
 // Auth
 function si(){auth.signInWithPopup(prov).catch(function(err){alert('Google sign in failed: '+err.message);});}
@@ -904,7 +904,7 @@ function rJournal(ts){
 
 // PROGRESS
 function rProgress(td,data){
-  var habits=data.habits;if(habits.length===0)return '<div class="empty"><div class="ei">📊</div><h3>No data yet</h3></div>';
+  var habits=data.habits||[];if(habits.length===0)return '<div class="empty"><div class="ei">📊</div><h3>No data yet</h3></div>';
   var ad=14,days=[];for(var i=ad-1;i>=0;i--){var d=new Date(td);d.setDate(td.getDate()-i);days.push(dk(d));}
   var totalDue=0,totalDone=0,pd=0;
   days.forEach(function(k){var c=data.completions[k]||[];var dueH=habits.filter(function(h){return hdueDk(h,k);});var doneH=dueH.filter(function(h){return c.indexOf(h.id)!==-1;});if(dueH.length>0&&doneH.length===dueH.length)pd++;});
