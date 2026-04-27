@@ -123,6 +123,20 @@ function buildEmail(type, toName, data) {
     };
   }
 
+  if (type === 'coach_message') {
+    return {
+      subject: `New message from your coach — Scaling Minds`,
+      html: emailWrapper(`
+        <h2 style="font-family:Georgia,serif;font-size:24px;color:${BRAND.green};margin:0 0 8px;">New message from your coach</h2>
+        <p style="font-size:14px;color:${BRAND.muted};margin:0 0 24px;">Hi ${firstName}, you have a new message in your portal.</p>
+        <div style="background:${BRAND.cream};border-left:4px solid ${BRAND.greenLight};border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:24px;">
+          <p style="margin:0;font-size:15px;color:${BRAND.text};line-height:1.6;">${data.text || ''}</p>
+        </div>
+        <a href="https://portal.scalingminds.com" style="display:inline-block;background:${BRAND.green};color:#F0EAD6;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Reply in Portal</a>
+      `)
+    };
+  }
+
   return null;
 }
 
