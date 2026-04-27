@@ -375,7 +375,10 @@ function ep(data){if(!data.startDate||!data.endDate)return null;var sp=data.star
 var st=null;
 function save(){if(!S.user)return;clearTimeout(st);st=setTimeout(function(){var d=S.data;db.collection('users').doc(S.user.uid).set({habits:d.habits,completions:d.completions,notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[],checkIns:d.checkIns||[],displayName:S.user.displayName||'',email:S.user.email||'',photoURL:S.user.photoURL||'',updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});},800);}
 
-function load(cb){if(!S.user)return;db.collection('users').doc(S.user.uid).get().then(function(doc){if(doc.exists){var d=doc.data();S.data.habits=(d.habits||[]).filter(Boolean);S.data.completions=d.completions||{};S.data.notes=d.notes||{};S.data.startDate=d.startDate||null;S.data.endDate=d.endDate||null;S.data.nextSession=d.nextSession||null;S.data.focusOfWeek=d.focusOfWeek||'';S.data.todos=(d.todos||[]).filter(Boolean);S.data.sessionPrep=d.sessionPrep||'';S.data.docs=(d.docs||[]).filter(Boolean);S.data.goals=(d.goals||[]).filter(Boolean);S.data.sessionNotes=(d.sessionNotes||[]).filter(Boolean);S.data.checkIns=(d.checkIns||[]).filter(Boolean);S.data.calendlyUrl=d.calendlyUrl||null;}if(cb)cb();}).catch(function(){if(cb)cb();});}
+function load(cb){if(!S.user)return;db.collection('users').doc(S.user.uid).get().then(function(doc){if(doc.exists){var d=doc.data();S.data.habits=(d.habits||[]).filter(Boolean);S.data.completions=d.completions||{};S.data.notes=d.notes||{};S.data.startDate=d.startDate||null;S.data.endDate=d.endDate||null;S.data.nextSession=d.nextSession||null;S.data.focusOfWeek=d.focusOfWeek||'';S.data.todos=(d.todos||[]).filter(Boolean);S.data.sessionPrep=d.sessionPrep||'';S.data.docs=(d.docs||[]).filter(Boolean);S.data.goals=(d.goals||[]).filter(Boolean);S.data.sessionNotes=(d.sessionNotes||[]).filter(Boolean);S.data.checkIns=(d.checkIns||[]).filter(Boolean);S.data.calendlyUrl=d.calendlyUrl||null;
+  // Auto-clear past sessions (give a 4-hour grace window after start time)
+  if(S.data.nextSession){var ns=S.data.nextSession;var nd=ns.indexOf('T')!==-1?new Date(ns):new Date((function(){var p=ns.split('-');return new Date(p[0],p[1]-1,p[2],23,59);})()); if(nd<new Date(Date.now()-4*3600*1000)){S.data.nextSession=null;db.collection('users').doc(S.user.uid).set({nextSession:null},{merge:true});}}
+}if(cb)cb();}).catch(function(){if(cb)cb();});}
 
 function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.forEach(function(doc){var d=doc.data();if(CE.indexOf(d.email)===-1){S.cls.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',phone:d.phone||'',birthday:d.birthday||'',address:d.address||'',company:d.company||'',title:d.title||'',archived:d.archived||false,habits:(d.habits||[]).filter(Boolean),completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:(d.todos||[]).filter(Boolean),sessionPrep:d.sessionPrep||'',docs:(d.docs||[]).filter(Boolean),goals:(d.goals||[]).filter(Boolean),sessionNotes:(d.sessionNotes||[]).filter(Boolean),checkIns:(d.checkIns||[]).filter(Boolean),calendlyUrl:d.calendlyUrl||null});}});if(cb)cb();}).catch(function(e2){console.error(e2);if(cb)cb();});}
 
@@ -723,11 +726,26 @@ function submitCheckin(){
 
 function cancelSession(){
   var name=S.user.displayName||S.user.email||'';
-  var subject='Session Cancellation Request';
-  var body='Hi,\n\nI need to cancel my upcoming session.\n\nThanks,\n'+name;
   var coachEmail=S.data.coachEmail||'andy@scalingminds.com';
+  var subject='Session Cancellation Request';
+  var body='Hi,\n\nI need to cancel my upcoming coaching session.\n\nThanks,\n'+name;
   var mailto='mailto:'+coachEmail+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
-  window.location.href=mailto;
+  // Show a modal so the action is never invisible
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;padding:28px;max-width:400px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.2)">'
+    +'<div style="font-family:\'DM Serif Display\',serif;font-size:20px;color:#1B4332;margin-bottom:8px">Cancel Session</div>'
+    +'<div style="font-size:13px;color:#666;margin-bottom:20px;line-height:1.5">To cancel, email your coach. Your mail app should open automatically — if not, send manually to the address below.</div>'
+    +'<div style="background:#f5f3ee;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px">'
+    +'<div style="font-weight:700;color:#1B4332;margin-bottom:4px">'+e(coachEmail)+'</div>'
+    +'<div style="color:#555;font-weight:600">Subject: '+e(subject)+'</div>'
+    +'</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap">'
+    +'<a href="'+mailto+'" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#1B4332;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap">Open Mail App</a>'
+    +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:12px 18px;border:1px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;background:#fff;cursor:pointer;color:#666">Close</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(ev){if(ev.target===ov)ov.remove();});
 }
 
 function startCountdown(nextSession){
