@@ -2218,7 +2218,6 @@ function sendAskAndy(){
   var name=S.user.displayName||S.user.email||'Client';
   var email=S.user.email||'';
   inp.value='';inp.style.height='38px';
-  // Save to Firestore
   var parentRef=db.collection('messages').doc(S.user.uid);
   parentRef.set({
     clientName:name,
@@ -2227,12 +2226,16 @@ function sendAskAndy(){
     lastMessageAt:firebase.firestore.FieldValue.serverTimestamp(),
     unreadByCoach:true,
     unreadByClient:false
-  },{merge:true});
-  parentRef.collection('thread').add({
-    from:'client',
-    text:text,
-    sentAt:firebase.firestore.FieldValue.serverTimestamp(),
-    read:false
+  },{merge:true}).then(function(){
+    return parentRef.collection('thread').add({
+      from:'client',
+      text:text,
+      sentAt:firebase.firestore.FieldValue.serverTimestamp(),
+      read:false
+    });
+  }).catch(function(){
+    if(inp){inp.value=text;}
+    alert('Message failed to send. Please check your connection and try again.');
   });
 }
 
