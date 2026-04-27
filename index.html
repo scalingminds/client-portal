@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://assets.calendly.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com https://scaling-minds-functions.cloudfunctions.net; frame-src https://calendly.com; img-src 'self' data: https:; object-src 'none'; base-uri 'self';">
 
 <title>Scaling Minds — Client Portal</title>
 <meta name="theme-color" content="#1B4332">
@@ -1534,6 +1533,10 @@ function selectThread(uid){
         msgs.appendChild(bubble);
       });
       msgs.scrollTop=msgs.scrollHeight;
+    },function(err){
+      console.error('Thread listener error:',err);
+      var msgs=document.getElementById('coach-thread-msgs');
+      if(msgs)msgs.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Connection lost — please refresh.</div>';
     });
 }
 
@@ -1546,7 +1549,7 @@ function rThreadView(uid){
   h+='<div style="font-family:\'DM Serif Display\',serif;font-size:15px;color:var(--cream-light);">'+e(name)+'</div></div>';
   h+='<div id="coach-thread-msgs" style="padding:16px;background:var(--cream-bg);height:280px;overflow-y:auto;"></div>';
   h+='<div style="padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;">';
-  h+='<textarea id="coach-reply-input" placeholder="Reply to '+e(name)+'..." rows="1" style="flex:1;border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-family:\'DM Sans\',sans-serif;font-size:13px;color:var(--text);resize:none;outline:none;background:var(--cream-bg);line-height:1.4;min-height:38px;max-height:100px;" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,100)+\'px\'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendCoachReply(\''+uid+'\');}"></textarea>';
+  h+='<textarea id="coach-reply-input" placeholder="Reply to '+e(name)+'..." rows="1" maxlength="2000" style="flex:1;border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-family:\'DM Sans\',sans-serif;font-size:13px;color:var(--text);resize:none;outline:none;background:var(--cream-bg);line-height:1.4;min-height:38px;max-height:100px;" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,100)+\'px\'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendCoachReply(\''+uid+'\');}"></textarea>';
   h+='<button onclick="sendCoachReply(\''+uid+'\')" style="width:36px;height:36px;min-width:36px;background:var(--green);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background=\'var(--green-light)\'" onmouseout="this.style.background=\'var(--green)\'">';
   h+='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>';
   h+='</div>';
@@ -1616,6 +1619,7 @@ function sendCoachReply(uid){
   var inp=document.getElementById('coach-reply-input');
   var text=inp?inp.value.trim():'';
   if(!text)return;
+  if(text.length>2000){alert('Message is too long (max 2000 characters).');return;}
   inp.value='';inp.style.height='38px';
   var client=S.cls.find(function(c){return c.uid===uid;})||{};
   var clientEmail=client.email||'';
@@ -2102,7 +2106,7 @@ function gbE(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
   </div>
   <!-- Input -->
   <div style="padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;align-items:flex-end;gap:8px;">
-    <textarea id="ask-andy-input" placeholder="Type a message..." rows="1" style="flex:1;border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:none;outline:none;background:var(--cream-bg);line-height:1.4;min-height:38px;max-height:100px;" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAskAndy();}"></textarea>
+    <textarea id="ask-andy-input" placeholder="Type a message..." rows="1" maxlength="2000" style="flex:1;border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:none;outline:none;background:var(--cream-bg);line-height:1.4;min-height:38px;max-height:100px;" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAskAndy();}"></textarea>
     <button onclick="sendAskAndy()" style="width:36px;height:36px;min-width:36px;background:var(--green);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s;" onmouseover="this.style.background='var(--green-light)'" onmouseout="this.style.background='var(--green)'">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </button>
@@ -2220,6 +2224,10 @@ function loadClientThread(){
       msgs2.scrollTop=msgs2.scrollHeight;
       // Mark as read
       if(S.user)db.collection('messages').doc(S.user.uid).set({unreadByClient:false},{merge:true});
+    },function(err){
+      console.error('Message listener error:',err);
+      var msgs2=document.getElementById('ask-andy-messages');
+      if(msgs2)msgs2.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">Connection lost — please refresh.</div>';
     });
 }
 
@@ -2230,6 +2238,7 @@ function sendAskAndy(){
   var inp=document.getElementById('ask-andy-input');
   var text=inp?inp.value.trim():'';
   if(!text||!S.user)return;
+  if(text.length>2000){alert('Message is too long (max 2000 characters).');return;}
   _lastAskAndySend=now;
   var name=S.user.displayName||S.user.email||'Client';
   var email=S.user.email||'';
@@ -2264,6 +2273,8 @@ function watchUnread(){
       var dot=document.getElementById('ask-andy-dot');
       if(dot)dot.style.background='#ef4444';
     }
+  },function(err){
+    console.error('Unread listener error:',err);
   });
 }
 
