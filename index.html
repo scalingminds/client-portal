@@ -340,7 +340,7 @@ function wd(){var t=new Date(),d=t.getDay(),m=new Date(t);m.setDate(t.getDate()-
 function ic(){return S.user&&CE.indexOf(S.user.email)!==-1;}
 function fd(s){if(!s)return'\u2014';var p=s.split('-');var d=new Date(p[0],p[1]-1,p[2]);return MN[d.getMonth()]+' '+d.getDate()+', '+p[0];}
 function fs(s){if(!s)return'\u2014';var p=s.split('-');var d=new Date(p[0],p[1]-1,p[2]);return DS[d.getDay()]+', '+MN[d.getMonth()]+' '+d.getDate();}
-function fdt(s){if(!s)return'\u2014';var d;if(s.indexOf('T')!==-1)d=new Date(s);else{var p=s.split('-');d=new Date(p[0],p[1]-1,p[2]);}var h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM';h=h%12;if(h===0)h=12;return MN[d.getMonth()]+' '+d.getDate()+' at '+h+':'+(m<10?'0':'')+m+' '+ap;}
+function fdt(s){if(!s)return'\u2014';var d;if(s.indexOf('T')!==-1)d=new Date(s);else{var p=s.split('-');d=new Date(p[0],p[1]-1,p[2]);}if(isNaN(d.getTime()))return'\u2014';var h=d.getHours(),m=d.getMinutes(),ap=h>=12?'PM':'AM';h=h%12;if(h===0)h=12;return MN[d.getMonth()]+' '+d.getDate()+' at '+h+':'+(m<10?'0':'')+m+' '+ap;}
 
 function streak(data){var s=0,d=new Date();while(true){var k=dk(d),due=data.habits.filter(function(h){return hdue(h,d);}),done=due.filter(function(h){return data.completions[k]&&data.completions[k].indexOf(h.id)!==-1;});if(due.length>0&&done.length===due.length){s++;d.setDate(d.getDate()-1);}else if(s===0){d.setDate(d.getDate()-1);var k2=dk(d),due2=data.habits.filter(function(h){return hdue(h,d);}),done2=due2.filter(function(h){return data.completions[k2]&&data.completions[k2].indexOf(h.id)!==-1;});if(due2.length>0&&done2.length===due2.length){s++;d.setDate(d.getDate()-1);}else break;}else break;}return s;}
 
@@ -352,7 +352,7 @@ function hdueCount(h,dayKeys){if(!h.freq||h.freq==='daily')return dayKeys.length
 
 function crate(data){var sd=data.startDate||null;if(!sd){var ad=Object.keys(data.completions).filter(function(k){return(data.completions[k]||[]).length>0;}).sort();if(ad.length>0)sd=ad[0];}if(!sd||data.habits.length===0)return 0;var sp=sd.split('-'),s=new Date(sp[0],sp[1]-1,sp[2]),t=new Date(),numDays=Math.max(1,Math.min(90,Math.floor((t-s)/(864e5))+1));var dayKeys=[];for(var i=0;i<numDays;i++){var d=new Date(t);d.setDate(d.getDate()-i);dayKeys.push(dk(d));}var totalDue=0,totalDone=0;data.habits.forEach(function(h){var due=hdueCount(h,dayKeys);totalDue+=due;var done=0;dayKeys.forEach(function(k){var c=data.completions[k]||[];if(c.indexOf(h.id)!==-1)done++;});totalDone+=Math.min(done,due);});return totalDue>0?Math.round((totalDone/totalDue)*100):0;}
 
-function adays(data){var sd=data.startDate||null;if(!sd){var ad=Object.keys(data.completions).filter(function(k){return(data.completions[k]||[]).length>0;}).sort();if(ad.length>0)sd=ad[0];}if(!sd)return 0;var sp=sd.split('-');return Math.max(1,Math.floor((new Date()-new Date(sp[0],sp[1]-1,sp[2]))/864e5)+1);}
+function adays(data){var sd=data.startDate||null;if(!sd){var ad=Object.keys(data.completions||{}).filter(function(k){return(data.completions[k]||[]).length>0;}).sort();if(ad.length>0)sd=ad[0];}if(!sd)return 0;var sp=sd.split('-');return Math.max(1,Math.floor((new Date()-new Date(sp[0],sp[1]-1,sp[2]))/864e5)+1);}
 
 function la(data){var dates=Object.keys(data.completions).sort(function(a,b){return b.localeCompare(a);});for(var i=0;i<dates.length;i++){if((data.completions[dates[i]]||[]).length>0)return dates[i];}return null;}
 function ds(s){if(!s)return 999;var p=s.split('-');return Math.floor((new Date()-new Date(p[0],p[1]-1,p[2]))/864e5);}
@@ -532,7 +532,7 @@ function rHome(td,ts,comp,sk,q){
   h+='</div>';
 
   // Commitments from last session
-  var sn=(S.data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
+  var sn=(S.data.sessionNotes||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   if(sn.length>0&&sn[0].commitments){
     h+='<div style="background:var(--white);border-left:4px solid var(--green);border-radius:0 12px 12px 0;padding:18px 22px;margin-bottom:36px">';
     h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--green-muted);margin-bottom:3px">What You\'re Working On</div>';
@@ -832,7 +832,7 @@ function rSessions(data){
   h+='<div style="width:36px;height:36px;min-width:36px;background:rgba(184,134,11,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>';
   h+='<div><div style="font-size:14px;font-weight:600;color:var(--green)">Pre-Session Check-In</div><div style="font-size:12px;color:var(--text-muted)">Complete before your next session</div></div></a>';
   // Session history
-  var sn=(data.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
+  var sn=(data.sessionNotes||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   if(sn.length>0){
     h+='<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--green);margin:20px 0 12px">Session History</h3>';
     sn.forEach(function(s){
@@ -1222,7 +1222,7 @@ function rCD(){
 
   // Session Notes
   h+='<div class="card"><h3>Session Notes</h3>';
-  var sn=(c.sessionNotes||[]).sort(function(a,b){return b.date.localeCompare(a.date);});
+  var sn=(c.sessionNotes||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   if(sn.length>0){sn.forEach(function(s,i){
     h+='<div class="sn-card" style="margin:8px 0"><div style="display:flex;justify-content:space-between"><div class="sn-date">'+fs(s.date)+'</div><button class="abtn del" onclick="rsn('+i+')" style="opacity:1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
     if(s.themes)h+='<div style="font-size:12px;margin-top:4px"><strong>Themes:</strong> '+e(s.themes)+'</div>';
@@ -2246,6 +2246,7 @@ function watchUnread(){
 }
 
 function downloadICS(dateStr){
+  if(!dateStr)return;
   // Parse date — handles both 'YYYY-MM-DD' and 'YYYY-MM-DDTHH:MM' formats
   var start, end;
   if(dateStr.indexOf('T')!==-1){
