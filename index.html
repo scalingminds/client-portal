@@ -341,6 +341,14 @@ var ID=7;
 function dd(){return{habits:[],completions:{},notes:{},startDate:null,endDate:null,nextSession:null,focusOfWeek:'',todos:[],sessionPrep:'',docs:[],goals:[],sessionNotes:[],checkIns:[]};}
 var S={user:null,data:dd(),view:'home',mo:false,eh:null,ic:false,cls:[],sc:null,cv:'clients',lib:[],_unreadCount:0,_errCount:0,_msgs:{},_selThread:null,_msgUnsub:null,_coachMsgUnsub:null,_inboxUnsub:null,_unreadUnsub:null,_coachName:'Andy Hite',_coachInitials:'AH'};
 
+// Normalize sentAt values across formats: Firestore Timestamp objects, ISO strings, Date,
+// numbers, or {seconds,nanoseconds} maps. Returns ms since epoch (0 if missing/invalid).
+// Why: legacy seed messages stored sentAt as ISO strings while new messages use
+// Firestore Timestamps. Firestore's orderBy puts these in different type-priority
+// buckets, so new messages would appear mid-list and auto-scroll-to-bottom would land
+// on a stale string-typed message — making the send look broken.
+function _sentAtMs(v){if(!v)return 0;if(typeof v.toMillis==='function'){try{return v.toMillis();}catch(e){return 0;}}if(typeof v==='number')return v;if(v instanceof Date)return v.getTime();if(typeof v==='string'){var t=Date.parse(v);return isNaN(t)?0:t;}if(v.seconds)return v.seconds*1000+(v.nanoseconds?Math.floor(v.nanoseconds/1e6):0);return 0;}
+
 // Helpers
 function dq(){var t=new Date();return QT[(t.getFullYear()*10000+(t.getMonth()+1)*100+t.getDate())%QT.length];}
 function dk(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -372,12 +380,16 @@ function ep(data){if(!data.startDate||!data.endDate)return null;var sp=data.star
 var st=null;
 function save(){if(!S.user)return;clearTimeout(st);st=setTimeout(function(){var d=S.data;db.collection('users').doc(S.user.uid).set({habits:d.habits,completions:d.completions,notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:d.todos||[],sessionPrep:d.sessionPrep||'',docs:d.docs||[],goals:d.goals||[],sessionNotes:d.sessionNotes||[],checkIns:d.checkIns||[],displayName:S.user.displayName||'',email:S.user.email||'',photoURL:S.user.photoURL||'',updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});},800);}
 
-function load(cb){if(!S.user)return;db.collection('users').doc(S.user.uid).get().then(function(doc){if(doc.exists){var d=doc.data();S.data.habits=(d.habits||[]).filter(Boolean);S.data.completions=d.completions||{};S.data.notes=d.notes||{};S.data.startDate=d.startDate||null;S.data.endDate=d.endDate||null;S.data.nextSession=d.nextSession||null;S.data.focusOfWeek=d.focusOfWeek||'';S.data.todos=(d.todos||[]).filter(Boolean);S.data.sessionPrep=d.sessionPrep||'';S.data.docs=(d.docs||[]).filter(Boolean);S.data.goals=(d.goals||[]).filter(Boolean);S.data.sessionNotes=(d.sessionNotes||[]).filter(Boolean);S.data.checkIns=(d.checkIns||[]).filter(Boolean);S.data.calendlyUrl=d.calendlyUrl||null;
+function load(cb){if(!S.user)return;db.collection('users').doc(S.user.uid).get().then(function(doc){if(doc.exists){var d=doc.data();S.data.habits=(d.habits||[]).filter(Boolean);S.data.completions=d.completions||{};S.data.notes=d.notes||{};S.data.startDate=d.startDate||null;S.data.endDate=d.endDate||null;S.data.nextSession=d.nextSession||null;S.data.focusOfWeek=d.focusOfWeek||'';S.data.todos=(d.todos||[]).filter(Boolean);S.data.sessionPrep=d.sessionPrep||'';S.data.docs=(d.docs||[]).filter(Boolean);S.data.goals=(d.goals||[]).filter(Boolean);S.data.sessionNotes=(d.sessionNotes||[]).filter(Boolean);S.data.checkIns=(d.checkIns||[]).filter(Boolean);S.data.calendlyUrl=d.calendlyUrl||null;S.data.tourSeen=d.tourSeen===true;
   // Auto-clear past sessions (give a 4-hour grace window after start time)
   if(S.data.nextSession){var ns=S.data.nextSession;var nd=ns.indexOf('T')!==-1?new Date(ns):new Date((function(){var p=ns.split('-');return new Date(p[0],p[1]-1,p[2],23,59);})()); if(nd<new Date(Date.now()-4*3600*1000)){S.data.nextSession=null;db.collection('users').doc(S.user.uid).set({nextSession:null},{merge:true});}}
 }if(cb)cb();}).catch(function(){if(cb)cb();});}
 
-function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.forEach(function(doc){var d=doc.data();if(CE.indexOf(d.email)===-1){S.cls.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',phone:d.phone||'',birthday:d.birthday||'',address:d.address||'',company:d.company||'',title:d.title||'',archived:d.archived||false,habits:(d.habits||[]).filter(Boolean),completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:d.nextSession||null,focusOfWeek:d.focusOfWeek||'',todos:(d.todos||[]).filter(Boolean),sessionPrep:d.sessionPrep||'',docs:(d.docs||[]).filter(Boolean),goals:(d.goals||[]).filter(Boolean),sessionNotes:(d.sessionNotes||[]).filter(Boolean),checkIns:(d.checkIns||[]).filter(Boolean),calendlyUrl:d.calendlyUrl||null});}});if(cb)cb();}).catch(function(e2){console.error(e2);if(cb)cb();});}
+// Returns true if a nextSession value is more than 4 hours past its start time.
+// Format: 'YYYY-MM-DD' (whole-day) or 'YYYY-MM-DDTHH:MM' (datetime-local).
+function _isNextSessionExpired(ns){if(!ns)return false;var nd;if(ns.indexOf('T')!==-1){nd=new Date(ns);}else{var p=ns.split('-');nd=new Date(p[0],p[1]-1,p[2],23,59);}return nd<new Date(Date.now()-4*3600*1000);}
+function loadAll(cb){db.collection('users').get().then(function(sn){S.cls=[];sn.forEach(function(doc){var d=doc.data();if(CE.indexOf(d.email)===-1){var ns=d.nextSession||null;// Auto-clear nextSession if it's expired so the coach view doesn't show stale dates.// Fire-and-forget Firestore write keeps the client view in sync next time they open the portal.
+if(_isNextSessionExpired(ns)){ns=null;db.collection('users').doc(doc.id).set({nextSession:null},{merge:true}).catch(function(){});}S.cls.push({uid:doc.id,displayName:d.displayName||'Unknown',email:d.email||'',photoURL:d.photoURL||'',phone:d.phone||'',birthday:d.birthday||'',address:d.address||'',company:d.company||'',title:d.title||'',archived:d.archived||false,habits:(d.habits||[]).filter(Boolean),completions:d.completions||{},notes:d.notes||{},startDate:d.startDate||null,endDate:d.endDate||null,nextSession:ns,focusOfWeek:d.focusOfWeek||'',todos:(d.todos||[]).filter(Boolean),sessionPrep:d.sessionPrep||'',docs:(d.docs||[]).filter(Boolean),goals:(d.goals||[]).filter(Boolean),sessionNotes:(d.sessionNotes||[]).filter(Boolean),checkIns:(d.checkIns||[]).filter(Boolean),calendlyUrl:d.calendlyUrl||null});}});if(cb)cb();}).catch(function(e2){console.error(e2);if(cb)cb();});}
 
 function scf(uid,f){db.collection('users').doc(uid).set(f,{merge:true}).then(function(){var c=S.cls.find(function(x){return x.uid===uid;});if(c)Object.keys(f).forEach(function(k){c[k]=f[k];});if(S.sc&&S.sc.uid===uid)Object.keys(f).forEach(function(k){S.sc[k]=f[k];});R();}).catch(function(err){alert('Save failed. Please check your connection and try again.\n\n'+err.message);});}
 
@@ -385,7 +397,7 @@ function loadLib(cb){db.collection('library').doc('resources').get().then(functi
 function saveLib(items){db.collection('library').doc('resources').set({items:items}).then(function(){S.lib=items;R();}).catch(function(err){alert('Library save failed. Please check your connection and try again.\n\n'+err.message);});}
 
 // Auth
-function si(){auth.signInWithPopup(prov).catch(function(err){alert('Google sign in failed: '+err.message);});}
+function si(){auth.signInWithPopup(prov).then(function(r){alert('SUCCESS: '+r.user.email);}).catch(function(err){var full='';try{full=JSON.stringify(err,Object.getOwnPropertyNames(err));}catch(e){full=String(err);}console.error('GOOGLE_AUTH_FAIL',{code:err.code,message:err.message,customData:err.customData,full:full});alert('CODE: '+err.code+'\nMSG: '+err.message+'\nDETAIL: '+full.substring(0,500));});}
 function siep(){
   var em=document.getElementById('login-email').value.trim(),pw=document.getElementById('login-pw').value;
   var errEl=document.getElementById('login-err');
@@ -1290,7 +1302,7 @@ function rCD(){
   // Dates
   h+='<div class="card"><h3>Engagement</h3><div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">Start</label><input class="fi" type="date" id="cs" value="'+(c.startDate||'')+'"></div><div class="fg" style="margin:0;flex:1;min-width:140px"><label class="fl">End</label><input class="fi" type="date" id="ce2" value="'+(c.endDate||'')+'"></div><button class="btn bp" onclick="scd()">Save</button></div></div>';
   // Next session
-  h+='<div class="card"><h3>Next Session</h3><div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="fg" style="margin:0;flex:1;min-width:180px"><input class="fi" type="datetime-local" id="cns" step="900" value="'+(c.nextSession||'')+'"></div><button class="btn bp" onclick="scns()">Save</button></div>';
+  h+='<div class="card"><h3>Next Session</h3><div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><div class="fg" style="margin:0;flex:1;min-width:180px"><input class="fi" type="datetime-local" id="cns" step="900" value="'+_toDtLocalInputValue(c.nextSession)+'"></div><button class="btn bp" onclick="scns()">Save</button></div>';
   h+='<div style="margin-top:10px"><div class="fg" style="margin:0"><label class="fl">Custom Calendly URL (optional)</label><div style="display:flex;gap:8px"><input class="fi" id="ccal" type="url" placeholder="https://calendly.com/..." value="'+e(c.calendlyUrl||'')+'"><button class="btn bp" onclick="sccal()">Save</button></div></div></div></div>';
   // Focus
   h+='<div class="card"><h3>Focus This Week</h3><textarea class="ft" id="cfw" placeholder="What should this client hold between sessions?">'+e(c.focusOfWeek||'')+'</textarea><div style="margin-top:8px;text-align:right"><button class="btn bp" onclick="scfw()">Save</button></div></div>';
@@ -1606,12 +1618,13 @@ function selectThread(uid){
   // Start real-time listener for thread
   if(S._coachMsgUnsub)S._coachMsgUnsub();
   S._coachMsgUnsub=db.collection('messages').doc(uid).collection('thread')
-    .orderBy('sentAt','asc')
     .onSnapshot(function(snap){
       var msgs=document.getElementById('coach-thread-msgs');
       if(!msgs)return;
       msgs.innerHTML='';
-      snap.forEach(function(doc){
+      // Sort across mixed sentAt types (see _sentAtMs comment)
+      var sortedDocs=snap.docs.slice().sort(function(a,b){return _sentAtMs(a.data().sentAt)-_sentAtMs(b.data().sentAt);});
+      sortedDocs.forEach(function(doc){
         var m=doc.data();
         var isCoach=m.from==='coach';
         var bubble=document.createElement('div');
@@ -1699,7 +1712,7 @@ function sendNewMessage(){
   // Email the client
   if(client.email&&S.user){
     S.user.getIdToken().then(function(token){
-      fetch(NU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({to:client.email,toName:client.displayName||'',type:'coach_message',data:{text:text}})}).catch(function(err){console.error('Notify failed:',err);});
+      fetch(NU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({to:client.email,toName:client.displayName||'',type:'coach_message',data:{text:text}})}).catch(function(err){console.warn('Notify (push email) skipped — sendNotification cloud function unreachable. Message itself was saved successfully. Detail:',err&&err.message?err.message:err);});
     }).catch(function(err){console.error('Token failed:',err);});
   }
   document.getElementById('new-msg-overlay').remove();
@@ -1742,7 +1755,7 @@ function sendCoachReply(uid){
     // Email the client
     if(clientEmail&&S.user){
       S.user.getIdToken().then(function(token){
-        fetch(NU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({to:clientEmail,toName:clientName,type:'coach_message',data:{text:text}})}).catch(function(err){console.error('Notify failed:',err);});
+        fetch(NU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({to:clientEmail,toName:clientName,type:'coach_message',data:{text:text}})}).catch(function(err){console.warn('Notify (push email) skipped — sendNotification cloud function unreachable. Message itself was saved successfully. Detail:',err&&err.message?err.message:err);});
       }).catch(function(err){console.error('Token failed:',err);});
     }
   }).catch(function(err){
@@ -1765,11 +1778,11 @@ function scfw(){scf(S.sc.uid,{focusOfWeek:document.getElementById('cfw').value||
 function ag(){var t=document.getElementById('ngt').value.trim();if(!t)return;var o=document.getElementById('ngo').value.trim();var g=(S.sc.goals||[]).slice();g.push({id:'g'+Date.now(),title:t,outcome:o,desc:'',status:'active',progress:0});scf(S.sc.uid,{goals:g});}
 function rg(i){if(!confirm('Remove?'))return;var g=(S.sc.goals||[]).slice();g.splice(i,1);scf(S.sc.uid,{goals:g});}
 function sgst(i,v){var g=(S.sc.goals||[]).slice();if(g[i]){g[i].status=v;if(!g[i].history)g[i].history=[];g[i].history.push({status:v,date:new Date().toISOString().split('T')[0]});}scf(S.sc.uid,{goals:g});}
-var NU='https://us-central1-scaling-minds-portal.cloudfunctions.net/sendNotification';
+var NU='https://rlooznqhjwgrukjozdfc.supabase.co/functions/v1/coach-message-notify';
 function notify(type,data){
   if(!S.sc||!S.sc.email||!S.user)return;
   S.user.getIdToken().then(function(token){
-    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({to:S.sc.email,toName:S.sc.displayName||'',type:type,data:data})}).catch(function(err){console.error('Notify failed:',err);});
+    fetch(NU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({to:S.sc.email,toName:S.sc.displayName||'',type:type,data:data})}).catch(function(err){console.warn('Notify (push email) skipped — sendNotification cloud function unreachable. Message itself was saved successfully. Detail:',err&&err.message?err.message:err);});
   }).catch(function(err){console.error('Token failed:',err);});
 }
 function asn(){var d=document.getElementById('snd').value,t=document.getElementById('snt').value.trim(),c=document.getElementById('snc').value.trim(),ex=document.getElementById('sne').value.trim(),n=document.getElementById('snn').value.trim();if(!d)return;var sn2=(S.sc.sessionNotes||[]).slice();sn2.push({id:'sn'+Date.now(),date:d,themes:t,commitments:c,experiments:ex,notes:n});scf(S.sc.uid,{sessionNotes:sn2});notify('session_note',{date:d,themes:t,commitments:c});}
@@ -1814,10 +1827,13 @@ var TOUR_STEPS=[
 ];
 var _tourStep=0;
 
-function tourSeen(){try{return localStorage.getItem(TOUR_KEY)==='1';}catch(e){return false;}}
-function markTourSeen(){try{localStorage.setItem(TOUR_KEY,'1');}catch(e){}}
+function tourSeen(){if(S&&S.data&&S.data.tourSeen===true)return true;try{return localStorage.getItem(TOUR_KEY)==='1';}catch(e){return false;}}
+function markTourSeen(){try{localStorage.setItem(TOUR_KEY,'1');}catch(e){}if(S&&S.data)S.data.tourSeen=true;if(S&&S.user&&typeof db!=='undefined'&&db){try{db.collection('users').doc(S.user.uid).set({tourSeen:true},{merge:true}).catch(function(){});}catch(e){}}}
 
 function startTour(){
+  // Mark seen immediately — auto-tour fires exactly once, even if the user closes it mid-flow.
+  // The 'Take the Tour' button on the profile page calls startTour() too, so a re-mark here is harmless.
+  markTourSeen();
   _tourStep=0;
   renderTourStep();
 }
@@ -1901,6 +1917,47 @@ function nextTourStep(){_tourStep++;renderTourStep();}
 function endTour(){markTourSeen();removeTour();if(S.view!=='home'){S.view='home';rC();}}
 
 function removeTour(){var el=document.getElementById('sm-tour');if(el)el.parentNode.removeChild(el);}
+
+
+
+// ══════════════════════════════════
+// CALENDLY → nextSession AUTO-FILL
+// When a client books a session via the Calendly popup inside the portal, capture the
+// scheduled time and write it to their Firestore user doc as nextSession. The coach view
+// reads that field and shows the upcoming session for each client.
+// Why: Calendly's postMessage event_scheduled payload only contains URIs, not the actual
+// time. We hand the event URI to a Supabase edge function (calendly-event-resolve) which
+// uses our Calendly API token to fetch the real start_time, then we write it locally.
+// ══════════════════════════════════
+var CAL_RESOLVE_URL='https://rlooznqhjwgrukjozdfc.supabase.co/functions/v1/calendly-event-resolve';
+
+function _calIsoToLocal(iso){var d=new Date(iso);var pad=function(n){return n<10?'0'+n:''+n;};return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());}
+// Coerce any nextSession value (ISO with Z, datetime-local, or date-only) to a value the
+// <input type="datetime-local"> can accept: 'YYYY-MM-DDTHH:MM' in local time.
+function _toDtLocalInputValue(s){if(!s)return'';if(typeof s!=='string')return'';if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s))return s;if(s.indexOf('T')!==-1){return _calIsoToLocal(s);}return s;}
+
+window.addEventListener('message',function(ev){
+  if(!ev||!ev.data||typeof ev.data!=='object')return;
+  if(ev.data.event!=='calendly.event_scheduled')return;
+  // Only act for client-side bookings (skip the coach)
+  if(!S||!S.user||S.ic)return;
+  var p=ev.data.payload;
+  if(!p||!p.event||!p.event.uri)return;
+  var eventUri=p.event.uri;
+  S.user.getIdToken().then(function(token){
+    return fetch(CAL_RESOLVE_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({eventUri:eventUri})
+    });
+  }).then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d};});}).then(function(x){
+    if(!x.ok||!x.d||!x.d.startTime){console.warn('Calendly resolve returned no startTime:',x);return;}console.log('Calendly booking captured:',x.d.startTime);
+    var local=_calIsoToLocal(x.d.startTime);
+    S.data.nextSession=local;
+    db.collection('users').doc(S.user.uid).set({nextSession:local},{merge:true});
+    if(typeof R==='function')R();
+  }).catch(function(err){console.warn('Calendly listener error:',err);});
+});
 
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
 
@@ -2328,14 +2385,15 @@ function loadClientThread(){
     }
   });
   S._msgUnsub=db.collection('messages').doc(S.user.uid).collection('thread')
-    .orderBy('sentAt','asc')
     .onSnapshot(function(snap){
       var msgs2=document.getElementById('ask-andy-messages');
       if(!msgs2)return;
       var ci=S._coachInitials||'AH';
       var cf=(S._coachName||'Andy').split(' ')[0];
       msgs2.innerHTML='<div style="display:flex;gap:8px;margin-bottom:12px;"><div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:\'DM Serif Display\',serif;font-size:10px;color:var(--cream-light);margin-top:2px;">'+e(ci)+'</div><div><div style="background:var(--white);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 14px;font-size:13px;color:var(--text);line-height:1.5;max-width:240px;">Hey! What&rsquo;s on your mind? Ask me anything between sessions.</div><div style="font-size:10px;color:var(--text-muted);margin-top:4px;">'+e(cf)+'</div></div></div>';
-      snap.forEach(function(doc){
+            // Sort across mixed sentAt types (see _sentAtMs comment)
+      var sortedDocs2=snap.docs.slice().sort(function(a,b){return _sentAtMs(a.data().sentAt)-_sentAtMs(b.data().sentAt);});
+      sortedDocs2.forEach(function(doc){
         var m=doc.data();
         var isClient=m.from==='client';
         var mci=m.coachInitials||ci;
