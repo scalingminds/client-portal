@@ -2492,6 +2492,12 @@ function sendAskAndy(){
       sentAt:firebase.firestore.FieldValue.serverTimestamp(),
       read:false
     });
+  }).then(function(){
+    // Notify coach via email — mirrors sendCoachReply pattern. Edge function routes
+    // type:'client_message' to andy@scalingminds.com regardless of dropdown.
+    S.user.getIdToken().then(function(token){
+      fetch(NU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({type:'client_message',data:{text:text}})}).catch(function(err){console.warn('Notify (push email) skipped — coach notification unreachable. Message itself was saved successfully. Detail:',err&&err.message?err.message:err);});
+    }).catch(function(err){console.error('Token failed:',err);});
   }).catch(function(){
     if(inp){inp.value=text;}
     alert('Message failed to send. Please check your connection and try again.');
