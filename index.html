@@ -1307,6 +1307,54 @@ function rCD(){
   // Focus
   h+='<div class="card"><h3>Focus This Week</h3><textarea class="ft" id="cfw" placeholder="What should this client hold between sessions?">'+e(c.focusOfWeek||'')+'</textarea><div style="margin-top:8px;text-align:right"><button class="btn bp" onclick="scfw()">Save</button></div></div>';
 
+  // Habits
+  h+='<div class="card"><h3>Habits</h3>';
+  var hb=c.habits||[];
+  if(hb.length===0){
+    h+='<div style="font-size:12px;color:var(--text-muted);padding:8px 0">This client has no habits yet.</div></div>';
+  } else {
+    var sk=streak(c),cr=crate(c);
+    var days30=[];for(var hi=29;hi>=0;hi--){var hd=new Date(td);hd.setDate(td.getDate()-hi);days30.push(hd);}
+    var lcK=null;Object.keys(c.completions||{}).forEach(function(k){if((c.completions[k]||[]).length>0&&(!lcK||k>lcK))lcK=k;});
+    var dsl='never';
+    if(lcK){var lp=lcK.split('-'),ld=new Date(lp[0],lp[1]-1,lp[2]);var nd2=Math.floor((td-ld)/864e5);dsl=nd2===0?'today':nd2===1?'yesterday':nd2+' days ago';}
+    var trkS=null;
+    if(c.startDate){var sp=c.startDate.split('-');trkS=new Date(sp[0],sp[1]-1,sp[2]);}
+    else if(lcK){var fp=Object.keys(c.completions||{}).filter(function(k){return(c.completions[k]||[]).length>0;}).sort()[0];if(fp){var fpp=fp.split('-');trkS=new Date(fpp[0],fpp[1]-1,fpp[2]);}}
+    h+='<div style="display:flex;gap:10px;margin:8px 0 14px;flex-wrap:wrap">';
+    h+='<div style="flex:1;min-width:90px;text-align:center;background:var(--cream-light);border-radius:10px;padding:12px"><div style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green)">'+sk+'</div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-top:2px">Streak (days)</div></div>';
+    h+='<div style="flex:1;min-width:90px;text-align:center;background:var(--cream-light);border-radius:10px;padding:12px"><div style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green)">'+cr+'%</div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-top:2px">90-day rate</div></div>';
+    h+='<div style="flex:1;min-width:90px;text-align:center;background:var(--cream-light);border-radius:10px;padding:12px"><div style="font-family:\'DM Serif Display\',serif;font-size:24px;color:var(--green)">'+hb.length+'</div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-top:2px">Habits</div></div>';
+    h+='</div>';
+    h+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Last 30 days &middot; last completion: '+dsl+'</div>';
+    h+='<div style="overflow-x:auto"><div style="min-width:600px">';
+    h+='<div style="display:grid;grid-template-columns:140px repeat(30,1fr);gap:2px;align-items:center;margin-bottom:4px"><div></div>';
+    days30.forEach(function(d2,i){var lbl=(i%7===0)?String(d2.getDate()):'';h+='<div style="font-size:9px;color:var(--text-muted);text-align:center">'+lbl+'</div>';});
+    h+='</div>';
+    hb.forEach(function(hab){
+      var flbl=!hab.freq||hab.freq==='daily'?'Daily':hab.freq==='days'?(hab.freqDays||[]).map(function(x){return DS[x];}).join(','):hab.freq==='weekly'?(hab.freqPerWeek||1)+'x/wk':'';
+      h+='<div style="display:grid;grid-template-columns:140px repeat(30,1fr);gap:2px;align-items:center;margin-bottom:3px">';
+      h+='<div style="padding-right:8px;overflow:hidden"><div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;text-overflow:ellipsis;overflow:hidden">'+e(hab.name)+'</div><div style="font-size:9px;color:var(--text-muted)">'+flbl+'</div></div>';
+      days30.forEach(function(d2){
+        var k=dk(d2),preTrk=trkS&&d2<trkS,due=!preTrk&&hdue(hab,d2),done=due&&(c.completions[k]||[]).indexOf(hab.id)!==-1;
+        var bg,ttl;
+        if(preTrk){bg='#e0dbd2';ttl='Pre-tracking';}
+        else if(!due){bg='#e0dbd2';ttl='Not due';}
+        else if(done){bg='#2D6A4F';ttl='Completed';}
+        else{bg='#d68b8b';ttl='Missed';}
+        h+='<div title="'+k+' &middot; '+ttl+'" style="height:18px;background:'+bg+';border-radius:3px"></div>';
+      });
+      h+='</div>';
+    });
+    h+='</div></div>';
+    h+='<div style="display:flex;gap:14px;font-size:10px;color:var(--text-muted);margin-top:12px;flex-wrap:wrap">';
+    h+='<div style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:#2D6A4F;border-radius:2px;display:inline-block"></span>Completed</div>';
+    h+='<div style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:#d68b8b;border-radius:2px;display:inline-block"></span>Missed</div>';
+    h+='<div style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:#e0dbd2;border-radius:2px;display:inline-block"></span>Not due / pre-tracking</div>';
+    h+='</div>';
+    h+='</div>';
+  }
+
   // Goals
   h+='<div class="card"><h3>Goals</h3>';
   var goals=c.goals||[];
